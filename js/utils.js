@@ -169,9 +169,9 @@ function exportCSV() {
   }
 
   const headers = [
-    'Date', 'Jour', 'Note', 'Arrivee Taf', 'Depart Taf', 'Pause (min)',
-    'Minutes Taf', 'Gain Taf (EUR)', 'Livraison', 'Minutes Livraison',
-    'Gain Livraison (EUR)', 'Pourboire (EUR)', 'Gain Total (EUR)', 'Photo sur le site', 'Mois Anterieur'
+    'Date', 'Jour', 'Note', 'Arrivee Prestation', 'Depart Prestation', 'Pause (min)',
+    'Minutes Prestation', 'Gain Prestation (EUR)', 'Livraison', 'Minutes Livraison',
+    'Gain Livraison (EUR)', 'Pourboire (EUR)', 'Gain Total Paie (EUR)', 'Photo sur le site', 'Mois Anterieur'
   ];
 
   const rows = activeShifts.map(item => {
@@ -183,7 +183,7 @@ function exportCSV() {
     }
     const delP = item.del_pay || 0;
     const tipP = getItemTipPay(item);
-    const totalP = isLegacy ? (item.total_pay || stdP) : (stdP + delP + tipP);
+    const totalP = isLegacy ? (item.total_pay || stdP) : (stdP + delP);
     const dt = parseYMD(item.date);
     const dayLabel = DAY_NAMES_SHORT[dt.getDay()];
 

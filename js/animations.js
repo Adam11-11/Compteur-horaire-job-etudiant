@@ -157,7 +157,16 @@ function spawnPixelCelebration(cardEl) {
 }
 
 async function runPostSaveSequence(oldStats, newStats, shiftTotalPay) {
-  const totalCard = document.getElementById('month-total-card');
+  if (document.body.getAttribute('data-view') !== 'counter' && typeof window.setView === 'function') {
+    window.setView('counter');
+  }
+
+  const totalChanged = Math.abs(newStats.totalPay - oldStats.totalPay) > 0.005;
+  const tipChangedOnly = !totalChanged && Math.abs((newStats.tipPay || 0) - (oldStats.tipPay || 0)) > 0.005;
+  const targetCard = tipChangedOnly
+    ? (document.querySelector('.tip-card') || document.getElementById('month-total-card'))
+    : document.getElementById('month-total-card');
+
   if (prefersReducedMotion()) {
     document.getElementById('month-std-pay').textContent = `${newStats.stdPay.toFixed(2)} €`;
     document.getElementById('month-del-pay').textContent = `${newStats.delPay.toFixed(2)} €`;
@@ -170,14 +179,15 @@ async function runPostSaveSequence(oldStats, newStats, shiftTotalPay) {
 
   await scrollToTotalCardAndWait();
 
-  if (totalCard) {
-    totalCard.classList.add('counting-pulse');
-    spawnFloatingGain(totalCard, shiftTotalPay);
+  if (targetCard) {
+    targetCard.classList.add('counting-pulse');
+    spawnFloatingGain(targetCard, shiftTotalPay);
   }
 
-  const animPromises = [
-    animateValueCounter('month-total-pay', oldStats.totalPay, newStats.totalPay, 1200, true)
-  ];
+  const animPromises = [];
+  if (totalChanged) {
+    animPromises.push(animateValueCounter('month-total-pay', oldStats.totalPay, newStats.totalPay, 1200, true));
+  }
   if (Math.abs(newStats.stdPay - oldStats.stdPay) > 0.005) {
     animPromises.push(animateValueCounter('month-std-pay', oldStats.stdPay, newStats.stdPay, 1200, false));
   }
@@ -185,14 +195,14 @@ async function runPostSaveSequence(oldStats, newStats, shiftTotalPay) {
     animPromises.push(animateValueCounter('month-del-pay', oldStats.delPay, newStats.delPay, 1200, false));
   }
   if (Math.abs((newStats.tipPay || 0) - (oldStats.tipPay || 0)) > 0.005) {
-    animPromises.push(animateValueCounter('month-tip-pay', oldStats.tipPay || 0, newStats.tipPay || 0, 1200, false));
+    animPromises.push(animateValueCounter('month-tip-pay', oldStats.tipPay || 0, newStats.tipPay || 0, 1200, tipChangedOnly));
   }
 
   await Promise.all(animPromises);
 
-  if (totalCard) {
-    totalCard.classList.remove('counting-pulse');
-    spawnPixelCelebration(totalCard);
+  if (targetCard) {
+    targetCard.classList.remove('counting-pulse');
+    spawnPixelCelebration(targetCard);
   }
   playCelebrationJingle();
 }

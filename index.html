@@ -179,7 +179,7 @@
         <div class="stats-grid" id="period-stats-grid">
           <div class="stat-card std-card stat-card-clickable" onclick="setView('prestations')" role="button" tabindex="0"
             title="Voir le détail des prestations">
-            <span class="stat-title">TAF DU MOIS (12€/H, MIN. 60€)</span>
+            <span class="stat-title">PRESTATIONS DU MOIS (12€/H, MIN. 60€)</span>
             <div class="stat-value" id="month-std-pay">0.00 €</div>
             <div class="stat-sub" id="month-std-hours">0h00 • Moy. 0h00/j</div>
           </div>
@@ -292,7 +292,7 @@
           <div class="live-clock-idle">
             <div class="live-clock-title" style="margin-bottom:0;">⏱ POINTAGE EN DIRECT</div>
             <button type="button" class="pixel-btn btn-start-shift" onclick="startLiveShift()">
-              ▶ DÉMARRER MON TAF
+              ▶ DÉMARRER MA PRESTATION
             </button>
           </div>
 
@@ -308,7 +308,7 @@
 
             <div class="live-clock-metrics">
               <div class="live-metric">
-                <span class="live-metric-label">TEMPS DE TAF</span>
+                <span class="live-metric-label">TEMPS PRESTATION</span>
                 <span class="live-metric-val" id="live-clock-elapsed">00:00:00</span>
               </div>
               <div class="live-metric">
@@ -412,7 +412,7 @@
           <div class="form-grid" id="form-roles-grid">
             <div class="role-block std-block">
               <div class="role-header">
-                <span>HORAIRES TAF</span>
+                <span>HORAIRES PRESTATION</span>
                 <span class="badge badge-cream">12 € / H (MIN. 60 €)</span>
               </div>
 
@@ -540,7 +540,7 @@
           <!-- BARRE D'ENREGISTREMENT COLLANTE SUR MOBILE -->
           <div class="sticky-submit-bar">
             <div class="live-preview">
-              <div>Aperçu : <strong id="live-details">0h00 taf | Pas de livraison</strong></div>
+              <div>Aperçu : <strong id="live-details">0h00 prestation | Pas de livraison</strong></div>
               <span id="live-total">+ 0.00 €</span>
             </div>
 
@@ -579,7 +579,7 @@
         </div>
       </section>
 
-      <!-- ONGLET PRESTATIONS (HEURES DE TAF) -->
+      <!-- ONGLET PRESTATIONS -->
       <section class="pixel-box category-view-section" id="section-prestations" aria-label="Détail des prestations">
         <div id="prestations-view-content"></div>
       </section>
@@ -613,7 +613,7 @@
               <span>LUN</span><span>MAR</span><span>MER</span><span>JEU</span><span>VEN</span><span>SAM</span><span>DIM</span>
             </div>
             <div class="cal-grid" id="cal-grid"></div>
-            <div class="cal-legend"><span><i class="d"></i>Taf</span><span><i class="d l"></i>Livraison</span><span><i
+            <div class="cal-legend"><span><i class="d"></i>Prestation</span><span><i class="d l"></i>Livraison</span><span><i
                   class="d t"></i>Pourboire</span><span><i class="d p"></i>Photo jointe</span><span>Bord pointillé =
                 sans photo</span><span>Totaux = mois civil</span></div>
           </div>
@@ -621,6 +621,32 @@
         </div>
       </section>
 
+    </div>
+  </div>
+
+  <!-- FENÊTRE MODALE DE CONFIRMATION IA ("CE QUE L'IA A COMPRIS") -->
+  <div id="ai-confirm-modal" class="ai-confirm-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="ai-confirm-title">
+    <div class="pixel-box ai-confirm-card">
+      <div class="ai-confirm-header">
+        <span class="ai-confirm-badge" id="ai-confirm-source-badge">🤖 ASSISTANT IA</span>
+        <h3 class="pixel-font ai-confirm-title" id="ai-confirm-title">CE QUE L'IA A COMPRIS</h3>
+      </div>
+
+      <div id="ai-confirm-body" class="ai-confirm-body"></div>
+
+      <div class="ai-confirm-actions">
+        <button type="button" class="pixel-btn btn-gold ai-confirm-btn-main" id="ai-confirm-save-btn" onclick="confirmAiModalAndSave()">
+          ✅ CONFIRMER &amp; AJOUTER
+        </button>
+        <div class="ai-confirm-sub-actions">
+          <button type="button" class="pixel-btn btn-secondary" onclick="editAiModalInForm()">
+            ✎ MODIFIER
+          </button>
+          <button type="button" class="pixel-btn btn-danger" onclick="closeAiConfirmModal(true)">
+            ✕ ANNULER
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -668,7 +694,7 @@
   <!-- Navigation basse (mobile / tablette) -->
   <nav class="bottom-nav" aria-label="Navigation de l'application">
     <a href="#section-period" data-bottom-view="counter" class="is-active">PAIE</a>
-    <a href="#section-prestations" data-bottom-view="prestations">TAF</a>
+    <a href="#section-prestations" data-bottom-view="prestations">PREST.</a>
     <a href="#section-livraisons" data-bottom-view="livraisons">LIVR.</a>
     <a href="#section-pourboires" data-bottom-view="pourboires">TIPS</a>
     <a href="#section-calendar" data-bottom-view="calendar">AGENDA</a>

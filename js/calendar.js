@@ -10,7 +10,7 @@ function initCalendarAndNavigation() {
     if (std > 0 && sp < STD_MIN_PAY) sp = Math.max(STD_MIN_PAY, (std / 60) * HOURLY_RATE);
     const dp = it.del_pay || 0;
     const tp = getItemTipPay(it);
-    return { std: std, sp: sp, dp: dp, tp: tp, total: sp + dp + tp, del: !!(it.has_delivery || dp > 0) };
+    return { std: std, sp: sp, dp: dp, tp: tp, total: sp + dp, del: !!(it.has_delivery || dp > 0) };
   }
 
   function dataByDate() {
@@ -38,7 +38,7 @@ function initCalendarAndNavigation() {
     const c = calc(it);
     let h = '<div class="cal-entry">';
     if (idx || it.note) h += '<div class="cal-entry-head">' + (idx ? '<b>ENTRÉE ' + idx + '</b>' : '') + escapeHtml(it.note || '') + '</div>';
-    if (c.std > 0) h += pill('pill-standard', 'Taf : ' + escapeHtml(it.std_start) + ' - ' + escapeHtml(it.std_end) + ' (' + formatHoursMin(c.std) + ') = ' + c.sp.toFixed(2) + '€');
+    if (c.std > 0) h += pill('pill-standard', 'Prestation : ' + escapeHtml(it.std_start) + ' - ' + escapeHtml(it.std_end) + ' (' + formatHoursMin(c.std) + ') = ' + c.sp.toFixed(2) + '€');
     if (it.std_break > 0) h += pill('pill-standard', 'Pause non payée : ' + Number(it.std_break) + ' min');
     if (c.del) {
       const dm = it.del_minutes || 0;

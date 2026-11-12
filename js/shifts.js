@@ -174,13 +174,14 @@ function calculateCurrentForm() {
 
   const tipInputEl = document.getElementById('tip-amount');
   const tipPay = Math.max(0, Number(tipInputEl ? tipInputEl.value : 0) || 0);
-  const tipLabel = tipPay > 0 ? ` | 💰 Pourboire +${tipPay.toFixed(2)}€` : '';
+  const tipLabel = tipPay > 0 ? ` | 💰 Pourboire +${tipPay.toFixed(2)}€ (hors paie)` : '';
 
-  const totalPay = stdPay + delPay + tipPay;
-  const stdLabelText = stdMinutes > 0 ? `${formatHoursMin(stdMinutes)} taf (${stdPay.toFixed(2)}€${rawStdPay < STD_MIN_PAY ? ' min 60€' : ''})` : `0h00 taf`;
+  const totalPay = stdPay + delPay;
+  const previewTotal = totalPay > 0 ? totalPay : tipPay;
+  const stdLabelText = stdMinutes > 0 ? `${formatHoursMin(stdMinutes)} prestation (${stdPay.toFixed(2)}€${rawStdPay < STD_MIN_PAY ? ' min 60€' : ''})` : `0h00 prestation`;
   document.getElementById('live-details').textContent = `${stdLabelText} | ${delLabel}${tipLabel}`;
-  document.getElementById('live-total').textContent = `+ ${totalPay.toFixed(2)} €`;
-  return { stdMinutes, stdPay, hasDelivery, delMinutes, delPay, tipPay, totalPay };
+  document.getElementById('live-total').textContent = `+ ${previewTotal.toFixed(2)} €`;
+  return { stdMinutes, stdPay, hasDelivery, delMinutes, delPay, tipPay, totalPay, previewTotal };
 }
 
 function initFormCalculationListeners() {
@@ -216,7 +217,7 @@ function getPeriodStatsSnapshot(year, monthIndex) {
       }
     }
   });
-  return { stdPay, delPay, tipPay, totalPay: stdPay + delPay + tipPay };
+  return { stdPay, delPay, tipPay, totalPay: stdPay + delPay };
 }
 
 // --- ÉDITION / ANNULATION D'UNE ENTRÉE ---
@@ -438,6 +439,11 @@ async function saveShift(e) {
     initActivePeriodFromDate(parseYMD(savedDateStr));
     cancelEdit();
 
+    // Basculer automatiquement vers le Compteur & Bilan pour voir le compteur s'augmenter en direct
+    if (typeof window.setView === 'function') {
+      window.setView('counter');
+    }
+
     if (!prefersReducedMotion()) {
       holdCounterDisplayValues = oldPeriodStats;
     }
@@ -458,10 +464,12 @@ async function saveShift(e) {
     }
 
     const newPeriodStats = { ...latestRenderedPeriodStats };
-    const totalChanged = Math.abs(newPeriodStats.totalPay - oldPeriodStats.totalPay) > 0.005;
+    const totalChanged = Math.abs(newPeriodStats.totalPay - oldPeriodStats.totalPay) > 0.005 ||
+      Math.abs((newPeriodStats.tipPay || 0) - (oldPeriodStats.tipPay || 0)) > 0.005;
+    const addedGainForBadge = calc.totalPay > 0 ? calc.totalPay : calc.tipPay;
 
     if (!wasEditingId || totalChanged) {
-      await runPostSaveSequence(oldPeriodStats, newPeriodStats, calc.totalPay);
+      await runPostSaveSequence(oldPeriodStats, newPeriodStats, addedGainForBadge);
     } else {
       document.getElementById('month-std-pay').textContent = `${newPeriodStats.stdPay.toFixed(2)} €`;
       document.getElementById('month-del-pay').textContent = `${newPeriodStats.delPay.toFixed(2)} €`;
@@ -475,10 +483,20 @@ async function saveShift(e) {
       if (stdStartVal && stdEndVal) {
         saveRecentPreset(stdStartVal, stdEndVal);
       }
+      if (!prefersReducedMotion()) {
+        holdCounterDisplayValues = oldPeriodStats;
+      }
       recordShiftOffline(payload, wasEditingId);
+      holdCounterDisplayValues = null;
       playSaveSuccessSound();
       initActivePeriodFromDate(parseYMD(savedDateStr));
       cancelEdit();
+      if (typeof window.setView === 'function') {
+        window.setView('counter');
+      }
+      const newPeriodStats = { ...latestRenderedPeriodStats };
+      const addedGainForBadge = calc.totalPay > 0 ? calc.totalPay : calc.tipPay;
+      runPostSaveSequence(oldPeriodStats, newPeriodStats, addedGainForBadge);
       showToast('Mode Hors-Ligne : journée enregistrée sur l\'appareil ! Elle sera synchronisée dès le retour du réseau.', {
         type: 'warn',
         duration: 5500

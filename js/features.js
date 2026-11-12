@@ -722,7 +722,7 @@ function openPrintablePaySheet() {
   <div class="sub">Période du <strong>${formatDateWithDayFR(recap.bounds.startYMD)}</strong> au <strong>${formatDateWithDayFR(recap.bounds.endYMD)}</strong> • ${recap.lines.length} journée(s) travaillée(s)</div>
 
   <div class="summary-grid">
-    <div class="box"><span>Heures Taf (${formatHoursMin(recap.totalStdMin)})</span><strong>${recap.totalStdPay.toFixed(2)} €</strong></div>
+    <div class="box"><span>Heures Prestations (${formatHoursMin(recap.totalStdMin)})</span><strong>${recap.totalStdPay.toFixed(2)} €</strong></div>
     <div class="box"><span>Livraisons (${recap.totalDelCount})</span><strong>${recap.totalDelPay.toFixed(2)} €</strong></div>
     <div class="box"><span>Total Paie Période</span><strong>${recap.employerTotal.toFixed(2)} €</strong></div>
     <div class="box"><span>${recap.advance > 0 ? `Reste à payer (Acompte -${recap.advance.toFixed(0)}€)` : 'Net à percevoir'}</span><strong>${recap.remainingEmployer.toFixed(2)} €</strong></div>
@@ -733,8 +733,8 @@ function openPrintablePaySheet() {
       <tr>
         <th>Date</th>
         <th>Note / Détail</th>
-        <th>Horaires Taf</th>
-        <th style="text-align:right">Gain Taf</th>
+        <th>Horaires Prestation</th>
+        <th style="text-align:right">Gain Prestation</th>
         <th style="text-align:right">Livraison</th>
         <th style="text-align:right">Total Jour</th>
         <th style="text-align:center">Preuve Photo</th>
@@ -903,7 +903,7 @@ function findMissingPayClues(missingAmount, recap) {
     if (Math.abs(r.employerRowTotal - missingAmount) < eps) {
       clues.push(`Correspond pile au total de ta journée du <strong>${escapeHtml(formatDateWithDayFR(r.item.date))} (${r.employerRowTotal.toFixed(2)} €)</strong> !`);
     } else if (r.stdP > 0 && Math.abs(r.stdP - missingAmount) < eps && r.stdP !== STD_MIN_PAY) {
-      clues.push(`Correspond aux heures de taf du <strong>${escapeHtml(formatDateWithDayFR(r.item.date))} (${r.stdP.toFixed(2)} €)</strong>.`);
+      clues.push(`Correspond aux heures de prestation du <strong>${escapeHtml(formatDateWithDayFR(r.item.date))} (${r.stdP.toFixed(2)} €)</strong>.`);
     }
   });
 
@@ -923,11 +923,11 @@ function findMissingPayClues(missingAmount, recap) {
     clues.push(`⚠ Correspond à l'écart du <strong>minimum garanti 60 €</strong> sur tes ${shortShiftsCount} service(s) de moins de 5h (${shortShiftsDiff.toFixed(2)} €) : ton patron a calculé à l'heure réelle au lieu du forfait 60 € min !`);
   }
 
-  // 5. Équivalent en heures de taf à 12€/h
+  // 5. Équivalent en heures de prestation à 12€/h
   const hoursEq = missingAmount / HOURLY_RATE;
   const minsEq = Math.round(hoursEq * 60);
   if (minsEq >= 15 && minsEq % 15 === 0) {
-    clues.push(`Équivalent en temps de travail : <strong>${formatHoursMin(minsEq)} de taf à ${HOURLY_RATE} €/h</strong>.`);
+    clues.push(`Équivalent en temps de travail : <strong>${formatHoursMin(minsEq)} de prestation à ${HOURLY_RATE} €/h</strong>.`);
   }
 
   return clues;

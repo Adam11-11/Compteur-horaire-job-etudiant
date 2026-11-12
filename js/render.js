@@ -100,12 +100,15 @@ function renderApp() {
     const delP = item.del_pay || 0;
     const isDel = item.has_delivery || delP > 0;
     const tipP = getItemTipPay(item);
-    const itemTotal = isLegacy ? Number(item.total_pay || stdP) : (stdP + delP + tipP);
+    // Les pourboires (tipP) ne sont PAS comptés dans la paie du mois ni dans le cumul global
+    const employerPay = isLegacy ? Number(item.total_pay || stdP) : (stdP + delP);
+    const itemTotal = employerPay > 0 ? employerPay : tipP;
+    const hasWork = isLegacy || stdMin > 0 || stdP > 0 || isDel;
     const hasProof = itemHasProof(item);
 
-    allTotalPay += itemTotal;
+    allTotalPay += employerPay;
     if (isLegacy) allLegacyCount++;
-    else if (item.date) allWorkedDatesSet.add(item.date);
+    else if (item.date && hasWork) allWorkedDatesSet.add(item.date);
 
     const pInfo = getPayPeriodForDateStr(item.date);
     const pKey = `${pInfo.year}-${String(pInfo.month + 1).padStart(2, '0')}`;
@@ -113,22 +116,22 @@ function renderApp() {
       periodBuckets.set(pKey, { year: pInfo.year, month: pInfo.month, total: 0, workedDates: new Set(), workedDays: 0, legacyCount: 0 });
     }
     const bucket = periodBuckets.get(pKey);
-    bucket.total += itemTotal;
+    bucket.total += employerPay;
     if (isLegacy) bucket.legacyCount++;
-    else if (item.date) {
+    else if (item.date && hasWork) {
       bucket.workedDates.add(item.date);
       bucket.workedDays = bucket.workedDates.size;
     }
 
     if (item.date >= prevBounds.startYMD && item.date <= prevBounds.endYMD) {
-      prevMonthTotalPay += itemTotal;
+      prevMonthTotalPay += employerPay;
     }
 
     const inPeriod = item.date >= bounds.startYMD && item.date <= bounds.endYMD;
     if (inPeriod) {
       monthStdMin += stdMin;
       if (isLegacy) {
-        monthStdPay += itemTotal;
+        monthStdPay += employerPay;
         monthLegacyCount++;
       } else {
         monthStdPay += stdP;
@@ -138,24 +141,25 @@ function renderApp() {
           monthTipCount++;
           monthTipPay += tipP;
         }
-        if (item.date) monthWorkedDatesSet.add(item.date);
-        if (!hasProof) monthMissingProofs++;
+        if (item.date && hasWork) monthWorkedDatesSet.add(item.date);
+        if (!hasProof && hasWork) monthMissingProofs++;
       }
     }
 
     const matchesFilter =
       logFilterMode === 'all' ||
       (logFilterMode === 'period' && inPeriod) ||
-      (logFilterMode === 'noproof' && !isLegacy && !hasProof);
+      (logFilterMode === 'noproof' && !isLegacy && hasWork && !hasProof);
 
     if (matchesFilter) {
-      displayedShifts.push({ item, inPeriod, computedStdPay: stdP, tipP, isLegacy, hasProof, itemTotal });
+      displayedShifts.push({ item, inPeriod, computedStdPay: stdP, tipP, isLegacy, hasProof, itemTotal, employerPay });
     }
   });
 
   const allWorkedDays = allWorkedDatesSet.size;
   const monthWorkedDays = monthWorkedDatesSet.size;
-  const currentMonthTotalPay = monthStdPay + monthDelPay + monthTipPay;
+  // La paie du mois = Prestations + Livraisons uniquement (hors pourboires)
+  const currentMonthTotalPay = monthStdPay + monthDelPay;
   latestRenderedPeriodStats = {
     stdPay: monthStdPay,
     delPay: monthDelPay,
@@ -208,8 +212,8 @@ function renderApp() {
       }
       const g = groupMap.get(wInfo.key);
       g.entries.push(entry);
-      g.subtotal += entry.itemTotal;
-      if (!entry.isLegacy) g.workedCount++;
+      g.subtotal += entry.employerPay !== undefined ? entry.employerPay : entry.itemTotal;
+      if (!entry.isLegacy && (entry.employerPay || 0) > 0) g.workedCount++;
     });
 
     let cascadeIndex = 0;

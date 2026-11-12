@@ -829,8 +829,11 @@ function parseVoiceTranscriptLocally(text, todayYMD) {
   });
 }
 
-// --- APPLICATION AUTOMATIQUE DANS LA BONNE SECTION & SAUVEGARDE ---
+// --- APPLICATION AUTOMATIQUE, MODALE DE CONFIRMATION & SAUVEGARDE ---
+let lastAiTargetView = 'prestations';
+
 async function saveAllAiDetectedEntries() {
+  closeAiConfirmModal(false);
   const extras = [...pendingExtraAiEntries];
   pendingExtraAiEntries = [];
   await saveShift(null);
@@ -857,7 +860,8 @@ async function saveAllAiDetectedEntries() {
         ? Math.max(DELIVERY_DEFAULT_PAY, (delMinutes / 60) * HOURLY_RATE)
         : 0;
       const tipPay = Number(extra.tip_pay) || 0;
-      const totalPay = stdPay + delPay + tipPay;
+      // Les pourboires ne sont pas comptés dans total_pay (paie du mois)
+      const totalPay = stdPay + delPay;
 
       await supabaseClient.from('shifts').insert([{
         date: extra.date,
@@ -871,12 +875,185 @@ async function saveAllAiDetectedEntries() {
         del_minutes: delMinutes,
         del_pay: Number(delPay.toFixed(2)),
         total_pay: Number(totalPay.toFixed(2)),
+        proof_url: tipPay > 0 ? `tip:${tipPay.toFixed(2)}` : null,
         is_legacy: false
       }]);
     }
     await fetchShifts();
     showToast(`${extras.length + 1} lignes ADAM enregistrées avec succès !`, { type: 'success' });
   }
+}
+
+async function confirmAiModalAndSave() {
+  const saveBtn = document.getElementById('ai-confirm-save-btn');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = '⏳ AJOUT EN COURS...';
+  }
+  try {
+    await saveAllAiDetectedEntries();
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = '✅ CONFIRMER & AJOUTER';
+    }
+  }
+}
+
+function editAiModalInForm() {
+  closeAiConfirmModal(false);
+  if (typeof playClickSound === 'function') playClickSound();
+  if (typeof window.setView === 'function') {
+    window.setView(lastAiTargetView || 'prestations', true);
+  }
+  const titleEl = document.getElementById('form-section-title');
+  if (titleEl) {
+    const titleMap = {
+      prestations: 'VÉRIFIER / MODIFIER LA PRESTATION',
+      livraisons: 'VÉRIFIER / MODIFIER LA LIVRAISON',
+      pourboires: 'VÉRIFIER / MODIFIER LE POURBOIRE'
+    };
+    titleEl.textContent = titleMap[lastAiTargetView] || 'VÉRIFIER LA SAISIE IA';
+  }
+  if (typeof scrollToForm === 'function') {
+    setTimeout(() => scrollToForm(), 80);
+  }
+}
+
+function closeAiConfirmModal(resetForm = false) {
+  const modal = document.getElementById('ai-confirm-modal');
+  if (modal) modal.style.display = 'none';
+  if (resetForm) {
+    pendingExtraAiEntries = [];
+    if (typeof cancelEdit === 'function') cancelEdit();
+  }
+}
+
+function openAiConfirmModal(data, calc, sourceType) {
+  const modal = document.getElementById('ai-confirm-modal');
+  const badgeEl = document.getElementById('ai-confirm-source-badge');
+  const bodyEl = document.getElementById('ai-confirm-body');
+  const saveBtn = document.getElementById('ai-confirm-save-btn');
+  if (!modal || !bodyEl) return;
+
+  if (badgeEl) {
+    badgeEl.textContent = sourceType === 'photo'
+      ? '📸 SCAN FEUILLE (LIGNE ADAM)'
+      : '🎙️ DICTÉE VOCALE IA';
+  }
+
+  let catBadgeHtml = `<span class="ai-cat-pill cat-prest">🍳 PRESTATION</span>`;
+  if (data.category === 'livraisons') {
+    catBadgeHtml = `<span class="ai-cat-pill cat-del">🚚 LIVRAISON</span>`;
+  } else if (data.category === 'pourboires') {
+    catBadgeHtml = `<span class="ai-cat-pill cat-tip">💰 POURBOIRE (HORS PAIE)</span>`;
+  }
+
+  const rowsHtml = [];
+  rowsHtml.push(`
+    <div class="ai-confirm-row">
+      <span class="ai-confirm-label">TYPE DÉTECTÉ</span>
+      <span class="ai-confirm-val">${catBadgeHtml}</span>
+    </div>
+  `);
+
+  if (data.date) {
+    rowsHtml.push(`
+      <div class="ai-confirm-row">
+        <span class="ai-confirm-label">DATE</span>
+        <strong class="ai-confirm-val">${escapeHtml(formatDateWithDayFR(data.date))}</strong>
+      </div>
+    `);
+  }
+
+  if (data.category === 'prestations' && data.std_start && data.std_end) {
+    const durStr = calc.stdMinutes > 0 ? ` (${formatHoursMin(calc.stdMinutes)})` : '';
+    rowsHtml.push(`
+      <div class="ai-confirm-row">
+        <span class="ai-confirm-label">HORAIRES PRESTATION</span>
+        <strong class="ai-confirm-val">${escapeHtml(data.std_start)} ➔ ${escapeHtml(data.std_end)}${durStr}</strong>
+      </div>
+    `);
+    if (Number(data.std_break) > 0) {
+      rowsHtml.push(`
+        <div class="ai-confirm-row">
+          <span class="ai-confirm-label">PAUSE</span>
+          <span class="ai-confirm-val">${Number(data.std_break)} min</span>
+        </div>
+      `);
+    }
+  }
+
+  if (data.has_delivery) {
+    let delDetail = 'Forfait 30.00 €';
+    if (data.del_start && data.del_end) {
+      const dm = calc.delMinutes > 0 ? ` (${formatHoursMin(calc.delMinutes)})` : '';
+      delDetail = `${escapeHtml(data.del_start)} ➔ ${escapeHtml(data.del_end)}${dm}`;
+    } else if (calc.delMinutes > 0) {
+      delDetail = `Durée : ${formatHoursMin(calc.delMinutes)}${calc.delMinutes > 150 ? ' (> 2h30 à 12€/h)' : ''}`;
+    }
+    rowsHtml.push(`
+      <div class="ai-confirm-row">
+        <span class="ai-confirm-label">DÉTAIL LIVRAISON</span>
+        <strong class="ai-confirm-val">${delDetail}</strong>
+      </div>
+    `);
+  }
+
+  if (Number(data.tip_pay) > 0) {
+    rowsHtml.push(`
+      <div class="ai-confirm-row">
+        <span class="ai-confirm-label">POURBOIRE</span>
+        <strong class="ai-confirm-val" style="color: var(--green-soft);">+${Number(data.tip_pay).toFixed(2)} € (non compté dans la paie)</strong>
+      </div>
+    `);
+  }
+
+  if (data.note) {
+    rowsHtml.push(`
+      <div class="ai-confirm-row">
+        <span class="ai-confirm-label">LIEU / NOTE</span>
+        <span class="ai-confirm-val">${escapeHtml(data.note)}</span>
+      </div>
+    `);
+  }
+
+  if (sourceType === 'photo') {
+    rowsHtml.push(`
+      <div class="ai-confirm-row">
+        <span class="ai-confirm-label">PREUVE PHOTO</span>
+        <span class="ai-confirm-val" style="color: var(--green-soft);">📷 Photo jointe automatiquement ✓</span>
+      </div>
+    `);
+  }
+
+  const displayAmount = calc.totalPay > 0 ? calc.totalPay : (calc.tipPay || 0);
+  const amountLabel = calc.totalPay > 0 ? 'MONTANT AJOUTÉ À LA PAIE' : 'MONTANT DU POURBOIRE';
+
+  const extraCount = pendingExtraAiEntries.length;
+  const extraHtml = extraCount > 0
+    ? `<div class="ai-confirm-extra-note">+ ${extraCount} autre(s) ligne(s) ADAM détectée(s) sur cette même feuille !</div>`
+    : '';
+
+  bodyEl.innerHTML = `
+    <div class="ai-confirm-summary-list">
+      ${rowsHtml.join('')}
+    </div>
+    <div class="ai-confirm-total-box">
+      <span>${amountLabel}</span>
+      <strong>+${displayAmount.toFixed(2)} €</strong>
+    </div>
+    ${extraHtml}
+  `;
+
+  if (saveBtn) {
+    saveBtn.disabled = false;
+    saveBtn.textContent = extraCount > 0
+      ? `✅ CONFIRMER LES ${extraCount + 1} LIGNES`
+      : `✅ CONFIRMER & AJOUTER`;
+  }
+
+  modal.style.display = 'flex';
 }
 
 function applyAiExtractedShift(rawData, sourceType) {
@@ -904,17 +1081,12 @@ function applyAiExtractedShift(rawData, sourceType) {
   // Appliquer le garde-fou métier (une livraison ne doit JAMAIS remplir std_start/std_end)
   data = normalizeAiEntry(data);
 
-  // Déterminer automatiquement la bonne section vers laquelle basculer
-  let targetView = 'prestations';
+  // Déterminer la bonne section cible si l'utilisateur clique sur "MODIFIER"
+  lastAiTargetView = 'prestations';
   if (data.category === 'livraisons') {
-    targetView = 'livraisons';
+    lastAiTargetView = 'livraisons';
   } else if (data.category === 'pourboires') {
-    targetView = 'pourboires';
-  }
-
-  // Basculer automatiquement sur la bonne section (même si on était sur la page d'accueil Compteur & Bilan !)
-  if (typeof setView === 'function') {
-    setView(targetView);
+    lastAiTargetView = 'pourboires';
   }
 
   // Réinitialiser proprement tous les champs du formulaire avant remplissage pour éviter tout cumul fantôme
@@ -934,6 +1106,7 @@ function applyAiExtractedShift(rawData, sourceType) {
   if (delEndEl) delEndEl.value = '';
   if (delMinEl) delMinEl.value = '';
   if (tipEl) tipEl.value = '';
+  if (noteEl) noteEl.value = '';
 
   if (data.date && /^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
     const dateEl = document.getElementById('shift-date');
@@ -969,65 +1142,16 @@ function applyAiExtractedShift(rawData, sourceType) {
     noteEl.value = data.note;
   }
 
-  const calc = typeof calculateCurrentForm === 'function' ? calculateCurrentForm() : { totalPay: 0 };
+  const calc = typeof calculateCurrentForm === 'function' ? calculateCurrentForm() : { totalPay: 0, stdMinutes: 0, delMinutes: 0, tipPay: 0 };
   if (typeof checkFormDuplicateDate === 'function') checkFormDuplicateDate();
   if (typeof playSaveSuccessSound === 'function') playSaveSuccessSound();
 
-  // Faire défiler doucement vers le formulaire rempli
-  if (typeof scrollToForm === 'function') {
-    scrollToForm();
-  }
-
-  const detailsParts = [];
-  if (data.date) detailsParts.push(`📅 ${formatDateFR(data.date)}`);
-  if (data.std_start && data.std_end) detailsParts.push(`⏱ ${data.std_start} - ${data.std_end}`);
-  if (data.has_delivery) {
-    if (data.del_start && data.del_end) {
-      detailsParts.push(`🚚 Livraison ${data.del_start} - ${data.del_end}`);
-    } else if (Number(data.del_minutes) > 0 && typeof formatHoursMin === 'function') {
-      detailsParts.push(`🚚 Livraison (${formatHoursMin(Number(data.del_minutes))})`);
-    } else {
-      detailsParts.push(`🚚 Livraison`);
-    }
-  }
-  if (data.tip_pay > 0) detailsParts.push(`💰 +${Number(data.tip_pay).toFixed(2)}€`);
-  if (data.note) detailsParts.push(`📝 ${escapeHtml(data.note)}`);
-
-  const extraCount = pendingExtraAiEntries.length;
-  const extraText = extraCount > 0
-    ? `<div style="margin-top:4px; color: var(--gold-soft);">+ ${extraCount} autre(s) ligne(s) ADAM détectée(s) sur cette feuille !</div>`
-    : '';
-  const saveBtnLabel = extraCount > 0
-    ? `⚡ ENREGISTRER LES ${extraCount + 1} LIGNES`
-    : `⚡ SAUVEGARDER DIRECT`;
-
   if (statusBanner) {
-    statusBanner.className = 'ai-result-banner success';
-    statusBanner.style.display = 'block';
-    statusBanner.innerHTML = `
-      <div class="ai-banner-row">
-        <div>
-          <strong>✅ ${sourceType === 'photo' ? 'FEUILLE LUE (LIGNE ADAM) + PHOTO JOINTE' : 'DICTÉE COMPRISE'} :</strong>
-          <div style="margin-top:4px;">${detailsParts.join(' • ') || escapeHtml(data.summary || 'Champs remplis')} — <strong>+${calc.totalPay.toFixed(2)} €</strong></div>
-          ${extraText}
-        </div>
-        <button type="button" class="pixel-btn btn-gold ai-quick-save-btn" onclick="saveAllAiDetectedEntries()">
-          ${saveBtnLabel}
-        </button>
-      </div>
-    `;
+    statusBanner.style.display = 'none';
   }
 
-  const toastDesc = data.std_start && data.std_end
-    ? `${data.std_start} - ${data.std_end}`
-    : (data.has_delivery ? 'Livraison prête' : 'Champs remplis');
-
-  showToast(`IA : ${toastDesc} (+${calc.totalPay.toFixed(2)} €)`, {
-    type: 'success',
-    duration: 5500,
-    actionText: 'SAUVEGARDER',
-    onAction: () => saveAllAiDetectedEntries()
-  });
+  // Ouvrir la fenêtre modale de confirmation ("Ce que l'IA a compris" -> Confirmer ou Modifier)
+  openAiConfirmModal(data, calc, sourceType);
 }
 
 function initAiAssistant() {
