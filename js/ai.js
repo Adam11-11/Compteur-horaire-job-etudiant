@@ -441,18 +441,25 @@ Sur la photo du tableau :
    - La colonne juste à droite de "RDV" contient l'heure de fin écrite à la main au stylo (ex: "23h40" -> "23:40").
    - La colonne de gauche tout au début indique le véhicule (ex: "P. TRAFIC", "K. LONG", "TB 1").
    - La colonne "PRESTATIONS" indique la ville et le détail (ex: "VILLIERS EN BIERE 60 P. (SP 21h00)").
-   - Si la prestation indique uniquement une livraison pure ("LIV 1", "LIV 2" sans service sur place "SP" ni "LIV + SERV") et qu'il s'agit d'une livraison, indique "category": "livraisons" et "has_delivery": true ; sinon indique "category": "prestations".
+   - ATTENTION RÈGLE MÉTIER CRUCIALE (NE PAS CUMULER PRESTATION 60€ ET LIVRAISON) :
+     * Cas A — C'est une LIVRAISON PURE (la colonne PRESTATIONS indique "LIV 1", "LIV 2", "LIV" SANS "SP" ni "SERV") :
+       Alors "category": "livraisons", "has_delivery": true, mets les horaires dans "del_start" et "del_end", et laisse OBLIGATOIREMENT "std_start": "" et "std_end": "" vides (sinon l'application ajoute 60€ de prestation par erreur !).
+     * Cas B — C'est une PRESTATION (service sur place "SP", ou "LIV + SERV") :
+       Alors "category": "prestations", "has_delivery": false, mets les horaires dans "std_start" et "std_end", et laisse "del_start": "" et "del_end": "" vides.
 4. Réponds UNIQUEMENT avec un objet JSON strict de la forme :
 {
   "found": true,
   "date": "YYYY-MM-DD",
   "entries": [
     {
-      "category": "prestations",
-      "std_start": "HH:MM",
-      "std_end": "HH:MM",
+      "category": "prestations | livraisons",
+      "std_start": "HH:MM ou vide si livraison",
+      "std_end": "HH:MM ou vide si livraison",
       "std_break": 0,
       "has_delivery": false,
+      "del_start": "HH:MM si livraison sinon vide",
+      "del_end": "HH:MM si livraison sinon vide",
+      "del_minutes": 0,
       "tip_pay": 0,
       "note": "Ville + nombre de parts + véhicule (ex: Villiers-en-Bière 60P - P. Trafic)"
     }
@@ -643,19 +650,99 @@ async function processVoiceTranscript(transcript) {
 function buildVoiceSystemPrompt(todayYMD) {
   return `Tu es un assistant de pointage intelligent pour un job étudiant (traiteur Paella).
 Date d'aujourd'hui : ${todayYMD}.
-À partir de ce que dit l'utilisateur, détermine la catégorie principale ("prestations", "livraisons", ou "pourboires") et extrais un objet JSON strict :
+
+RÈGLES MÉTIER ABSOLUES (À RESPECTER STRICTEMENT POUR ÉVITER TOUTE ERREUR DE PAIE) :
+L'application possède 3 catégories distinctes qui ne doivent PAS être mélangées par erreur :
+
+1. CATÉGORIE "livraisons" (LIVRAISON) :
+   - Si l'utilisateur dit qu'il a fait une LIVRAISON (ex: "j'ai fait une livraison", "livraison de 11h à 13h50", "livraison de 2h50", "livraison à 34 euros") :
+   - Tu DOIS mettre : "category": "livraisons" et "has_delivery": true.
+   - INTERDICTION ABSOLUE de remplir "std_start" ou "std_end" pour une livraison ! "std_start" et "std_end" DOIVENT rester vides ("") sinon l'application ajoute un minimum de 60€ de prestation par-dessus la livraison !
+   - Si l'utilisateur donne les heures de début et de fin de sa livraison, mets-les UNIQUEMENT dans "del_start" ("HH:MM") et "del_end" ("HH:MM").
+   - Si l'utilisateur donne la durée de la livraison (ex: "2h50" ou "170 minutes"), convertis-la en minutes dans "del_minutes" (ex: 170).
+   - Si l'utilisateur donne directement le montant en euros d'une livraison longue > 30€ (ex: "livraison à 34 euros"), calcule les minutes à 12€/h : "del_minutes" = Math.round((montant / 12) * 60) (ex: 34€ -> 170 minutes) et mets "del_pay": 34. Si c'est une livraison normale sans durée précisée, mets "del_minutes": 0 (forfait 30€).
+
+2. CATÉGORIE "prestations" (PRESTATION / SERVICE / TAF) :
+   - Si l'utilisateur parle de ses heures de travail / prestation / service (sans dire que c'est une livraison) :
+   - Mets "category": "prestations", "std_start": "HH:MM", "std_end": "HH:MM", et "has_delivery": false (sauf s'il précise explicitement avoir fait UNE prestation ET UNE livraison séparée).
+
+3. CATÉGORIE "pourboires" (POURBOIRE / TIP SEUL) :
+   - Si l'utilisateur mentionne uniquement un pourboire (ex: "20 euros de pourboire") :
+   - Mets "category": "pourboires", "tip_pay": 20, "std_start": "", "std_end": "", "has_delivery": false.
+
+Réponds UNIQUEMENT avec un objet JSON strict :
 {
   "category": "prestations | livraisons | pourboires",
   "date": "YYYY-MM-DD",
-  "std_start": "HH:MM ou vide",
-  "std_end": "HH:MM ou vide",
+  "std_start": "HH:MM uniquement si prestation, VIDE si livraison",
+  "std_end": "HH:MM uniquement si prestation, VIDE si livraison",
   "std_break": 0,
   "has_delivery": false,
+  "del_start": "HH:MM si livraison avec horaires, sinon vide",
+  "del_end": "HH:MM si livraison avec horaires, sinon vide",
   "del_minutes": 0,
+  "del_pay": 0,
   "tip_pay": 0,
-  "note": "Note ou lieu éventuel",
+  "note": "Note ou ville éventuelle",
   "summary": "Résumé court de ce qui a été compris"
 }`;
+}
+
+// Garde-fou déterministe : empêche à 100% que les horaires d'une livraison aillent dans std_start/std_end (et déclenchent le min 60€)
+function normalizeAiEntry(raw) {
+  const item = { ...(raw || {}) };
+  const summaryAndNote = `${item.summary || ''} ${item.note || ''}`.toLowerCase();
+
+  let cat = String(item.category || '').toLowerCase().trim();
+  const mentionsDeliveryOnly =
+    cat === 'livraisons' ||
+    cat === 'livraison' ||
+    (Boolean(item.has_delivery) && !/\b(prestation|service\s+sur\s+place)\b/i.test(summaryAndNote));
+
+  if (mentionsDeliveryOnly) {
+    item.category = 'livraisons';
+    item.has_delivery = true;
+
+    // Si l'IA a mis les horaires de la livraison dans std_start / std_end par erreur, on les déplace dans del_start / del_end !
+    if (!item.del_start && !item.del_end && item.std_start && item.std_end) {
+      item.del_start = item.std_start;
+      item.del_end = item.std_end;
+    }
+
+    // On vide OBLIGATOIREMENT std_start et std_end pour ne JAMAIS déclencher les 60€ minimum de prestation
+    item.std_start = '';
+    item.std_end = '';
+    item.std_break = 0;
+
+    // Calcul de del_minutes si del_start et del_end sont fournis
+    if (item.del_start && item.del_end && typeof getMinutesBetween === 'function') {
+      const rangeMin = getMinutesBetween(item.del_start, item.del_end);
+      if (rangeMin > 0) {
+        item.del_minutes = rangeMin;
+      }
+    }
+
+    // Si un montant en euros > 30€ a été dicté (ex: 34€) sans durée en minutes ni horaires, on déduit les minutes (12€/h)
+    const explicitDelPay = Number(item.del_pay) || 0;
+    if ((!item.del_minutes || item.del_minutes <= 0) && explicitDelPay > 30) {
+      item.del_minutes = Math.round((explicitDelPay / (typeof HOURLY_RATE === 'number' ? HOURLY_RATE : 12)) * 60);
+    }
+  } else if (cat === 'pourboires' || cat === 'pourboire' || (!item.std_start && !item.has_delivery && Number(item.tip_pay) > 0)) {
+    item.category = 'pourboires';
+    item.std_start = '';
+    item.std_end = '';
+    item.std_break = 0;
+    item.has_delivery = false;
+    item.del_start = '';
+    item.del_end = '';
+    item.del_minutes = 0;
+  } else {
+    item.category = 'prestations';
+    item.del_start = item.del_start || '';
+    item.del_end = item.del_end || '';
+  }
+
+  return item;
 }
 
 function parseVoiceTranscriptLocally(text, todayYMD) {
@@ -667,16 +754,47 @@ function parseVoiceTranscriptLocally(text, todayYMD) {
     dateStr = toYMD(d);
   }
 
+  const has_delivery = /\blivraisons?\b/.test(lower);
+  const mentionsPrestation = /\b(prestations?|services?)\b/.test(lower);
+  const isDeliveryOnly = has_delivery && !mentionsPrestation;
+
   const timeMatches = [...lower.matchAll(/(\d{1,2})\s*(?:h|:)\s*(\d{0,2})/g)];
-  let std_start = '';
-  let std_end = '';
+  let firstTime = '';
+  let secondTime = '';
   if (timeMatches.length >= 2) {
     const h1 = String(Math.min(23, Number(timeMatches[0][1]))).padStart(2, '0');
     const m1 = String(Math.min(59, Number(timeMatches[0][2] || 0))).padStart(2, '0');
     const h2 = String(Math.min(23, Number(timeMatches[1][1]))).padStart(2, '0');
     const m2 = String(Math.min(59, Number(timeMatches[1][2] || 0))).padStart(2, '0');
-    std_start = `${h1}:${m1}`;
-    std_end = `${h2}:${m2}`;
+    firstTime = `${h1}:${m1}`;
+    secondTime = `${h2}:${m2}`;
+  }
+
+  let std_start = '';
+  let std_end = '';
+  let del_start = '';
+  let del_end = '';
+  let del_minutes = 0;
+
+  if (isDeliveryOnly) {
+    del_start = firstTime;
+    del_end = secondTime;
+    // Si une seule durée est dite (ex: "livraison de 2h50")
+    if (timeMatches.length === 1) {
+      const durH = Number(timeMatches[0][1]) || 0;
+      const durM = Number(timeMatches[0][2]) || 0;
+      del_minutes = durH * 60 + durM;
+    }
+    const euroMatch = lower.match(/(\d+(?:[.,]\d+)?)\s*(?:€|euros?|balles?)/);
+    if (!del_start && !del_minutes && euroMatch && !/\b(pourboire|tip)\b/.test(lower)) {
+      const val = parseFloat(String(euroMatch[1]).replace(',', '.')) || 0;
+      if (val > 30) {
+        del_minutes = Math.round((val / 12) * 60);
+      }
+    }
+  } else {
+    std_start = firstTime;
+    std_end = secondTime;
   }
 
   let std_break = 0;
@@ -685,7 +803,6 @@ function parseVoiceTranscriptLocally(text, todayYMD) {
     std_break = Number(pauseMatch[1] || pauseMatch[2] || 0);
   }
 
-  const has_delivery = /\blivraisons?\b/.test(lower);
   let tip_pay = 0;
   const tipMatch = lower.match(/(\d+(?:[.,]\d+)?)\s*(?:€|euros?|balles?)\s*(?:de\s*)?(?:pourboire|tip)|(?:pourboire|tip)\s*(?:de\s*)?(\d+(?:[.,]\d+)?)/);
   if (tipMatch) {
@@ -693,20 +810,23 @@ function parseVoiceTranscriptLocally(text, todayYMD) {
   }
 
   let category = 'prestations';
-  if (!std_start && has_delivery) category = 'livraisons';
+  if (isDeliveryOnly) category = 'livraisons';
   else if (!std_start && !has_delivery && tip_pay > 0) category = 'pourboires';
 
-  return {
+  return normalizeAiEntry({
     category,
     date: dateStr,
     std_start,
     std_end,
     std_break,
     has_delivery,
+    del_start,
+    del_end,
+    del_minutes,
     tip_pay,
     note: '',
     summary: text
-  };
+  });
 }
 
 // --- APPLICATION AUTOMATIQUE DANS LA BONNE SECTION & SAUVEGARDE ---
@@ -716,7 +836,8 @@ async function saveAllAiDetectedEntries() {
   await saveShift(null);
 
   if (extras.length > 0 && navigator.onLine && typeof supabaseClient !== 'undefined') {
-    for (const extra of extras) {
+    for (const rawExtra of extras) {
+      const extra = normalizeAiEntry(rawExtra);
       const startMin = extra.std_start ? parseTimeMinutes(extra.std_start) : null;
       const endMin = extra.std_end ? parseTimeMinutes(extra.std_end) : null;
       let stdMinutes = 0;
@@ -726,7 +847,15 @@ async function saveAllAiDetectedEntries() {
         stdMinutes = Math.max(0, diff - (Number(extra.std_break) || 0));
       }
       const stdPay = stdMinutes > 0 ? Math.max(STD_MIN_PAY, (stdMinutes / 60) * HOURLY_RATE) : 0;
-      const delPay = extra.has_delivery ? DELIVERY_DEFAULT_PAY : 0;
+
+      let delMinutes = Number(extra.del_minutes) || 0;
+      if (extra.del_start && extra.del_end && typeof getMinutesBetween === 'function') {
+        const dm = getMinutesBetween(extra.del_start, extra.del_end);
+        if (dm > 0) delMinutes = dm;
+      }
+      const delPay = extra.has_delivery
+        ? Math.max(DELIVERY_DEFAULT_PAY, (delMinutes / 60) * HOURLY_RATE)
+        : 0;
       const tipPay = Number(extra.tip_pay) || 0;
       const totalPay = stdPay + delPay + tipPay;
 
@@ -739,9 +868,7 @@ async function saveAllAiDetectedEntries() {
         std_minutes: stdMinutes,
         std_pay: Number(stdPay.toFixed(2)),
         has_delivery: Boolean(extra.has_delivery),
-        del_start: '',
-        del_end: '',
-        del_minutes: 0,
+        del_minutes: delMinutes,
         del_pay: Number(delPay.toFixed(2)),
         total_pay: Number(totalPay.toFixed(2)),
         is_legacy: false
@@ -767,18 +894,21 @@ function applyAiExtractedShift(rawData, sourceType) {
       date: rawData.date || first.date
     };
     if (rawData.entries.length > 1) {
-      pendingExtraAiEntries = rawData.entries.slice(1).map(e => ({
+      pendingExtraAiEntries = rawData.entries.slice(1).map(e => normalizeAiEntry({
         ...e,
         date: rawData.date || e.date || toYMD(new Date())
       }));
     }
   }
 
+  // Appliquer le garde-fou métier (une livraison ne doit JAMAIS remplir std_start/std_end)
+  data = normalizeAiEntry(data);
+
   // Déterminer automatiquement la bonne section vers laquelle basculer
   let targetView = 'prestations';
-  if (data.category === 'livraisons' || (!data.std_start && data.has_delivery)) {
+  if (data.category === 'livraisons') {
     targetView = 'livraisons';
-  } else if (data.category === 'pourboires' || (!data.std_start && !data.has_delivery && Number(data.tip_pay) > 0)) {
+  } else if (data.category === 'pourboires') {
     targetView = 'pourboires';
   }
 
@@ -787,40 +917,56 @@ function applyAiExtractedShift(rawData, sourceType) {
     setView(targetView);
   }
 
+  // Réinitialiser proprement tous les champs du formulaire avant remplissage pour éviter tout cumul fantôme
+  const startEl = document.getElementById('std-start');
+  const endEl = document.getElementById('std-end');
+  const breakEl = document.getElementById('std-break');
+  const delStartEl = document.getElementById('del-start');
+  const delEndEl = document.getElementById('del-end');
+  const delMinEl = document.getElementById('del-duration-min');
+  const tipEl = document.getElementById('tip-amount');
+  const noteEl = document.getElementById('shift-note');
+
+  if (startEl) startEl.value = '';
+  if (endEl) endEl.value = '';
+  if (breakEl) breakEl.value = '0';
+  if (delStartEl) delStartEl.value = '';
+  if (delEndEl) delEndEl.value = '';
+  if (delMinEl) delMinEl.value = '';
+  if (tipEl) tipEl.value = '';
+
   if (data.date && /^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
     const dateEl = document.getElementById('shift-date');
     if (dateEl) dateEl.value = data.date;
   }
 
-  if (data.std_start) {
-    const startEl = document.getElementById('std-start');
-    if (startEl) startEl.value = data.std_start;
-  }
-  if (data.std_end) {
-    const endEl = document.getElementById('std-end');
-    if (endEl) endEl.value = data.std_end;
-  }
-  if (typeof data.std_break === 'number' && data.std_break >= 0) {
-    const breakEl = document.getElementById('std-break');
-    if (breakEl) breakEl.value = String(data.std_break);
-  }
-
-  if (typeof data.has_delivery === 'boolean' && typeof setDeliveryState === 'function') {
-    setDeliveryState(data.has_delivery);
-    if (data.has_delivery && data.del_minutes > 0) {
-      const delMinEl = document.getElementById('del-duration-min');
-      if (delMinEl) delMinEl.value = String(data.del_minutes);
+  // Remplir les horaires de prestation UNIQUEMENT si ce n'est pas une livraison pure
+  if (data.category === 'prestations') {
+    if (data.std_start && startEl) startEl.value = data.std_start;
+    if (data.std_end && endEl) endEl.value = data.std_end;
+    if (typeof data.std_break === 'number' && data.std_break >= 0 && breakEl) {
+      breakEl.value = String(data.std_break);
     }
   }
 
-  if (typeof data.tip_pay === 'number' && data.tip_pay > 0) {
-    const tipEl = document.getElementById('tip-amount');
-    if (tipEl) tipEl.value = data.tip_pay.toFixed(2);
+  // Remplir la livraison et ses horaires/durée propres (sans toucher à std-start/std-end)
+  if (typeof setDeliveryState === 'function') {
+    setDeliveryState(Boolean(data.has_delivery));
+    if (data.has_delivery) {
+      if (data.del_start && delStartEl) delStartEl.value = data.del_start;
+      if (data.del_end && delEndEl) delEndEl.value = data.del_end;
+      if (Number(data.del_minutes) > 0 && delMinEl) {
+        delMinEl.value = String(Math.round(Number(data.del_minutes)));
+      }
+    }
   }
 
-  if (data.note) {
-    const noteEl = document.getElementById('shift-note');
-    if (noteEl) noteEl.value = data.note;
+  if (typeof data.tip_pay === 'number' && data.tip_pay > 0 && tipEl) {
+    tipEl.value = data.tip_pay.toFixed(2);
+  }
+
+  if (data.note && noteEl) {
+    noteEl.value = data.note;
   }
 
   const calc = typeof calculateCurrentForm === 'function' ? calculateCurrentForm() : { totalPay: 0 };
@@ -835,7 +981,15 @@ function applyAiExtractedShift(rawData, sourceType) {
   const detailsParts = [];
   if (data.date) detailsParts.push(`📅 ${formatDateFR(data.date)}`);
   if (data.std_start && data.std_end) detailsParts.push(`⏱ ${data.std_start} - ${data.std_end}`);
-  if (data.has_delivery) detailsParts.push(`🚚 Livraison`);
+  if (data.has_delivery) {
+    if (data.del_start && data.del_end) {
+      detailsParts.push(`🚚 Livraison ${data.del_start} - ${data.del_end}`);
+    } else if (Number(data.del_minutes) > 0 && typeof formatHoursMin === 'function') {
+      detailsParts.push(`🚚 Livraison (${formatHoursMin(Number(data.del_minutes))})`);
+    } else {
+      detailsParts.push(`🚚 Livraison`);
+    }
+  }
   if (data.tip_pay > 0) detailsParts.push(`💰 +${Number(data.tip_pay).toFixed(2)}€`);
   if (data.note) detailsParts.push(`📝 ${escapeHtml(data.note)}`);
 
@@ -864,7 +1018,11 @@ function applyAiExtractedShift(rawData, sourceType) {
     `;
   }
 
-  showToast(`IA : ${data.std_start && data.std_end ? `${data.std_start} - ${data.std_end}` : 'Champs remplis'} (+${calc.totalPay.toFixed(2)} €)`, {
+  const toastDesc = data.std_start && data.std_end
+    ? `${data.std_start} - ${data.std_end}`
+    : (data.has_delivery ? 'Livraison prête' : 'Champs remplis');
+
+  showToast(`IA : ${toastDesc} (+${calc.totalPay.toFixed(2)} €)`, {
     type: 'success',
     duration: 5500,
     actionText: 'SAUVEGARDER',
