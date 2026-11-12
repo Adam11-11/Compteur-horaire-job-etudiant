@@ -43,7 +43,7 @@ function updateFormPhotoUI() {
   }
 }
 
-function setFormPhotoFile(file) {
+function setFormPhotoFile(file, skipAiAutoScan = false) {
   if (!file) return;
   if (!/^image\//i.test(file.type) && !/\.(jpe?g|png|webp|gif|bmp|heic|heif|avif)$/i.test(file.name || '')) {
     showToast('Fichier non pris en charge : choisis une image.', { type: 'error' });
@@ -59,6 +59,15 @@ function setFormPhotoFile(file) {
   removeExistingFormPhoto = false;
   playToggleSound(true);
   updateFormPhotoUI();
+
+  // D'une pierre deux coups : si une clé IA est configurée et que les heures sont vides, lire automatiquement la feuille
+  if (!skipAiAutoScan && typeof getGeminiApiKey === 'function' && getGeminiApiKey()) {
+    const startVal = document.getElementById('std-start')?.value;
+    const endVal = document.getElementById('std-end')?.value;
+    if (!startVal && !endVal && typeof analyzeSheetPhotoWithAI === 'function') {
+      analyzeSheetPhotoWithAI(file);
+    }
+  }
 }
 
 function clearFormPhoto(silent = false) {

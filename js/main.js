@@ -7,6 +7,7 @@ function bootMainApp() {
   initCalendarAndNavigation();
   initPhotoViewer();
   initNewFeatures();
+  if (typeof initAiAssistant === 'function') initAiAssistant();
 
   document.getElementById('shift-date').value = toYMD(new Date());
   initLegacyYearSelect();

@@ -326,6 +326,8 @@ function cancelEdit() {
   existingFormProofPath = null;
   removeExistingFormPhoto = false;
   clearFormPhoto(true);
+  const aiBanner = document.getElementById('ai-scan-result-banner');
+  if (aiBanner) aiBanner.style.display = 'none';
   if (typeof syncFormForCategoryView === 'function') {
     syncFormForCategoryView(document.body.getAttribute('data-view') || 'prestations');
   } else {
