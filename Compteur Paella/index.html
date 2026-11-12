@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#18171c" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PaellaPay" />
+  <title>Compteur Paella</title>
+
+  <!-- Icônes & Manifest PWA -->
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg" />
+  <link rel="apple-touch-icon" href="assets/icon.svg" />
+  <link rel="manifest" href="manifest.webmanifest" />
+
+  <!-- Polices Pixel Art -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+
+  <!-- Feuilles de style modulaires -->
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout-v2.css" />
+  <link rel="stylesheet" href="css/calendar.css" />
+  <link rel="stylesheet" href="css/photos.css" />
+  <link rel="stylesheet" href="css/features.css" />
+
+  <!-- Supabase Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body data-view="counter" data-auth="checking">
+
+  <!-- ÉCRAN DE VERROUILLAGE / CONNEXION SUPABASE AUTH -->
+  <div id="auth-gate" class="auth-gate" aria-live="polite">
+    <!-- État 1 : Vérification initiale de la session -->
+    <div id="auth-checking-box" class="pixel-box auth-card auth-checking-card">
+      <div class="auth-brand-title">
+        <svg width="24" height="24" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+          <rect x="5" y="1" width="6" height="14" fill="#d94b57" />
+          <rect x="3" y="3" width="10" height="10" fill="#d94b57" />
+          <rect x="5" y="3" width="6" height="10" fill="#eb7c85" />
+          <rect x="6" y="5" width="4" height="6" fill="#f2ece4" />
+        </svg>
+        <span>COMPTEUR PAELLA</span>
+      </div>
+      <p class="auth-checking-text">⏳ VÉRIFICATION DE LA SESSION...</p>
+    </div>
+
+    <!-- État 2 : Formulaire de connexion -->
+    <div id="auth-form-box" class="pixel-box auth-card" style="display: none;">
+      <div class="auth-brand-title">
+        <svg width="24" height="24" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+          <rect x="5" y="1" width="6" height="14" fill="#d94b57" />
+          <rect x="3" y="3" width="10" height="10" fill="#d94b57" />
+          <rect x="5" y="3" width="6" height="10" fill="#eb7c85" />
+          <rect x="6" y="5" width="4" height="6" fill="#f2ece4" />
+        </svg>
+        <span>ACCÈS PRIVÉ</span>
+      </div>
+
+      <div class="auth-mode-tabs" role="group" aria-label="Méthode de connexion">
+        <button type="button" id="auth-mode-pass-btn" class="auth-mode-btn active" onclick="setAuthMode('password')">🔑
+          MOT DE PASSE</button>
+        <button type="button" id="auth-mode-magic-btn" class="auth-mode-btn" onclick="setAuthMode('magiclink')">✉ MAGIC
+          LINK</button>
+      </div>
+
+      <form id="auth-login-form" method="post" action="#">
+        <div class="form-group">
+          <label class="field-label" for="auth-email">ADRESSE EMAIL</label>
+          <input type="email" id="auth-email" name="email" autocomplete="username" placeholder="ton.email@exemple.com"
+            required />
+        </div>
+
+        <div class="form-group" id="auth-password-group">
+          <label class="field-label" for="auth-password">MOT DE PASSE</label>
+          <input type="password" id="auth-password" name="password" autocomplete="current-password"
+            placeholder="••••••••" required />
+        </div>
+
+        <div id="auth-feedback" class="auth-feedback" style="display: none;" role="alert"></div>
+
+        <button type="submit" class="pixel-btn auth-submit-btn" id="auth-submit-btn">🔓 SE CONNECTER</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- EN-TÊTE ÉPURÉ SUR UNE SEULE LIGNE -->
+    <header>
+      <div class="header-top-row">
+        <div class="header-brand-group">
+          <h1>
+            <svg width="26" height="26" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+              <rect x="5" y="1" width="6" height="14" fill="#d94b57" />
+              <rect x="3" y="3" width="10" height="10" fill="#d94b57" />
+              <rect x="5" y="3" width="6" height="10" fill="#eb7c85" />
+              <rect x="6" y="5" width="4" height="6" fill="#f2ece4" />
+            </svg>
+            COMPTEUR PAELLA
+          </h1>
+        </div>
+
+        <div class="header-Status-bar">
+          <button type="button" id="network-status-pill" class="status-pill online" onclick="syncOfflineQueue(true)"
+            title="Cliquer pour synchroniser avec le cloud">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="network-status-label">SYNCHRO</span>
+          </button>
+
+          <button type="button" id="pwa-install-btn" class="pwa-install-btn" onclick="promptPWAInstall()">
+            📲 INSTALLER
+          </button>
+
+          <button type="button" id="auth-logout-btn" class="status-pill auth-logout-pill" onclick="handleLogout()"
+            title="Se déconnecter">
+            🔒 DÉCO
+          </button>
+        </div>
+      </div>
+
+      <button type="button" id="sound-toggle-btn" class="sound-toggle-btn" onclick="toggleSoundMute()"
+        aria-label="Activer ou couper les effets sonores" aria-pressed="false">
+        🔊
+      </button>
+    </header>
+
+    <!-- ONGLETS (PC & Mobile) : COMPTEUR / PRESTATIONS / LIVRAISONS / POURBOIRES / AGENDA -->
+    <div class="view-tabs" role="group" aria-label="Affichage">
+      <button type="button" class="tab-btn view-tab active" data-view-btn="counter" aria-pressed="true"
+        onclick="setView('counter')">📊 COMPTEUR &amp; BILAN</button>
+      <button type="button" class="tab-btn view-tab" data-view-btn="prestations" aria-pressed="false"
+        onclick="setView('prestations')">🍳 PRESTATIONS</button>
+      <button type="button" class="tab-btn view-tab" data-view-btn="livraisons" aria-pressed="false"
+        onclick="setView('livraisons')">🚚 LIVRAISONS</button>
+      <button type="button" class="tab-btn view-tab" data-view-btn="pourboires" aria-pressed="false"
+        onclick="setView('pourboires')">💰 POURBOIRES</button>
+      <button type="button" class="tab-btn view-tab" data-view-btn="calendar" aria-pressed="false"
+        onclick="setView('calendar')">📅 AGENDA DES JOURS</button>
+    </div>
+
+    <!-- APPLICATION PRINCIPALE -->
+    <div id="app-content">
+
+      <!-- COMPTEUR MOIS DE PAIE -->
+      <section class="pixel-box" id="section-period">
+        <h2 class="section-title">
+          <div class="section-title-left"><span class="dot"></span> COMPTEUR DE LA PAIE DU MOIS</div>
+          <button type="button" class="nav-btn" onclick="resetToCurrentPeriod()"
+            aria-label="Revenir à la période d'aujourd'hui">AUJOURD'HUI</button>
+        </h2>
+
+        <div class="period-nav">
+          <div class="period-controls">
+            <button type="button" class="nav-btn" onclick="changePeriod(-1)" aria-label="Mois précédent">
+              <span>◀</span><span class="nav-btn-text">MOIS PRÉC.</span>
+            </button>
+            <div class="period-current-label" id="period-label-box">
+              <div class="period-month-title" id="period-title">PAIE DE ...</div>
+              <div class="period-dates-badge" id="period-range-text">Du <strong>--/--/----</strong> au
+                <strong>--/--/----</strong>
+              </div>
+            </div>
+            <button type="button" class="nav-btn" onclick="changePeriod(1)" aria-label="Mois suivant">
+              <span class="nav-btn-text">MOIS SUIV.</span><span>▶</span>
+            </button>
+          </div>
+
+          <div class="period-meta-row">
+            <div class="meta-badge" id="period-remaining-badge">Fin de période : --/--/----</div>
+            <div class="meta-badge" id="period-diff-badge">Vs mois préc. : --</div>
+            <button type="button" class="meta-badge alert-proof" id="period-missing-proof-badge"
+              onclick="setLogFilter('noproof')">
+              0 sans photo
+            </button>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="period-stats-grid">
+          <div class="stat-card stat-card-clickable" onclick="setView('prestations')" role="button" tabindex="0"
+            title="Voir le détail des prestations">
+            <span class="stat-title">TAF DU MOIS (12€/H, MIN. 60€) ➔</span>
+            <div class="stat-value" id="month-std-pay">0.00 €</div>
+            <div class="stat-sub" id="month-std-hours">0h00 • Moy. 0h00/j</div>
+          </div>
+          <div class="stat-card delivery-card stat-card-clickable" onclick="setView('livraisons')" role="button"
+            tabindex="0" title="Voir le détail des livraisons">
+            <span class="stat-title">LIVRAISONS DU MOIS ➔</span>
+            <div class="stat-value" id="month-del-pay">0.00 €</div>
+            <div class="stat-sub" id="month-del-count">0 livraison</div>
+          </div>
+          <div class="stat-card tip-card stat-card-clickable" onclick="setView('pourboires')" role="button" tabindex="0"
+            title="Voir le détail des pourboires">
+            <span class="stat-title">POURBOIRES DU MOIS ➔</span>
+            <div class="stat-value" id="month-tip-pay">0.00 €</div>
+            <div class="stat-sub" id="month-tip-count">0 pourboire</div>
+          </div>
+          <div class="stat-card total-card" id="month-total-card">
+            <span class="stat-title">TOTAL PAIE DU MOIS</span>
+            <div class="stat-value" id="month-total-pay">0.00 €</div>
+            <div class="stat-sub" id="month-total-days">0 journée travaillée</div>
+          </div>
+        </div>
+
+        <!-- DÉTECTEUR AUTOMATIQUE D'INCOHÉRENCES / DOUBLONS SUR LA PÉRIODE -->
+        <div class="anomaly-alerts-box" id="period-anomalies-box" aria-live="polite"></div>
+
+        <!-- ACTIONS RAPIDES PÉRIODE : FICHE PDF & COMPARATEUR -->
+        <div class="period-quick-tools">
+          <button type="button" class="pixel-btn btn-secondary" onclick="openPrintablePaySheet()">
+            🖨 FICHE DE PAIE PDF
+          </button>
+          <button type="button" class="pixel-btn btn-secondary" onclick="togglePayCheckPanel()">
+            ⚖ COMPARER PAIE REÇUE
+          </button>
+        </div>
+
+        <!-- Comparateur « Ce que le patron m'a versé vs Mon Compteur » -->
+        <div class="inline-config-panel" id="paycheck-compare-panel">
+          <div class="pixel-font" style="font-size: 10px; color: var(--gold-soft); margin-bottom: 8px;">
+            ⚖ CONTRÔLE DE PAIE : CE QUE LE PATRON M'A VERSÉ VS MON COMPTEUR
+          </div>
+          <div class="inline-config-row">
+            <input type="number" id="paycheck-received-input" min="0" step="0.01" inputmode="decimal"
+              placeholder="Tape le montant reçu du patron (€) ex: 810.00"
+              aria-label="Montant réellement reçu du patron" />
+            <button type="button" class="pixel-btn btn-gold" onclick="runPayCheckComparison()">VÉRIFIER</button>
+            <button type="button" class="pixel-btn btn-secondary" onclick="togglePayCheckPanel()">FERMER</button>
+          </div>
+          <div class="paycheck-result-box" id="paycheck-result-box" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <!-- COMPTEUR GLOBAL DEPUIS LE DÉBUT + HISTORIQUE PAR MOIS (DÉPLIABLE, REPLIÉ PAR DÉFAUT) -->
+      <section class="pixel-box" id="section-global">
+        <button type="button" class="collapsible-trigger" id="global-collapse-btn" aria-expanded="false"
+          onclick="toggleGlobalSection()">
+          <span class="section-title-left">
+            <span class="dot dot-gold"></span>
+            <span>TOTAL GLOBAL &amp; BILAN PAR MOIS (<span id="global-inline-summary">0.00 €</span>)</span>
+          </span>
+          <span id="global-collapse-icon">▼ DÉPLIER</span>
+        </button>
+
+        <div class="collapsible-body" id="global-collapsible-body">
+          <div class="stats-grid" style="grid-template-columns: 1fr; margin-bottom: 18px;">
+            <div class="stat-card alltime-card">
+              <span class="stat-title">CUMUL HISTORIQUE GLOBAL</span>
+              <div class="stat-value" id="all-total-pay">0.00 €</div>
+              <div class="stat-sub" id="all-total-days">0 journée travaillée</div>
+            </div>
+          </div>
+
+          <div
+            style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <h3 class="pixel-font" style="font-size: 11px; color: var(--gold-soft);">HISTORIQUE PAR PÉRIODE DE PAIE</h3>
+            <div class="backup-actions-bar">
+              <button type="button" class="pixel-btn btn-secondary" onclick="exportCSV()"
+                aria-label="Exporter toutes les entrées en CSV">
+                ⬇ EXPORT CSV
+              </button>
+              <button type="button" class="pixel-btn btn-secondary" onclick="exportJSON()"
+                aria-label="Télécharger une sauvegarde complète en JSON">
+                💾 SAUVEGARDE JSON
+              </button>
+              <button type="button" class="pixel-btn btn-secondary" onclick="triggerImportJSON()"
+                aria-label="Restaurer une sauvegarde JSON">
+                📂 RESTAURER JSON
+              </button>
+            </div>
+          </div>
+          <div id="monthly-summary-list" class="monthly-chart-list"></div>
+        </div>
+      </section>
+
+      <!-- FORMULAIRE ENREGISTRER / MODIFIER UNE JOURNÉE -->
+      <section class="pixel-box" id="section-form">
+        <h2 class="section-title">
+          <div class="section-title-left">
+            <span class="dot"></span>
+            <span id="form-section-title">ENREGISTRER UNE PRESTATION</span>
+          </div>
+          <button type="button" class="pixel-btn btn-secondary" id="legacy-toggle-btn" onclick="toggleLegacyForm()"
+            aria-label="Ajouter un mois antérieur">
+            <span class="hide-mobile">+ AJOUTER UN MOIS ANTÉRIEUR</span>
+            <span class="show-mobile">+ MOIS PASSÉ</span>
+          </button>
+        </h2>
+
+        <!-- POINTAGE EN DIRECT 1-CLIC ("DÉMARRER / TERMINER MON SERVICE") -->
+        <div class="live-clock-box" id="live-clock-box">
+          <div class="live-clock-idle">
+            <div class="live-clock-title" style="margin-bottom:0;">⏱ POINTAGE EN DIRECT</div>
+            <button type="button" class="pixel-btn btn-start-shift" onclick="startLiveShift()">
+              ▶ DÉMARRER MON TAF
+            </button>
+          </div>
+
+          <div class="live-clock-active">
+            <div class="live-clock-header">
+              <div class="live-clock-badge">
+                <span class="live-pulse-dot" aria-hidden="true"></span>
+                <span id="live-clock-status-text">EN SERVICE...</span>
+              </div>
+            </div>
+
+            <div class="live-overtime-warning" id="live-overtime-warning" role="alert"></div>
+
+            <div class="live-clock-metrics">
+              <div class="live-metric">
+                <span class="live-metric-label">TEMPS DE TAF</span>
+                <span class="live-metric-val" id="live-clock-elapsed">00:00:00</span>
+              </div>
+              <div class="live-metric">
+                <span class="live-metric-label">GAIN ESTIMÉ</span>
+                <span class="live-metric-val gold" id="live-clock-pay">60.00 €</span>
+              </div>
+              <div class="live-metric">
+                <span class="live-metric-label">PAUSE CUMULÉE</span>
+                <span class="live-metric-val" id="live-clock-pause">0 min</span>
+              </div>
+            </div>
+
+            <div class="live-clock-actions">
+              <button type="button" class="pixel-btn btn-secondary" id="live-pause-btn"
+                onclick="toggleLiveShiftPause()">
+                ⏸ PAUSE
+              </button>
+              <button type="button" class="pixel-btn btn-gold" onclick="finishLiveShift(false)">
+                ⏹ FIN DE SERVICE (REMPLIR)
+              </button>
+              <button type="button" class="pixel-btn" onclick="finishLiveShift(true)">
+                ⚡ FIN &amp; SAUVEGARDER
+              </button>
+              <button type="button" class="pixel-btn btn-danger" id="live-cancel-btn" onclick="cancelLiveShift()">
+                ✕ ANNULER
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOÎTE MASQUÉE POUR MOIS ANTÉRIEUR (GAIN GLOBAL SIMPLIFIÉ) -->
+        <div id="legacy-container" class="pixel-box"
+          style="border-color: var(--gold-soft); background: var(--bg-input); margin-bottom: 18px;">
+          <h3 class="pixel-font" id="legacy-form-title"
+            style="font-size: 11px; color: var(--gold-soft); margin-bottom: 12px;">IMPORT MOIS PASSÉ (DEPUIS AVRIL 2025)
+          </h3>
+          <p style="color: var(--text-muted); font-size: 18px; margin-bottom: 14px;">
+            Indique simplement le montant total perçu pour ce mois.
+          </p>
+          <form id="legacy-form" onsubmit="saveLegacyMonth(event)">
+            <div class="form-grid">
+              <div class="input-group">
+                <label for="legacy-month">Mois</label>
+                <select id="legacy-month" required>
+                  <option value="0">Janvier</option>
+                  <option value="1">Février</option>
+                  <option value="2">Mars</option>
+                  <option value="3" selected>Avril</option>
+                  <option value="4">Mai</option>
+                  <option value="5">Juin</option>
+                  <option value="6">Juillet</option>
+                  <option value="7">Août</option>
+                  <option value="8">Septembre</option>
+                  <option value="9">Octobre</option>
+                  <option value="10">Novembre</option>
+                  <option value="11">Décembre</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="legacy-year">Année</label>
+                <select id="legacy-year" required></select>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="input-group">
+                <label for="legacy-total-pay">Gain Total du Mois (€)</label>
+                <input type="number" id="legacy-total-pay" step="0.01" min="0" inputmode="decimal"
+                  placeholder="Ex: 950.00" required />
+              </div>
+              <div class="input-group">
+                <label for="legacy-note">Note (optionnel)</label>
+                <input type="text" id="legacy-note" placeholder="Ex: Début activité..." />
+              </div>
+            </div>
+
+            <div class="submit-actions-row">
+              <button type="submit" class="pixel-btn btn-gold" id="legacy-submit-btn">VALIDER CE MOIS ANTÉRIEUR</button>
+              <button type="button" class="pixel-btn btn-secondary" id="legacy-cancel-btn" style="display: none;"
+                onclick="cancelEdit()">ANNULER</button>
+            </div>
+          </form>
+        </div>
+
+        <form id="shift-form" onsubmit="saveShift(event)">
+          <div class="form-grid">
+            <div class="input-group">
+              <label for="shift-date">Date de la journée</label>
+              <input type="date" id="shift-date" required />
+              <div class="form-duplicate-warning" id="form-duplicate-warning" role="alert"></div>
+            </div>
+            <div class="input-group">
+              <label for="shift-note">Note / Détail (optionnel)</label>
+              <input type="text" id="shift-note" placeholder="Ex: Service du soir..." />
+            </div>
+          </div>
+
+          <div class="form-grid" id="form-roles-grid">
+            <div class="role-block std-block">
+              <div class="role-header">
+                <span>HORAIRES TAF</span>
+                <span class="badge badge-cream">12 € / H (MIN. 60 €)</span>
+              </div>
+
+              <!-- Raccourcis horaires récents -->
+              <div class="quick-presets">
+                <span class="quick-presets-label">Horaires rapides :</span>
+                <div class="preset-pills" id="preset-pills-container"></div>
+              </div>
+
+              <div class="time-row">
+                <div class="input-group">
+                  <label for="std-start">Arrivée</label>
+                  <div class="input-with-btn">
+                    <input type="time" id="std-start" />
+                    <button type="button" class="now-btn" onclick="setNowTime('std-start')"
+                      aria-label="Mettre l'heure actuelle pour l'arrivée">MAINTENANT</button>
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label for="std-end">Départ</label>
+                  <div class="input-with-btn">
+                    <input type="time" id="std-end" />
+                    <button type="button" class="now-btn" onclick="setNowTime('std-end')"
+                      aria-label="Mettre l'heure actuelle pour le départ">MAINTENANT</button>
+                  </div>
+                </div>
+              </div>
+              <div class="input-group" style="margin-top: 8px;">
+                <label for="std-break">Pause non payée (minutes)</label>
+                <input type="number" id="std-break" min="0" max="480" value="0" inputmode="numeric" />
+              </div>
+            </div>
+
+            <div class="role-block delivery">
+              <div class="role-header">
+                <span>LIVRAISON</span>
+                <span class="badge badge-red">30 € PAR DÉFAUT</span>
+              </div>
+              <div class="delivery-toggle" id="del-toggle" role="switch" aria-checked="false" tabindex="0"
+                onclick="toggleDelivery()" onkeydown="handleSwitchKey(event, toggleDelivery)">
+                <div class="pixel-checkbox" id="del-check-box" aria-hidden="true"></div>
+                <div>
+                  <div class="pixel-font" style="font-size: 10px;">J'AI FAIT UNE LIVRAISON</div>
+                  <div style="font-size: 18px; color: var(--text-muted);">+30,00 € par défaut</div>
+                </div>
+              </div>
+              <div class="delivery-extra-box" id="del-extra-box">
+                <p class="rule-hint">Si durée &gt; 2h30, passage à 12€/h :</p>
+                <div class="time-row">
+                  <div class="input-group">
+                    <label for="del-start">Début</label>
+                    <div class="input-with-btn">
+                      <input type="time" id="del-start" />
+                      <button type="button" class="now-btn" onclick="setNowTime('del-start')"
+                        aria-label="Mettre l'heure actuelle pour le début de livraison">MAINTENANT</button>
+                    </div>
+                  </div>
+                  <div class="input-group">
+                    <label for="del-end">Fin</label>
+                    <div class="input-with-btn">
+                      <input type="time" id="del-end" />
+                      <button type="button" class="now-btn" onclick="setNowTime('del-end')"
+                        aria-label="Mettre l'heure actuelle pour la fin de livraison">MAINTENANT</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="input-group" style="margin-top: 8px;">
+                  <label for="del-duration-min">Ou durée en minutes</label>
+                  <input type="number" id="del-duration-min" min="0" step="5" inputmode="numeric"
+                    placeholder="Ex: 180" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BLOC POURBOIRE (TIPS) -->
+          <div class="role-block tip-block">
+            <div class="role-header">
+              <span>💰 POURBOIRE (TIPS)</span>
+              <span class="badge badge-green">BONUS +100%</span>
+            </div>
+            <div class="tip-row-layout">
+              <div>
+                <span class="quick-presets-label">Ajout rapide en 1 clic :</span>
+                <div class="tip-quick-btns">
+                  <button type="button" class="tip-pill-btn" onclick="addQuickTip(2)">+2 €</button>
+                  <button type="button" class="tip-pill-btn" onclick="addQuickTip(5)">+5 €</button>
+                  <button type="button" class="tip-pill-btn" onclick="addQuickTip(10)">+10 €</button>
+                  <button type="button" class="tip-pill-btn" onclick="addQuickTip(20)">+20 €</button>
+                  <button type="button" class="tip-pill-btn tip-reset-btn" onclick="clearTipAmount()">0 €</button>
+                </div>
+              </div>
+              <div class="input-group">
+                <label for="tip-amount">Montant du pourboire (€)</label>
+                <input type="number" id="tip-amount" min="0" step="0.50" inputmode="decimal" placeholder="Ex: 10.00" />
+              </div>
+            </div>
+          </div>
+
+          <!-- AJOUT DIRECT DE PHOTO DE PREUVE (COMPACT) -->
+          <div class="form-photo-block" id="form-photo-dropzone">
+            <div class="form-photo-row">
+              <div class="form-photo-info">
+                <img id="form-photo-thumb" class="form-photo-thumb" alt="Aperçu de la photo" />
+                <div>
+                  <div class="pixel-font" id="form-photo-title" style="font-size: 10px; color: var(--white-cream);">📷
+                    PHOTO DE PREUVE (OPTIONNEL)</div>
+                  <div id="form-photo-sub" style="font-size: 17px; color: var(--text-muted); display: none;"></div>
+                </div>
+              </div>
+              <div class="form-photo-actions">
+                <button type="button" class="pixel-btn btn-secondary photo-add" id="form-photo-pick-btn"
+                  onclick="triggerFormPhotoPick()">
+                  📷 JOINDRE PHOTO
+                </button>
+                <button type="button" class="pixel-btn btn-danger" id="form-photo-clear-btn" style="display: none;"
+                  onclick="clearFormPhoto()">
+                  ✕
+                </button>
+              </div>
+            </div>
+            <input type="file" id="form-photo-input" accept="image/*" hidden />
+          </div>
+
+          <!-- BARRE D'ENREGISTREMENT COLLANTE SUR MOBILE -->
+          <div class="sticky-submit-bar">
+            <div class="live-preview">
+              <div>Aperçu : <strong id="live-details">0h00 taf | Pas de livraison</strong></div>
+              <span id="live-total">+ 0.00 €</span>
+            </div>
+
+            <div class="submit-actions-row">
+              <button type="submit" class="pixel-btn" id="shift-submit-btn">SAUVEGARDER DANS LE CLOUD</button>
+              <button type="button" class="pixel-btn btn-secondary" id="shift-cancel-btn" style="display: none;"
+                onclick="cancelEdit()">ANNULER</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <!-- HISTORIQUE (DÉPLIABLE, REPLIÉ PAR DÉFAUT) -->
+      <section class="pixel-box" id="section-history">
+        <button type="button" class="collapsible-trigger" id="history-collapse-btn" aria-expanded="false"
+          onclick="toggleHistorySection()">
+          <span class="section-title-left">
+            <span class="dot"></span>
+            <span>HISTORIQUE (<span id="history-inline-count">0 entrée</span>)</span>
+          </span>
+          <span id="history-collapse-icon">▼ DÉPLIER</span>
+        </button>
+
+        <div class="collapsible-body" id="history-collapsible-body">
+          <div class="filter-tabs" style="margin-bottom: 14px;">
+            <button type="button" class="tab-btn active" id="tab-period" onclick="setLogFilter('period')">MOIS DE
+              PAIE</button>
+            <button type="button" class="tab-btn" id="tab-noproof" onclick="setLogFilter('noproof')">SANS PHOTO</button>
+            <button type="button" class="tab-btn" id="tab-all" onclick="setLogFilter('all')">TOUT</button>
+            <button type="button" class="tab-btn" onclick="exportJSON()" aria-label="Sauvegarder les données en JSON">💾
+              JSON</button>
+          </div>
+          <div id="log-list" class="log-list">
+            <div class="empty-state">Chargement des données...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ONGLET PRESTATIONS (HEURES DE TAF) -->
+      <section class="pixel-box category-view-section" id="section-prestations" aria-label="Détail des prestations">
+        <div id="prestations-view-content"></div>
+      </section>
+
+      <!-- ONGLET LIVRAISONS -->
+      <section class="pixel-box category-view-section" id="section-livraisons" aria-label="Détail des livraisons">
+        <div id="livraisons-view-content"></div>
+      </section>
+
+      <!-- ONGLET POURBOIRES (TIPS) -->
+      <section class="pixel-box category-view-section" id="section-pourboires" aria-label="Détail des pourboires">
+        <div id="pourboires-view-content"></div>
+      </section>
+
+      <!-- CALENDRIER / AGENDA DES JOURS TRAVAILLÉS -->
+      <section class="pixel-box" id="section-calendar" aria-label="Agenda des jours travaillés">
+        <h2 class="section-title">
+          <div class="section-title-left"><span class="dot dot-gold"></span> AGENDA DES JOURS TRAVAILLÉS</div>
+          <button type="button" class="nav-btn" onclick="calToday()"
+            aria-label="Revenir à aujourd'hui">AUJOURD'HUI</button>
+        </h2>
+        <div class="cal-layout">
+          <div class="cal-main">
+            <div class="cal-nav">
+              <button type="button" class="nav-btn" onclick="calChange(-1)" aria-label="Mois précédent">◀</button>
+              <div class="cal-title" id="cal-title" aria-live="polite">—</div>
+              <button type="button" class="nav-btn" onclick="calChange(1)" aria-label="Mois suivant">▶</button>
+            </div>
+            <div class="cal-stats" id="cal-stats"></div>
+            <div class="cal-dow" aria-hidden="true">
+              <span>LUN</span><span>MAR</span><span>MER</span><span>JEU</span><span>VEN</span><span>SAM</span><span>DIM</span>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+            <div class="cal-legend"><span><i class="d"></i>Taf</span><span><i class="d l"></i>Livraison</span><span><i
+                  class="d t"></i>Pourboire</span><span><i class="d p"></i>Photo jointe</span><span>Bord pointillé =
+                sans photo</span><span>Totaux = mois civil</span></div>
+          </div>
+          <aside class="cal-detail" id="cal-detail" aria-live="polite"></aside>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Navigation basse (mobile / tablette) -->
+  <nav class="bottom-nav" aria-label="Navigation de l'application">
+    <a href="#section-period" data-bottom-view="counter" class="is-active">PAIE</a>
+    <a href="#section-prestations" data-bottom-view="prestations">TAF</a>
+    <a href="#section-livraisons" data-bottom-view="livraisons">LIVR.</a>
+    <a href="#section-pourboires" data-bottom-view="pourboires">TIPS</a>
+    <a href="#section-calendar" data-bottom-view="calendar">AGENDA</a>
+  </nav>
+
+  <!-- Visionneuse de photo de preuve -->
+  <dialog id="photo-dialog" aria-labelledby="pd-title">
+    <div class="pd-body">
+      <h2 class="pd-title" id="pd-title">PHOTO</h2>
+      <div class="pd-frame" id="pd-frame">
+        <p class="pd-msg">CHARGEMENT…</p>
+      </div>
+      <div class="pd-actions">
+        <button type="button" class="pixel-btn btn-secondary photo-add" id="pd-replace">REMPLACER</button>
+        <button type="button" class="pixel-btn btn-danger" id="pd-delete">SUPPRIMER LA PHOTO</button>
+        <button type="button" class="pixel-btn btn-secondary" id="pd-close">FERMER</button>
+      </div>
+    </div>
+  </dialog>
+  <!-- Sélecteur de fichier pour les cartes d'historique et l'agenda (PC & mobile) -->
+  <input type="file" id="photo-input" accept="image/*" hidden>
+  <!-- Sélecteur de fichier pour la restauration de sauvegarde JSON -->
+  <input type="file" id="json-import-input" accept="application/json,.json" hidden>
+
+  <!-- Conteneur de notifications Toasts -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- Modules JavaScript de l'application -->
+  <script src="js/config.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/animations.js"></script>
+  <script src="js/photos.js"></script>
+  <script src="js/shifts.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/features.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+
+</html>

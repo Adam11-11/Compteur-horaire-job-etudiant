@@ -1,0 +1,21 @@
+{
+  "name": "Compteur Paella",
+  "short_name": "PaellaPay",
+  "description": "Compteur d'heures, livraisons et paie synchronisé dans le cloud avec mode hors-ligne.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#18171c",
+  "theme_color": "#18171c",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
