@@ -1,0 +1,102 @@
+/* ---------- Onglets Vues Spécialisées (COMPTEUR / PRESTATIONS / LIVRAISONS / POURBOIRES / AGENDA) ---------- */
+body[data-view="counter"] #section-form,
+body[data-view="counter"] #section-prestations,
+body[data-view="counter"] #section-livraisons,
+body[data-view="counter"] #section-pourboires,
+body[data-view="counter"] #section-calendar { display: none; }
+
+body[data-view="calendar"] #app-content > section:not(#section-calendar),
+body[data-view="prestations"] #app-content > section:not(#section-prestations):not(#section-form),
+body[data-view="livraisons"] #app-content > section:not(#section-livraisons):not(#section-form),
+body[data-view="pourboires"] #app-content > section:not(#section-pourboires):not(#section-form) { display: none; }
+
+/* Filtrage des blocs du formulaire selon l'onglet actif */
+body[data-view="prestations"] #section-form .role-block.delivery,
+body[data-view="prestations"] #section-form .role-block.tip-block { display: none; }
+
+body[data-view="livraisons"] #section-form #live-clock-box,
+body[data-view="livraisons"] #section-form #legacy-toggle-btn,
+body[data-view="livraisons"] #section-form #legacy-container,
+body[data-view="livraisons"] #section-form .role-block.std-block,
+body[data-view="livraisons"] #section-form .role-block.tip-block { display: none !important; }
+
+body[data-view="pourboires"] #section-form #live-clock-box,
+body[data-view="pourboires"] #section-form #legacy-toggle-btn,
+body[data-view="pourboires"] #section-form #legacy-container,
+body[data-view="pourboires"] #section-form #form-roles-grid { display: none !important; }
+.cal-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.cal-nav { display: grid; grid-template-columns: 52px 1fr 52px; gap: 10px; align-items: center; margin-bottom: 12px; }
+.cal-nav .nav-btn { min-height: 52px; padding: 0; }
+.cal-title { text-align: center; font-family: 'Press Start 2P', monospace; font-size: clamp(11px, 3.6vw, 16px); line-height: 1.5; color: var(--gold-soft); text-shadow: 2px 2px 0 var(--border-shadow); }
+.cal-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+.cal-stat { background: var(--bg-input); border: 3px solid var(--border-soft); box-shadow: 3px 3px 0 var(--border-shadow); padding: 8px 4px; text-align: center; font-size: 19px; color: var(--text-muted); }
+.cal-stat b { display: block; margin-top: 4px; font: 13px 'Press Start 2P', monospace; color: var(--white-cream); }
+.cal-note { grid-column: 1 / -1; font-size: 19px; color: var(--gold-soft); }
+.cal-dow, .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-dow { margin-bottom: 4px; text-align: center; font: 8px 'Press Start 2P', monospace; color: var(--text-muted); }
+.cal-dow span { padding: 6px 0; }
+.cal-cell { position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 60px; padding: 4px; background: var(--bg-input); border: 3px solid var(--border-soft); box-shadow: 2px 2px 0 var(--border-shadow); color: var(--white-cream); font-family: 'VT323', monospace; font-size: 20px; line-height: 1; text-align: left; cursor: pointer; }
+div.cal-cell.out { opacity: .3; box-shadow: none; cursor: default; }
+.cal-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 2px; flex-wrap: wrap; }
+.cal-dots { display: flex; gap: 2px; margin-top: 3px; }
+.cal-dots .d { width: 7px; height: 7px; background: var(--gold-soft); }
+.cal-dots .d.l { background: var(--red-soft); }
+.cal-dots .d.p { background: var(--green-soft); }
+.cal-amt { color: var(--gold-soft); font-size: 19px; }
+.cal-cell.worked { background: #2a2418; border-color: var(--gold-soft); }
+.cal-cell.noproof { border-bottom-style: dashed; }
+.cal-cell.today { border-color: var(--white-cream); }
+.cal-cell.sel { background: #3a3220; border-color: var(--gold-soft); box-shadow: 4px 4px 0 var(--border-shadow), 0 0 0 3px var(--gold-soft); z-index: 1; }
+@media (hover: hover) { button.cal-cell:hover { border-color: var(--gold-soft); } }
+button.cal-cell:active { transform: translateY(2px); }
+.cal-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font-size: 18px; color: var(--text-muted); }
+.cal-legend .d { display: inline-block; width: 10px; height: 10px; margin-right: 6px; background: var(--gold-soft); }
+.cal-legend .d.l { background: var(--red-soft); }
+.cal-legend .d.p { background: var(--green-soft); }
+.cal-detail { background: var(--bg-input); border: 3px solid var(--border-soft); box-shadow: 4px 4px 0 var(--border-shadow); padding: 14px; scroll-margin-bottom: calc(var(--nav-h) + 16px); }
+.cal-detail-title { font-size: 13px; line-height: 1.6; }
+.cal-period { margin: 6px 0 12px; font: 10px/1.6 'Press Start 2P', monospace; color: var(--text-muted); }
+.cal-day-total { margin-bottom: 4px; font: clamp(18px, 5vw, 24px) 'Press Start 2P', monospace; color: var(--gold-soft); text-shadow: 0 0 12px var(--gold-glow); }
+.cal-hint { margin-bottom: 12px; font-size: 21px; color: var(--text-muted); }
+.cal-entry { margin-top: 12px; padding-top: 12px; border-top: 3px dashed var(--border-soft); }
+.cal-entry-head { margin-bottom: 8px; font-size: 21px; }
+.cal-entry-head b { margin-right: 8px; font: 10px 'Press Start 2P', monospace; color: var(--gold-soft); }
+.cal-entry-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+.cal-entry-total { font: 14px 'Press Start 2P', monospace; color: var(--gold-soft); }
+.cal-detail .pixel-btn { width: 100%; }
+.cal-entry-foot .pixel-btn { width: auto; }
+.pill-miss { border-style: dashed; border-color: var(--border-soft); color: var(--text-muted); background: var(--bg-dark); }
+@media (min-width: 640px) {
+  .cal-cell { min-height: 84px; padding: 6px; font-size: 22px; }
+  .cal-amt { font-size: 22px; }
+  .cal-dow { font-size: 10px; }
+}
+@media (min-width: 1024px) {
+  .cal-layout { grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr); align-items: start; gap: 24px; }
+  .cal-detail { position: sticky; top: 16px; }
+  .cal-cell { min-height: 96px; }
+  body[data-view="counter"] #app-content {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "period"
+      "history"
+      "global";
+  }
+  body[data-view="calendar"] #app-content {
+    grid-template-areas: none;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  body[data-view="prestations"] #app-content,
+  body[data-view="livraisons"] #app-content,
+  body[data-view="pourboires"] #app-content {
+    grid-template-columns: minmax(360px, 1fr) minmax(0, 1.35fr);
+    grid-template-areas: "form catview";
+    align-items: start;
+  }
+  #section-prestations,
+  #section-livraisons,
+  #section-pourboires {
+    grid-area: catview;
+  }
+}
+

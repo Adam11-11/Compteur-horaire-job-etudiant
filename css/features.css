@@ -1,0 +1,899 @@
+/* =====================================================================
+   NOUVELLES FONCTIONNALITÉS :
+   1. Pointage en direct 1-clic (Chronomètre de service persistant)
+   2. Barre d'état Cloud / Hors-ligne & Bouton d'installation PWA
+   3. Sauvegarde & Restauration JSON
+   ===================================================================== */
+
+/* Responsive mobile / desktop helpers */
+@media (max-width: 639px) {
+  .hide-mobile { display: none !important; }
+  .show-mobile { display: inline !important; }
+}
+
+/* ==========================================
+   1. BARRE D'OUTILS HEADER (STATUT CLOUD & PWA)
+   ========================================== */
+header {
+  padding: 12px 72px 12px 14px;
+  margin-bottom: 12px;
+}
+
+.header-top-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.header-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.header-Status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.status-pill {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  line-height: 1.3;
+  padding: 5px 8px;
+  min-height: 30px;
+  background: var(--bg-input);
+  color: var(--white-cream);
+  border: 2px solid var(--border-soft);
+  box-shadow: 2px 2px 0 var(--border-shadow);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: transform 0.08s ease, border-color 0.15s ease;
+}
+.status-pill:hover { border-color: var(--gold-soft); }
+.status-pill:active { transform: translateY(2px); }
+
+.status-pill.online {
+  border-color: var(--green-soft);
+  color: var(--green-soft);
+}
+.status-pill.offline {
+  border-color: var(--gold-soft);
+  color: var(--gold-soft);
+  background: #292214;
+}
+.status-pill.syncing {
+  border-color: var(--gold-soft);
+  color: var(--gold-soft);
+}
+.status-dot {
+  width: 7px;
+  height: 7px;
+  background: currentColor;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.pwa-install-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  padding: 5px 8px;
+  min-height: 30px;
+  background: var(--bg-input);
+  color: var(--gold-soft);
+  border: 2px solid var(--gold-soft);
+  box-shadow: 2px 2px 0 var(--border-shadow);
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  gap: 5px;
+}
+.pwa-install-btn.visible {
+  display: inline-flex;
+}
+
+@media (min-width: 1024px) {
+  header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 80px 12px 20px;
+    gap: 8px;
+  }
+  .header-top-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+/* ==========================================
+   3. POINTAGE DIRECT EN 1 CLIC (CHRONOMÈTRE DE SERVICE)
+   ========================================== */
+.live-clock-box {
+  background: var(--bg-input);
+  border: 3px solid var(--gold-soft);
+  box-shadow: 4px 4px 0 var(--border-shadow);
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  position: relative;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.live-clock-box.is-running {
+  border-color: var(--green-soft);
+  box-shadow: 4px 4px 0 var(--border-shadow), 0 0 14px rgba(90, 181, 122, 0.28);
+}
+.live-clock-box.is-paused {
+  border-color: var(--gold-soft);
+}
+
+.live-clock-idle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.live-clock-info {
+  flex: 1;
+  min-width: 200px;
+}
+.live-clock-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: var(--gold-soft);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.live-clock-sub {
+  font-size: 19px;
+  color: var(--text-muted);
+  line-height: 1.25;
+}
+
+.pixel-btn.btn-start-shift {
+  background: var(--green-soft);
+  color: #0b140e;
+  box-shadow: inset -4px -4px 0 #2e6b43, inset 4px 4px 0 #8be0a9, 0 4px 0 var(--border-shadow);
+  width: auto;
+  min-width: 240px;
+}
+
+.live-clock-active {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+.live-clock-box.is-running .live-clock-idle,
+.live-clock-box.is-paused .live-clock-idle {
+  display: none;
+}
+.live-clock-box.is-running .live-clock-active,
+.live-clock-box.is-paused .live-clock-active {
+  display: flex;
+}
+
+.live-clock-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.live-clock-badge {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: var(--green-soft);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.live-clock-box.is-paused .live-clock-badge {
+  color: var(--gold-soft);
+}
+.live-pulse-dot {
+  width: 10px;
+  height: 10px;
+  background: currentColor;
+  display: inline-block;
+  animation: blinkCursor 1s steps(1) infinite;
+}
+
+.live-clock-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  background: var(--bg-panel);
+  border: 2px solid var(--border-soft);
+  padding: 10px 12px;
+}
+.live-metric {
+  text-align: center;
+}
+.live-metric-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 4px;
+}
+.live-metric-val {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 16px;
+  color: var(--white-cream);
+  font-variant-numeric: tabular-nums;
+}
+.live-metric-val.gold {
+  color: var(--gold-soft);
+}
+
+.live-clock-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.live-clock-actions .pixel-btn {
+  flex: 1 1 160px;
+  width: auto;
+  font-size: 10px;
+  padding: 10px 12px;
+}
+.live-clock-actions .pixel-btn.btn-danger {
+  flex: 0 0 auto;
+}
+
+/* ==========================================
+   4. BOUTONS SAUVEGARDE / RESTAURATION JSON & BADGE HORS-LIGNE
+   ========================================== */
+.backup-actions-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.pill-offline-sync {
+  border-color: var(--gold-soft);
+  color: var(--gold-soft);
+  background: #292214;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  padding: 4px 8px;
+}
+
+/* ==========================================
+   5. POURBOIRES (TIPS) — CARTE, FORMULAIRE, BADGES
+   ========================================== */
+.stat-card.tip-card {
+  border-color: var(--green-soft);
+}
+.stat-card.tip-card .stat-value {
+  color: var(--green-soft);
+}
+
+/* Grille des statistiques avec la carte Pourboires */
+#period-stats-grid .tip-card {
+  grid-column: 1 / -1;
+}
+@media (min-width: 640px) {
+  #period-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  #period-stats-grid .total-card {
+    grid-column: 1 / -1;
+  }
+  #period-stats-grid .tip-card {
+    grid-column: auto;
+  }
+}
+@media (min-width: 1024px) {
+  #period-stats-grid {
+    grid-template-columns: 1.35fr 1fr;
+  }
+  #period-stats-grid .total-card {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+  }
+  #period-stats-grid .stat-card:not(.total-card) {
+    grid-column: 2;
+  }
+}
+
+.role-block.tip-block {
+  border-color: var(--green-soft);
+  margin-bottom: 18px;
+}
+
+.tip-row-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: end;
+}
+@media (min-width: 640px) {
+  .tip-row-layout {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+.tip-quick-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tip-pill-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  min-height: 46px;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  color: var(--green-soft);
+  border: 2px solid var(--green-soft);
+  box-shadow: 2px 2px 0 var(--border-shadow);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.08s ease, background-color 0.15s ease;
+}
+.tip-pill-btn:hover {
+  background: #192b20;
+  transform: translateY(-2px);
+}
+.tip-pill-btn:active {
+  transform: translateY(2px);
+}
+.tip-pill-btn.tip-reset-btn {
+  color: var(--text-muted);
+  border-color: var(--border-soft);
+}
+.tip-pill-btn.tip-reset-btn:hover {
+  color: var(--red-light);
+  border-color: var(--red-soft);
+  background: #2c161b;
+}
+
+.pill-tip {
+  border-color: var(--green-soft);
+  color: #c8f7d6;
+  background: #16281d;
+}
+
+.cal-dots .d.t,
+.cal-legend .d.t {
+  background: #38d9a9;
+}
+
+/* ==========================================
+   6. OUTILS RAPIDES PÉRIODE (FICHE PDF & COMPARATEUR DE PAIE)
+   ========================================== */
+.period-quick-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+.period-quick-tools .pixel-btn {
+  flex: 1 1 180px;
+  width: auto;
+  min-height: 44px;
+  font-size: 10px;
+  padding: 10px 12px;
+}
+
+.inline-config-panel {
+  display: none;
+  background: var(--bg-input);
+  border: 3px dashed var(--gold-soft);
+  padding: 12px 14px;
+  margin-top: 12px;
+}
+.inline-config-panel.open {
+  display: block;
+  animation: fadeSlideDown 0.2s ease-out;
+}
+.inline-config-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.inline-config-row input {
+  flex: 1 1 160px;
+  min-height: 44px;
+}
+.inline-config-row .pixel-btn {
+  width: auto;
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 10px;
+}
+
+.header-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* ==========================================
+   7. DÉTECTEUR D'INCOHÉRENCES / OUBLIS & COMPARATEUR DE PAIE
+   ========================================== */
+.anomaly-alerts-box {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.anomaly-alerts-box.has-anomalies {
+  display: flex;
+}
+
+.anomaly-alert-item {
+  background: #2c161b;
+  border: 3px solid var(--red-soft);
+  box-shadow: 3px 3px 0 var(--border-shadow);
+  padding: 10px 12px;
+  color: var(--white-cream);
+  font-size: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.anomaly-alert-item strong {
+  color: var(--gold-soft);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+}
+
+.live-overtime-warning {
+  display: none;
+  background: #2c161b;
+  border: 3px solid var(--red-soft);
+  padding: 10px 12px;
+  color: var(--white-cream);
+  font-size: 19px;
+  animation: blinkCursor 1.2s steps(1) infinite;
+}
+.live-overtime-warning.visible {
+  display: block;
+}
+
+.form-duplicate-warning {
+  display: none;
+  background: #292214;
+  border: 2px solid var(--gold-soft);
+  color: var(--gold-soft);
+  padding: 8px 10px;
+  margin-top: 6px;
+  font-size: 18px;
+  line-height: 1.25;
+}
+.form-duplicate-warning.visible {
+  display: block;
+  animation: fadeSlideDown 0.18s ease-out;
+}
+
+/* Résultat du comparateur « Ce que le patron m'a versé vs Mon Compteur » */
+.paycheck-result-box {
+  margin-top: 10px;
+  padding: 12px;
+  background: var(--bg-panel);
+  border: 3px solid var(--border-soft);
+  font-size: 20px;
+  display: none;
+}
+.paycheck-result-box.visible {
+  display: block;
+}
+.paycheck-result-box.match-ok {
+  border-color: var(--green-soft);
+  background: #16261c;
+}
+.paycheck-result-box.match-short {
+  border-color: var(--red-soft);
+  background: #2c161b;
+}
+.paycheck-result-box.match-bonus {
+  border-color: var(--gold-soft);
+  background: #292214;
+}
+.paycheck-verdict-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+.paycheck-clues-list {
+  margin-top: 8px;
+  padding-left: 18px;
+  color: var(--white-cream);
+  font-size: 19px;
+}
+.paycheck-clues-list li {
+  margin-bottom: 4px;
+}
+
+/* ==========================================
+   8. ONGLETS SPÉCIALISÉS & UI COMPACTE (5 POINTS)
+   ========================================== */
+/* Sur mobile (< 768px), on masque les onglets du haut car la barre fixe du bas est déjà là */
+@media (max-width: 767px) {
+  .view-tabs {
+    display: none !important;
+  }
+}
+@media (min-width: 768px) {
+  .view-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .view-tabs .view-tab {
+    flex: 1 1 auto;
+  }
+  .bottom-nav {
+    display: none !important;
+  }
+}
+
+.view-tab[data-view-btn="prestations"].active {
+  background: #3a301c;
+  border-color: var(--gold-soft);
+  color: var(--gold-soft);
+  box-shadow: 4px 4px 0 var(--border-shadow), inset -3px -3px 0 #1f190d;
+}
+.view-tab[data-view-btn="livraisons"].active {
+  background: var(--red-soft);
+  border-color: var(--white-cream);
+  color: var(--white-cream);
+  box-shadow: 4px 4px 0 var(--border-shadow), inset -3px -3px 0 var(--red-dark);
+}
+.view-tab[data-view-btn="pourboires"].active {
+  background: #173021;
+  border-color: var(--green-soft);
+  color: var(--green-soft);
+  box-shadow: 4px 4px 0 var(--border-shadow), inset -3px -3px 0 #0d1c13;
+}
+
+/* Point 2 : Badges de période compacts sur 1 ligne */
+.period-meta-row {
+  margin-top: 8px;
+  gap: 8px;
+}
+.meta-badge {
+  padding: 5px 10px;
+  font-size: 9px;
+}
+
+/* Point 3 : Dropzone photo compacte */
+#form-photo-dropzone {
+  padding: 10px 12px !important;
+}
+
+/* Point 4 : Bandeau résumé compact dans les onglets catégories */
+.cat-summary-strip {
+  background: var(--bg-input);
+  border: 3px solid var(--border-soft);
+  box-shadow: 4px 4px 0 var(--border-shadow);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.cat-summary-strip.gold-accent { border-color: var(--gold-soft); }
+.cat-summary-strip.red-accent { border-color: var(--red-soft); }
+.cat-summary-strip.green-accent { border-color: var(--green-soft); }
+
+.cat-strip-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 2px dashed var(--border-soft);
+}
+.cat-strip-period {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.cat-strip-month-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: var(--gold-soft);
+  padding: 0 6px;
+}
+.compact-nav-btn {
+  padding: 6px 10px !important;
+  min-height: 32px !important;
+  font-size: 9px !important;
+}
+.cat-strip-scope {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.compact-scope-btn {
+  padding: 6px 10px !important;
+  min-height: 32px !important;
+  font-size: 9px !important;
+}
+
+.cat-strip-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+@media (max-width: 560px) {
+  .cat-strip-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+.cat-metric-chip {
+  background: var(--bg-card);
+  border: 2px solid var(--border-soft);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cat-metric-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: var(--text-muted);
+}
+.cat-metric-val {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: var(--white-cream);
+}
+.cat-summary-strip.gold-accent .cat-metric-val { color: var(--gold-soft); }
+.cat-summary-strip.red-accent .cat-metric-val { color: var(--red-light); }
+.cat-summary-strip.green-accent .cat-metric-val { color: var(--green-soft); }
+
+/* Point 5 : Lignes d'historique compactes sur 1 ligne */
+.log-item.compact-row {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.compact-row-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.compact-row-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.compact-date {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: var(--white-cream);
+  white-space: nowrap;
+}
+.compact-pills {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.compact-pills .pill {
+  padding: 3px 7px;
+  font-size: 16px;
+}
+.compact-note {
+  font-size: 18px;
+  color: var(--text-muted);
+  font-style: italic;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.compact-row-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+.compact-row-pay {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  color: var(--green-soft);
+  white-space: nowrap;
+}
+.compact-row-btns {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.compact-icon-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  padding: 6px 8px;
+  min-height: 32px;
+  min-width: 32px;
+  background: var(--bg-card);
+  color: var(--white-cream);
+  border: 2px solid var(--border-soft);
+  box-shadow: 2px 2px 0 var(--border-shadow);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.08s ease, border-color 0.15s ease;
+}
+.compact-icon-btn:hover {
+  border-color: var(--gold-soft);
+  color: var(--gold-soft);
+}
+.compact-icon-btn:active {
+  transform: translateY(2px);
+}
+.compact-icon-btn.has-photo {
+  border-color: var(--green-soft);
+  color: var(--green-soft);
+}
+.compact-icon-btn.missing-photo {
+  border-color: var(--gold-soft);
+  color: var(--gold-soft);
+}
+.compact-icon-btn.del:hover {
+  border-color: var(--red-light);
+  color: var(--red-light);
+}
+
+.stat-card-clickable {
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.stat-card-clickable:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold-soft);
+}
+.stat-card-clickable:active {
+  transform: translateY(2px);
+}
+
+/* ==========================================
+   9. AUTHENTIFICATION SUPABASE & VERROUILLAGE UI
+   ========================================== */
+body[data-auth="checking"] .container,
+body[data-auth="checking"] .bottom-nav,
+body[data-auth="unauthenticated"] .container,
+body[data-auth="unauthenticated"] .bottom-nav {
+  display: none !important;
+}
+
+body[data-auth="authenticated"] #auth-gate {
+  display: none !important;
+}
+
+.auth-gate {
+  min-height: 88dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 24px 20px;
+  margin: 0 auto;
+}
+
+.auth-checking-card {
+  text-align: center;
+  padding: 32px 20px;
+}
+
+.auth-brand-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  color: var(--gold-soft);
+  margin-bottom: 18px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.auth-checking-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.auth-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.auth-mode-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  padding: 10px 8px;
+  background: var(--bg-input);
+  color: var(--text-muted);
+  border: 2px solid var(--border-soft);
+  box-shadow: 2px 2px 0 var(--border-shadow);
+  cursor: pointer;
+  transition: transform 0.08s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.auth-mode-btn.active {
+  background: #3a301c;
+  border-color: var(--gold-soft);
+  color: var(--gold-soft);
+}
+
+.auth-submit-btn {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.auth-feedback {
+  font-size: 19px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 2px solid var(--border-soft);
+  background: var(--bg-input);
+  line-height: 1.35;
+}
+
+.auth-feedback.error {
+  border-color: var(--red-light);
+  color: var(--red-light);
+  background: #2b181c;
+}
+
+.auth-feedback.success {
+  border-color: var(--green-soft);
+  color: var(--green-soft);
+  background: #172b20;
+}
+
+.auth-logout-pill {
+  color: var(--text-muted);
+  border-color: var(--border-soft);
+}
+.auth-logout-pill:hover {
+  color: var(--red-light);
+  border-color: var(--red-light);
+}
+
+
+
+
+
+
