@@ -186,7 +186,82 @@ function updateAiKeyStatusUI() {
   }
 }
 
-// --- APPEL API GEMINI (AVEC FALLBACK DE MODÈLE) ---
+// --- APPEL API GEMINI (AVEC DÉTECTION AUTOMATIQUE DES MODÈLES DISPONIBLES) ---
+let cachedGeminiModels = null;
+let cachedGeminiModelsKey = '';
+
+async function discoverAvailableGeminiModels(apiKey) {
+  if (cachedGeminiModels && cachedGeminiModelsKey === apiKey && cachedGeminiModels.length > 0) {
+    return cachedGeminiModels;
+  }
+
+  const preferredOrder = [
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-flash-latest',
+    'gemini-2.5-pro',
+    'gemini-pro-latest'
+  ];
+
+  try {
+    const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
+    const res = await fetch(listUrl);
+    if (res.ok) {
+      const data = await res.json();
+      const rawModels = Array.isArray(data.models) ? data.models : [];
+      const supported = rawModels
+        .filter(m => {
+          const methods = m.supportedGenerationMethods || [];
+          const name = String(m.name || '').replace(/^models\//, '');
+          if (!methods.includes('generateContent')) return false;
+          if (/embedding|imagen|veo|tts|aqa|bisheng|learnlm/i.test(name)) return false;
+          return /^gemini-/i.test(name);
+        })
+        .map(m => String(m.name).replace(/^models\//, ''));
+
+      if (supported.length > 0) {
+        supported.sort((a, b) => {
+          const idxA = preferredOrder.indexOf(a);
+          const idxB = preferredOrder.indexOf(b);
+          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+          if (idxA !== -1) return -1;
+          if (idxB !== -1) return 1;
+          const isFlashA = a.includes('flash') ? 0 : 1;
+          const isFlashB = b.includes('flash') ? 0 : 1;
+          return isFlashA - isFlashB;
+        });
+        cachedGeminiModels = supported;
+        cachedGeminiModelsKey = apiKey;
+        return supported;
+      }
+    }
+  } catch (e) {
+    // Fallback silencieux sur la liste par défaut si ListModels échoue
+  }
+
+  return ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-flash-latest'];
+}
+
+function parseJsonFromGeminiText(rawText) {
+  if (!rawText) throw new Error('Réponse vide de l\'IA.');
+  const cleaned = String(rawText)
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) {
+      return JSON.parse(match[0]);
+    }
+    throw new Error('Réponse IA invalide (JSON non reconnu).');
+  }
+}
+
 async function callGeminiStructured(parts, systemInstruction) {
   const apiKey = getGeminiApiKey();
   if (!apiKey) {
@@ -195,8 +270,14 @@ async function callGeminiStructured(parts, systemInstruction) {
     throw new Error('Configure d\'abord ta clé API Gemini gratuite dans le menu 🤖.');
   }
 
-  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-  let lastError = null;
+  const models = await discoverAvailableGeminiModels(apiKey);
+  let primaryError = null;
+
+  // Fusionne la consigne système directement dans les parts utilisateur pour une compatibilité maximale v1beta
+  const combinedParts = [
+    { text: `${systemInstruction}\n\nIMPORTANT : Réponds uniquement avec l'objet JSON brut, sans texte autour.` },
+    ...parts
+  ];
 
   for (const model of models) {
     try {
@@ -205,10 +286,7 @@ async function callGeminiStructured(parts, systemInstruction) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          systemInstruction: {
-            parts: [{ text: systemInstruction }]
-          },
-          contents: [{ role: 'user', parts }],
+          contents: [{ parts: combinedParts }],
           generationConfig: {
             temperature: 0.1,
             responseMimeType: 'application/json'
@@ -222,26 +300,30 @@ async function callGeminiStructured(parts, systemInstruction) {
         if (response.status === 400 && /API_KEY_INVALID|key not valid/i.test(msg)) {
           throw new Error('Clé API Gemini invalide. Vérifie ta clé dans le menu 🤖.');
         }
-        lastError = new Error(msg);
+        // Si le modèle est introuvable (404), on passe au suivant sans écraser une vraie erreur précédente
+        if (response.status === 404 || /not found|not supported/i.test(msg)) {
+          if (!primaryError) primaryError = new Error(msg);
+          continue;
+        }
+        if (!primaryError) primaryError = new Error(msg);
         continue;
       }
 
       const data = await response.json();
-      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      const rawText = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('\n').trim();
       if (!rawText) {
-        lastError = new Error('Réponse vide de l\'IA.');
+        if (!primaryError) primaryError = new Error('Réponse vide de l\'IA.');
         continue;
       }
 
-      const cleaned = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
-      return JSON.parse(cleaned);
+      return parseJsonFromGeminiText(rawText);
     } catch (err) {
-      lastError = err;
       if (/Clé API Gemini invalide/i.test(err.message)) throw err;
+      if (!primaryError) primaryError = err;
     }
   }
 
-  throw lastError || new Error('Impossible de joindre Gemini.');
+  throw primaryError || new Error('Impossible de joindre Gemini.');
 }
 
 function blobToBase64(blob) {
@@ -254,6 +336,54 @@ function blobToBase64(blob) {
     };
     reader.onerror = reject;
     reader.readAsDataURL(blob);
+  });
+}
+
+function prepareImageForGemini(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const maxDim = 1600;
+      let width = img.width || 1200;
+      let height = img.height || 1200;
+      if (width > maxDim || height > maxDim) {
+        if (width >= height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      const commaIdx = dataUrl.indexOf(',');
+      resolve({
+        mimeType: 'image/jpeg',
+        base64: commaIdx !== -1 ? dataUrl.slice(commaIdx + 1) : dataUrl
+      });
+    };
+    img.onerror = async () => {
+      URL.revokeObjectURL(objectUrl);
+      try {
+        const b64 = await blobToBase64(file);
+        resolve({
+          mimeType: file.type || 'image/jpeg',
+          base64: b64
+        });
+      } catch (err) {
+        reject(err);
+      }
+    };
+    img.src = objectUrl;
   });
 }
 
@@ -298,8 +428,7 @@ async function analyzeSheetPhotoWithAI(file) {
   }
 
   try {
-    const compressedBlob = typeof compressPhotoBlob === 'function' ? await compressPhotoBlob(file) : file;
-    const base64Data = await blobToBase64(compressedBlob);
+    const preparedImg = await prepareImageForGemini(file);
     const refYear = typeof activePayYear === 'number' ? activePayYear : new Date().getFullYear();
     const todayYMD = typeof toYMD === 'function' ? toYMD(new Date()) : new Date().toISOString().slice(0, 10);
 
@@ -334,7 +463,7 @@ Sur la photo du tableau :
     const result = await callGeminiStructured(
       [
         { text: `Lis cette feuille de planning, ignore les autres prénoms et trouve uniquement la ou les lignes de ${TARGET_WORKER_NAME} ainsi que la date en haut à gauche.` },
-        { inline_data: { mime_type: compressedBlob.type || 'image/webp', data: base64Data } }
+        { inline_data: { mime_type: preparedImg.mimeType, data: preparedImg.base64 } }
       ],
       systemPrompt
     );
