@@ -15,7 +15,7 @@
    1. BARRE D'OUTILS HEADER (STATUT CLOUD & PWA)
    ========================================== */
 header {
-  padding: 12px 72px 12px 14px;
+  padding: 12px 16px;
   margin-bottom: 12px;
 }
 
@@ -25,7 +25,8 @@ header {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
+  width: 100%;
 }
 
 .header-brand-group {
@@ -39,7 +40,7 @@ header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-top: 0;
   padding-top: 0;
   border-top: none;
@@ -47,17 +48,17 @@ header {
 
 .status-pill {
   font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
+  font-size: 9px;
   line-height: 1.3;
-  padding: 5px 8px;
-  min-height: 30px;
+  padding: 6px 10px;
+  min-height: 34px;
   background: var(--bg-input);
   color: var(--white-cream);
   border: 2px solid var(--border-soft);
   box-shadow: 2px 2px 0 var(--border-shadow);
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   cursor: pointer;
   transition: transform 0.08s ease, border-color 0.15s ease;
 }
@@ -87,9 +88,9 @@ header {
 
 .pwa-install-btn {
   font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
-  padding: 5px 8px;
-  min-height: 30px;
+  font-size: 9px;
+  padding: 6px 10px;
+  min-height: 34px;
   background: var(--bg-input);
   color: var(--gold-soft);
   border: 2px solid var(--gold-soft);
@@ -103,11 +104,25 @@ header {
   display: inline-flex;
 }
 
+/* Bouton Son intégré proprement dans la barre d'en-tête sans déborder */
+.header-Status-bar .sound-toggle-btn {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  margin: 0 !important;
+  width: 36px;
+  height: 34px;
+  min-height: 34px;
+  font-size: 16px;
+  border: 2px solid var(--border-soft);
+  box-shadow: 2px 2px 0 var(--border-shadow);
+}
+
 @media (min-width: 1024px) {
   header {
     flex-direction: column;
     align-items: stretch;
-    padding: 12px 80px 12px 20px;
+    padding: 14px 20px;
     gap: 8px;
   }
   .header-top-row {
@@ -570,14 +585,64 @@ header {
   box-shadow: 4px 4px 0 var(--border-shadow), inset -3px -3px 0 #0d1c13;
 }
 
-/* Point 2 : Badges de période compacts sur 1 ligne */
+/* Point 2 : Badges de période lisibles et bien proportionnés */
 .period-meta-row {
-  margin-top: 8px;
-  gap: 8px;
+  margin-top: 10px;
+  gap: 10px;
 }
 .meta-badge {
-  padding: 5px 10px;
-  font-size: 9px;
+  padding: 8px 14px;
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  line-height: 1.25;
+  min-height: 42px;
+}
+.meta-badge.alert-proof {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+}
+
+/* Cartes de statistiques du mois avec encadrement et écran lumineux (comme le Total 192.00 €) */
+.stat-card.std-card {
+  border-color: var(--gold-soft);
+  box-shadow: 4px 4px 0 var(--border-shadow), 0 0 12px rgba(229, 181, 103, 0.2);
+}
+.stat-card.delivery-card {
+  border-color: var(--red-soft);
+  box-shadow: 4px 4px 0 var(--border-shadow), 0 0 14px rgba(217, 75, 87, 0.32);
+}
+.stat-card.tip-card {
+  border-color: var(--green-soft);
+  box-shadow: 4px 4px 0 var(--border-shadow), 0 0 14px rgba(90, 181, 122, 0.32);
+}
+
+.stat-card.std-card .stat-value,
+.stat-card.delivery-card .stat-value,
+.stat-card.tip-card .stat-value {
+  display: block;
+  min-width: 0;
+  margin: 4px 0 8px;
+  padding: 10px 8px;
+  letter-spacing: 1px;
+  background: #0b0a0e repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.045) 0 2px, transparent 2px 4px);
+  border: 3px solid var(--border-soft);
+  box-shadow: inset 3px 3px 0 #000;
+}
+
+.stat-card.std-card .stat-value {
+  color: var(--white-cream);
+  border-color: #635c48;
+  text-shadow: 0 0 12px rgba(242, 236, 228, 0.55), 2px 2px 0 #000;
+}
+.stat-card.delivery-card .stat-value {
+  color: var(--red-light);
+  border-color: #6e3038;
+  text-shadow: 0 0 14px rgba(235, 124, 133, 0.75), 2px 2px 0 #000;
+}
+.stat-card.tip-card .stat-value {
+  color: var(--green-soft);
+  border-color: #2b5c3f;
+  text-shadow: 0 0 14px rgba(90, 181, 122, 0.75), 2px 2px 0 #000;
 }
 
 /* Point 3 : Dropzone photo compacte */
@@ -585,13 +650,13 @@ header {
   padding: 10px 12px !important;
 }
 
-/* Point 4 : Bandeau résumé compact dans les onglets catégories */
+/* Point 4 : Bandeau résumé compact dans les onglets catégories (DA Pixel-Art) */
 .cat-summary-strip {
   background: var(--bg-input);
   border: 3px solid var(--border-soft);
   box-shadow: 4px 4px 0 var(--border-shadow);
-  padding: 12px 14px;
-  margin-bottom: 14px;
+  padding: 14px;
+  margin-bottom: 16px;
 }
 .cat-summary-strip.gold-accent { border-color: var(--gold-soft); }
 .cat-summary-strip.red-accent { border-color: var(--red-soft); }
@@ -603,52 +668,86 @@ header {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
-  padding-bottom: 10px;
-  margin-bottom: 10px;
-  border-bottom: 2px dashed var(--border-soft);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 3px dashed var(--border-soft);
 }
 .cat-strip-period {
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .cat-strip-month-label {
   font-family: 'Press Start 2P', monospace;
   font-size: 11px;
   color: var(--gold-soft);
   padding: 0 6px;
+  line-height: 1.4;
 }
 .compact-nav-btn {
-  padding: 6px 10px !important;
-  min-height: 32px !important;
-  font-size: 9px !important;
+  font-family: 'Press Start 2P', monospace !important;
+  padding: 8px 12px !important;
+  min-height: 38px !important;
+  min-width: 38px !important;
+  font-size: 10px !important;
+  background: var(--bg-panel) !important;
+  color: var(--white-cream) !important;
+  border: 2px solid var(--white-cream) !important;
+  box-shadow: 3px 3px 0 var(--border-shadow) !important;
+  cursor: pointer;
 }
+.compact-nav-btn:hover {
+  background: var(--red-soft) !important;
+  border-color: var(--white-cream) !important;
+}
+.compact-nav-btn:active {
+  transform: translateY(2px);
+}
+
 .cat-strip-scope {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 .compact-scope-btn {
-  padding: 6px 10px !important;
-  min-height: 32px !important;
-  font-size: 9px !important;
+  font-family: 'Press Start 2P', monospace !important;
+  padding: 8px 12px !important;
+  min-height: 38px !important;
+  font-size: 10px !important;
+  background: var(--bg-panel) !important;
+  color: var(--text-muted) !important;
+  border: 2px solid var(--border-soft) !important;
+  box-shadow: 3px 3px 0 var(--border-shadow) !important;
+  cursor: pointer;
+}
+.compact-scope-btn:hover {
+  border-color: var(--gold-soft) !important;
+  color: var(--white-cream) !important;
+}
+.compact-scope-btn.active {
+  background: var(--red-soft) !important;
+  color: var(--white-cream) !important;
+  border-color: var(--white-cream) !important;
+  box-shadow: 3px 3px 0 var(--border-shadow), inset -2px -2px 0 var(--red-dark) !important;
 }
 
 .cat-strip-metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 10px;
 }
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .cat-strip-metrics {
     grid-template-columns: 1fr;
   }
 }
 .cat-metric-chip {
-  background: var(--bg-card);
+  background: var(--bg-panel);
   border: 2px solid var(--border-soft);
-  padding: 8px 10px;
+  box-shadow: 3px 3px 0 var(--border-shadow);
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -658,33 +757,42 @@ header {
   font-family: 'Press Start 2P', monospace;
   font-size: 8px;
   color: var(--text-muted);
+  line-height: 1.4;
 }
 .cat-metric-val {
   font-family: 'Press Start 2P', monospace;
   font-size: 12px;
   color: var(--white-cream);
+  white-space: nowrap;
 }
-.cat-summary-strip.gold-accent .cat-metric-val { color: var(--gold-soft); }
-.cat-summary-strip.red-accent .cat-metric-val { color: var(--red-light); }
-.cat-summary-strip.green-accent .cat-metric-val { color: var(--green-soft); }
+.cat-summary-strip.gold-accent .cat-metric-val {
+  color: var(--gold-soft);
+  text-shadow: 0 0 10px rgba(229, 181, 103, 0.45);
+}
+.cat-summary-strip.red-accent .cat-metric-val {
+  color: var(--red-light);
+  text-shadow: 0 0 10px rgba(235, 124, 133, 0.45);
+}
+.cat-summary-strip.green-accent .cat-metric-val {
+  color: var(--green-soft);
+  text-shadow: 0 0 10px rgba(90, 181, 122, 0.45);
+}
 
-/* Point 5 : Lignes d'historique compactes sur 1 ligne */
+/* Point 5 : Lignes d'historique compactes sur 1 seule ligne horizontale */
 .log-item.compact-row {
-  padding: 10px 12px;
-  margin-bottom: 8px;
-}
-.compact-row-main {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 10px 14px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
 }
 .compact-row-left {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -700,12 +808,13 @@ header {
   flex-wrap: wrap;
   gap: 6px;
 }
-.compact-pills .pill {
-  padding: 3px 7px;
-  font-size: 16px;
+.compact-pills .shift-pill {
+  margin: 0 !important;
+  padding: 4px 9px;
+  font-size: 19px;
 }
 .compact-note {
-  font-size: 18px;
+  font-size: 19px;
   color: var(--text-muted);
   font-style: italic;
   max-width: 260px;
@@ -716,27 +825,28 @@ header {
 .compact-row-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-left: auto;
 }
 .compact-row-pay {
   font-family: 'Press Start 2P', monospace;
   font-size: 13px;
   color: var(--green-soft);
+  text-shadow: 0 0 8px rgba(90, 181, 122, 0.35);
   white-space: nowrap;
 }
 .compact-row-btns {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 .compact-icon-btn {
   font-family: 'Press Start 2P', monospace;
   font-size: 10px;
-  padding: 6px 8px;
-  min-height: 32px;
-  min-width: 32px;
-  background: var(--bg-card);
+  padding: 6px 9px;
+  min-height: 34px;
+  min-width: 34px;
+  background: var(--bg-panel);
   color: var(--white-cream);
   border: 2px solid var(--border-soft);
   box-shadow: 2px 2px 0 var(--border-shadow);
@@ -744,6 +854,7 @@ header {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 3px;
   transition: transform 0.08s ease, border-color 0.15s ease;
 }
 .compact-icon-btn:hover {
@@ -779,7 +890,7 @@ header {
 }
 
 /* ==========================================
-   9. AUTHENTIFICATION SUPABASE & VERROUILLAGE UI
+   9. AUTHENTIFICATION SUPABASE & VERROUILLAGE UI (DA PIXEL-ART)
    ========================================== */
 body[data-auth="checking"] .container,
 body[data-auth="checking"] .bottom-nav,
@@ -802,27 +913,48 @@ body[data-auth="authenticated"] #auth-gate {
 
 .auth-card {
   width: 100%;
-  max-width: 420px;
-  padding: 24px 20px;
+  max-width: 440px;
+  padding: 28px 24px;
   margin: 0 auto;
+  border: 4px solid var(--white-cream);
+  box-shadow: 8px 8px 0 var(--border-shadow), inset -4px -4px 0 var(--border-soft);
 }
 
 .auth-checking-card {
   text-align: center;
-  padding: 32px 20px;
+  padding: 36px 24px;
+}
+
+.auth-header-block {
+  text-align: center;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+  border-bottom: 3px dashed var(--border-soft);
 }
 
 .auth-brand-title {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   font-family: 'Press Start 2P', monospace;
-  font-size: 13px;
-  color: var(--gold-soft);
-  margin-bottom: 18px;
+  font-size: 16px;
+  color: var(--white-cream);
+  text-shadow: 3px 3px 0 var(--red-dark);
+  margin-bottom: 12px;
   text-align: center;
   line-height: 1.5;
+}
+
+.auth-subtitle-badge {
+  display: inline-block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--gold-soft);
+  background: var(--bg-input);
+  border: 2px solid var(--gold-soft);
+  padding: 6px 12px;
+  box-shadow: 3px 3px 0 var(--border-shadow);
 }
 
 .auth-checking-text {
@@ -832,40 +964,65 @@ body[data-auth="authenticated"] #auth-gate {
   line-height: 1.6;
 }
 
-.auth-mode-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+.auth-field-group {
   margin-bottom: 18px;
 }
 
-.auth-mode-btn {
+.auth-field-group .field-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: 9px;
-  padding: 10px 8px;
-  background: var(--bg-input);
-  color: var(--text-muted);
-  border: 2px solid var(--border-soft);
-  box-shadow: 2px 2px 0 var(--border-shadow);
-  cursor: pointer;
-  transition: transform 0.08s ease, border-color 0.15s ease, color 0.15s ease;
+  font-size: 10px;
+  color: var(--gold-soft);
+  margin-bottom: 8px;
+  display: block;
 }
 
-.auth-mode-btn.active {
-  background: #3a301c;
-  border-color: var(--gold-soft);
-  color: var(--gold-soft);
+.auth-pixel-input {
+  width: 100%;
+  min-height: 52px;
+  background: var(--bg-input) !important;
+  border: 3px solid var(--border-soft) !important;
+  border-radius: 0 !important;
+  color: var(--white-cream) !important;
+  font-family: 'VT323', monospace !important;
+  font-size: 24px !important;
+  padding: 10px 14px !important;
+  box-shadow: inset 3px 3px 0 var(--border-shadow), 3px 3px 0 var(--border-shadow) !important;
+  outline: none !important;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.auth-pixel-input:focus {
+  border-color: var(--gold-soft) !important;
+  background: #1b1922 !important;
+  box-shadow: inset 3px 3px 0 var(--border-shadow), 0 0 10px rgba(229, 181, 103, 0.35) !important;
+}
+
+/* Forcer la DA Pixel-Art même quand le navigateur/téléphone pré-remplit l'email et le mot de passe */
+.auth-pixel-input:-webkit-autofill,
+.auth-pixel-input:-webkit-autofill:hover,
+.auth-pixel-input:-webkit-autofill:focus,
+.auth-pixel-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #141318 inset !important;
+  -webkit-text-fill-color: #f2ece4 !important;
+  caret-color: #f2ece4 !important;
+  border: 3px solid var(--gold-soft) !important;
+  border-radius: 0 !important;
+  font-family: 'VT323', monospace !important;
+  font-size: 24px !important;
 }
 
 .auth-submit-btn {
   width: 100%;
-  margin-top: 8px;
+  margin-top: 6px;
+  min-height: 54px;
+  font-size: 13px;
 }
 
 .auth-feedback {
-  font-size: 19px;
+  font-size: 20px;
   padding: 10px 12px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   border: 2px solid var(--border-soft);
   background: var(--bg-input);
   line-height: 1.35;

@@ -263,7 +263,7 @@ function renderApp() {
           const stdMin = item.std_minutes || 0;
           const startSafe = escapeHtml(item.std_start);
           const endSafe = escapeHtml(item.std_end);
-          const stdText = stdMin > 0 ? `<span class="shift-pill pill-standard">${startSafe}→${endSafe} (${formatHoursMin(stdMin)})</span>` : '';
+          const stdText = stdMin > 0 ? `<span class="shift-pill pill-standard">${startSafe} - ${endSafe} (${formatHoursMin(stdMin)})</span>` : '';
           let delText = '';
           if (item.has_delivery || delP > 0) {
             const delMin = item.del_minutes || 0;

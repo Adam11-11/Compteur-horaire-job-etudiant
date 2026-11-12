@@ -1075,19 +1075,19 @@ function editFromCategory(id) {
   startEditShift(id);
 }
 
-function buildCategoryHeaderAndNav(titleText, dotClass, summaryMetricsHtml) {
+function buildCategoryHeaderAndNav(titleText, accentClass, summaryMetricsHtml) {
   return `
-    <div class="cat-summary-strip">
+    <div class="cat-summary-strip ${accentClass}">
       <div class="cat-strip-top">
         <div class="cat-strip-period">
-          <button type="button" class="compact-nav-btn" onclick="changePeriod(-1)" aria-label="Mois précédent">◀</button>
-          <span class="cat-strip-month">PAIE DE ${MONTH_NAMES[activePayMonth]} ${activePayYear}</span>
-          <button type="button" class="compact-nav-btn" onclick="changePeriod(1)" aria-label="Mois suivant">▶</button>
-          <button type="button" class="compact-nav-btn" onclick="resetToCurrentPeriod()" title="Revenir à aujourd'hui">AUJ.</button>
+          <button type="button" class="nav-btn compact-nav-btn" onclick="changePeriod(-1)" aria-label="Mois précédent">◀</button>
+          <span class="cat-strip-month-label">PAIE DE ${MONTH_NAMES[activePayMonth]} ${activePayYear}</span>
+          <button type="button" class="nav-btn compact-nav-btn" onclick="changePeriod(1)" aria-label="Mois suivant">▶</button>
+          <button type="button" class="nav-btn compact-nav-btn" onclick="resetToCurrentPeriod()" title="Revenir à aujourd'hui">AUJ.</button>
         </div>
         <div class="cat-strip-scope">
-          <button type="button" class="compact-scope-btn ${categoryScopeMode === 'period' ? 'active' : ''}" onclick="setCategoryScope('period')">MOIS</button>
-          <button type="button" class="compact-scope-btn ${categoryScopeMode === 'all' ? 'active' : ''}" onclick="setCategoryScope('all')">TOUT</button>
+          <button type="button" class="tab-btn compact-scope-btn ${categoryScopeMode === 'period' ? 'active' : ''}" onclick="setCategoryScope('period')">MOIS</button>
+          <button type="button" class="tab-btn compact-scope-btn ${categoryScopeMode === 'all' ? 'active' : ''}" onclick="setCategoryScope('all')">TOUT</button>
         </div>
       </div>
       <div class="cat-strip-metrics">
@@ -1100,8 +1100,8 @@ function buildCategoryHeaderAndNav(titleText, dotClass, summaryMetricsHtml) {
 function buildCategoryCardHtml(item, badgeHtml, amountValue) {
   const hasProof = itemHasProof(item);
   const photoBtnHtml = hasProof
-    ? `<button type="button" class="compact-icon-btn photo-ok" data-kind="compact-view" data-photo-act="view" data-photo-id="${item.id}" title="Voir la photo jointe">${CAM_SVG}<span>✓</span></button>`
-    : `<button type="button" class="compact-icon-btn photo-miss" data-kind="compact-add" data-photo-act="add" data-photo-id="${item.id}" title="Ajouter une photo">${CAM_SVG}<span>+</span></button>`;
+    ? `<button type="button" class="compact-icon-btn has-photo" data-kind="compact-view" data-photo-act="view" data-photo-id="${item.id}" title="Voir la photo jointe">${CAM_SVG}<span>✓</span></button>`
+    : `<button type="button" class="compact-icon-btn missing-photo" data-kind="compact-add" data-photo-act="add" data-photo-id="${item.id}" title="Ajouter une photo">${CAM_SVG}<span>+</span></button>`;
 
   const safeIdAttr = typeof item.id === 'number' ? item.id : `'${escapeHtml(item.id)}'`;
   const noteSpan = item.note ? `<span class="compact-note">— ${escapeHtml(item.note)}</span>` : '';
@@ -1117,7 +1117,7 @@ function buildCategoryCardHtml(item, badgeHtml, amountValue) {
         <div class="compact-row-btns">
           ${photoBtnHtml}
           <button type="button" class="compact-icon-btn edit-btn" onclick="editFromCategory(${safeIdAttr})" title="Modifier">✎</button>
-          <button type="button" class="compact-icon-btn del-btn" onclick="deleteShift(${safeIdAttr})" title="Supprimer">✕</button>
+          <button type="button" class="compact-icon-btn del" onclick="deleteShift(${safeIdAttr})" title="Supprimer">✕</button>
         </div>
       </div>
     </div>
@@ -1165,19 +1165,19 @@ function renderCategoryViews() {
       ? `<div class="empty-state">Aucune prestation sur cette sélection.</div>`
       : `<div class="log-list">${rows.map(({ item, stdMin, stdP }) => {
           const pillHtml = `
-            <span class="shift-pill pill-standard">${escapeHtml(item.std_start)}→${escapeHtml(item.std_end)} (${formatHoursMin(stdMin)})</span>
+            <span class="shift-pill pill-standard">${escapeHtml(item.std_start)} - ${escapeHtml(item.std_end)} (${formatHoursMin(stdMin)})</span>
             ${item.std_break > 0 ? `<span class="shift-pill pill-standard">Pause ${Number(item.std_break)}m</span>` : ''}
           `;
           return buildCategoryCardHtml(item, pillHtml, stdP);
         }).join('')}</div>`;
 
     const metricsHtml = `
-      <div class="cat-metric-chip gold"><span>MOIS (${monthCount} j)</span><strong>${monthPay.toFixed(2)} €</strong></div>
-      <div class="cat-metric-chip"><span>HEURES (moy. ${formatHoursMin(avgMin)})</span><strong>${formatHoursMin(monthMin)}</strong></div>
-      <div class="cat-metric-chip"><span>CUMUL GLOBAL</span><strong>${allPay.toFixed(2)} €</strong></div>
+      <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} j)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
+      <div class="cat-metric-chip"><span class="cat-metric-label">HEURES (moy. ${formatHoursMin(avgMin)})</span><strong class="cat-metric-val">${formatHoursMin(monthMin)}</strong></div>
+      <div class="cat-metric-chip"><span class="cat-metric-label">CUMUL GLOBAL</span><strong class="cat-metric-val">${allPay.toFixed(2)} €</strong></div>
     `;
 
-    prestContainer.innerHTML = `${buildCategoryHeaderAndNav('PRESTATIONS', 'dot-gold', metricsHtml)}${cardsHtml}`;
+    prestContainer.innerHTML = `${buildCategoryHeaderAndNav('PRESTATIONS', 'gold-accent', metricsHtml)}${cardsHtml}`;
   }
 
   // --- 2. ONGLET LIVRAISONS ---
@@ -1219,12 +1219,12 @@ function renderCategoryViews() {
         }).join('')}</div>`;
 
     const metricsHtml = `
-      <div class="cat-metric-chip red"><span>MOIS (${monthCount} livr.)</span><strong>${monthPay.toFixed(2)} €</strong></div>
-      <div class="cat-metric-chip"><span>DÉTAIL</span><strong>${monthFlatCount} forf. / ${monthLongCount} &gt;2h30</strong></div>
-      <div class="cat-metric-chip"><span>CUMUL GLOBAL</span><strong>${allPay.toFixed(2)} €</strong></div>
+      <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} livr.)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
+      <div class="cat-metric-chip"><span class="cat-metric-label">DÉTAIL</span><strong class="cat-metric-val">${monthFlatCount} forf. / ${monthLongCount} &gt;2h30</strong></div>
+      <div class="cat-metric-chip"><span class="cat-metric-label">CUMUL GLOBAL</span><strong class="cat-metric-val">${allPay.toFixed(2)} €</strong></div>
     `;
 
-    delContainer.innerHTML = `${buildCategoryHeaderAndNav('LIVRAISONS', '', metricsHtml)}${cardsHtml}`;
+    delContainer.innerHTML = `${buildCategoryHeaderAndNav('LIVRAISONS', 'red-accent', metricsHtml)}${cardsHtml}`;
   }
 
   // --- 3. ONGLET POURBOIRES (TIPS) ---
@@ -1263,12 +1263,12 @@ function renderCategoryViews() {
         }).join('')}</div>`;
 
     const metricsHtml = `
-      <div class="cat-metric-chip green"><span>MOIS (${monthCount} tips)</span><strong>${monthPay.toFixed(2)} €</strong></div>
-      <div class="cat-metric-chip"><span>MOY. / MAX</span><strong>${avgTip.toFixed(1)}€ / +${monthMaxTip.toFixed(0)}€</strong></div>
-      <div class="cat-metric-chip"><span>CUMUL GLOBAL</span><strong>${allPay.toFixed(2)} €</strong></div>
+      <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} tips)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
+      <div class="cat-metric-chip"><span class="cat-metric-label">MOY. / MAX</span><strong class="cat-metric-val">${avgTip.toFixed(1)}€ / +${monthMaxTip.toFixed(0)}€</strong></div>
+      <div class="cat-metric-chip"><span class="cat-metric-label">CUMUL GLOBAL</span><strong class="cat-metric-val">${allPay.toFixed(2)} €</strong></div>
     `;
 
-    tipContainer.innerHTML = `${buildCategoryHeaderAndNav('POURBOIRES', 'dot-gold', metricsHtml)}${cardsHtml}`;
+    tipContainer.innerHTML = `${buildCategoryHeaderAndNav('POURBOIRES', 'green-accent', metricsHtml)}${cardsHtml}`;
   }
 }
 

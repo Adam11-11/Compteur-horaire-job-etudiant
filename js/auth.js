@@ -200,35 +200,6 @@ function setAuthState(state, user = null) {
   }
 }
 
-function setAuthMode(mode) {
-  authMode = mode === 'magiclink' ? 'magiclink' : 'password';
-  const passGroup = document.getElementById('auth-password-group');
-  const passInput = document.getElementById('auth-password');
-  const submitBtn = document.getElementById('auth-submit-btn');
-  const modePassBtn = document.getElementById('auth-mode-pass-btn');
-  const modeMagicBtn = document.getElementById('auth-mode-magic-btn');
-  const feedbackEl = document.getElementById('auth-feedback');
-
-  if (feedbackEl) {
-    feedbackEl.style.display = 'none';
-    feedbackEl.textContent = '';
-  }
-
-  if (authMode === 'magiclink') {
-    if (passGroup) passGroup.style.display = 'none';
-    if (passInput) passInput.required = false;
-    if (submitBtn) submitBtn.textContent = '✉ ENVOYER LE LIEN MAGIQUE';
-    if (modePassBtn) modePassBtn.classList.remove('active');
-    if (modeMagicBtn) modeMagicBtn.classList.add('active');
-  } else {
-    if (passGroup) passGroup.style.display = 'block';
-    if (passInput) passInput.required = true;
-    if (submitBtn) submitBtn.textContent = '🔓 SE CONNECTER';
-    if (modePassBtn) modePassBtn.classList.add('active');
-    if (modeMagicBtn) modeMagicBtn.classList.remove('active');
-  }
-}
-
 function showAuthFeedback(message, type = 'error') {
   const feedbackEl = document.getElementById('auth-feedback');
   if (!feedbackEl) return;
@@ -252,7 +223,7 @@ async function handleLoginSubmit(e) {
     return;
   }
 
-  if (authMode === 'password' && !password) {
+  if (!password) {
     showAuthFeedback('Renseigne ton mot de passe.', 'error');
     if (typeof playErrorSound === 'function') playErrorSound();
     return;
@@ -267,30 +238,16 @@ async function handleLoginSubmit(e) {
   if (fb) fb.style.display = 'none';
 
   try {
-    if (authMode === 'magiclink') {
-      const redirectUrl = window.location.origin + window.location.pathname;
-      const { error } = await supabaseClient.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: redirectUrl,
-          shouldCreateUser: false
-        }
-      });
-      if (error) throw error;
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
+    if (error) throw error;
+    if (data && data.session) {
+      savePersistentAuthBackup(data.session, password);
       if (typeof playSaveSuccessSound === 'function') playSaveSuccessSound();
-      showAuthFeedback('✓ Lien envoyé ! Vérifie ta boîte mail et clique sur le lien pour ouvrir l\'appli.', 'success');
-    } else {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-      });
-      if (error) throw error;
-      if (data && data.session) {
-        savePersistentAuthBackup(data.session, password);
-        if (typeof playSaveSuccessSound === 'function') playSaveSuccessSound();
-        if (passInput) passInput.value = '';
-        onAuthenticatedSession(data.session);
-      }
+      if (passInput) passInput.value = '';
+      onAuthenticatedSession(data.session);
     }
   } catch (err) {
     if (typeof playErrorSound === 'function') playErrorSound();

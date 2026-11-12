@@ -50,7 +50,7 @@ function renderPresetPills() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'preset-pill';
-    btn.textContent = `${s} → ${e}`;
+    btn.textContent = `${s} - ${e}`;
     btn.setAttribute('aria-label', `Remplir horaires de ${s} à ${e}`);
     btn.onclick = () => {
       document.getElementById('std-start').value = s;

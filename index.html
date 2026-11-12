@@ -38,8 +38,8 @@
   <div id="auth-gate" class="auth-gate" aria-live="polite">
     <!-- État 1 : Vérification initiale de la session -->
     <div id="auth-checking-box" class="pixel-box auth-card auth-checking-card">
-      <div class="auth-brand-title">²
-        <svg width="24" height="24" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+      <div class="auth-brand-title">
+        <svg width="26" height="26" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
           <rect x="5" y="1" width="6" height="14" fill="#d94b57" />
           <rect x="3" y="3" width="10" height="10" fill="#d94b57" />
           <rect x="5" y="3" width="6" height="10" fill="#eb7c85" />
@@ -52,33 +52,29 @@
 
     <!-- État 2 : Formulaire de connexion -->
     <div id="auth-form-box" class="pixel-box auth-card" style="display: none;">
-      <div class="auth-brand-title">
-        <svg width="24" height="24" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
-          <rect x="5" y="1" width="6" height="14" fill="#d94b57" />
-          <rect x="3" y="3" width="10" height="10" fill="#d94b57" />
-          <rect x="5" y="3" width="6" height="10" fill="#eb7c85" />
-          <rect x="6" y="5" width="4" height="6" fill="#f2ece4" />
-        </svg>
-        <span>ACCÈS PRIVÉ</span>
-      </div>
-
-      <div class="auth-mode-tabs" role="group" aria-label="Méthode de connexion">
-        <button type="button" id="auth-mode-pass-btn" class="auth-mode-btn active" onclick="setAuthMode('password')">🔑
-          MOT DE PASSE</button>
-        <button type="button" id="auth-mode-magic-btn" class="auth-mode-btn" onclick="setAuthMode('magiclink')">✉ MAGIC
-          LINK</button>
+      <div class="auth-header-block">
+        <div class="auth-brand-title">
+          <svg width="28" height="28" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+            <rect x="5" y="1" width="6" height="14" fill="#d94b57" />
+            <rect x="3" y="3" width="10" height="10" fill="#d94b57" />
+            <rect x="5" y="3" width="6" height="10" fill="#eb7c85" />
+            <rect x="6" y="5" width="4" height="6" fill="#f2ece4" />
+          </svg>
+          <span>COMPTEUR PAELLA</span>
+        </div>
+        <div class="auth-subtitle-badge">🔒 ACCÈS PRIVÉ SÉCURISÉ</div>
       </div>
 
       <form id="auth-login-form" method="post" action="#">
-        <div class="form-group">
+        <div class="form-group auth-field-group">
           <label class="field-label" for="auth-email">ADRESSE EMAIL</label>
-          <input type="email" id="auth-email" name="email" autocomplete="username" placeholder="ton.email@exemple.com"
+          <input type="email" id="auth-email" class="auth-pixel-input" name="email" autocomplete="username" placeholder="ton.email@exemple.com"
             required />
         </div>
 
-        <div class="form-group" id="auth-password-group">
+        <div class="form-group auth-field-group" id="auth-password-group">
           <label class="field-label" for="auth-password">MOT DE PASSE</label>
-          <input type="password" id="auth-password" name="password" autocomplete="current-password"
+          <input type="password" id="auth-password" class="auth-pixel-input" name="password" autocomplete="current-password"
             placeholder="••••••••" required />
         </div>
 
@@ -120,13 +116,13 @@
             title="Se déconnecter">
             🔒 DÉCO
           </button>
+
+          <button type="button" id="sound-toggle-btn" class="sound-toggle-btn" onclick="toggleSoundMute()"
+            aria-label="Activer ou couper les effets sonores" aria-pressed="false" title="Activer / couper le son">
+            🔊
+          </button>
         </div>
       </div>
-
-      <button type="button" id="sound-toggle-btn" class="sound-toggle-btn" onclick="toggleSoundMute()"
-        aria-label="Activer ou couper les effets sonores" aria-pressed="false">
-        🔊
-      </button>
     </header>
 
     <!-- ONGLETS (PC & Mobile) : COMPTEUR / PRESTATIONS / LIVRAISONS / POURBOIRES / AGENDA -->
@@ -181,21 +177,21 @@
         </div>
 
         <div class="stats-grid" id="period-stats-grid">
-          <div class="stat-card stat-card-clickable" onclick="setView('prestations')" role="button" tabindex="0"
+          <div class="stat-card std-card stat-card-clickable" onclick="setView('prestations')" role="button" tabindex="0"
             title="Voir le détail des prestations">
-            <span class="stat-title">TAF DU MOIS (12€/H, MIN. 60€) ➔</span>
+            <span class="stat-title">TAF DU MOIS (12€/H, MIN. 60€)</span>
             <div class="stat-value" id="month-std-pay">0.00 €</div>
             <div class="stat-sub" id="month-std-hours">0h00 • Moy. 0h00/j</div>
           </div>
           <div class="stat-card delivery-card stat-card-clickable" onclick="setView('livraisons')" role="button"
             tabindex="0" title="Voir le détail des livraisons">
-            <span class="stat-title">LIVRAISONS DU MOIS ➔</span>
+            <span class="stat-title">LIVRAISONS DU MOIS</span>
             <div class="stat-value" id="month-del-pay">0.00 €</div>
             <div class="stat-sub" id="month-del-count">0 livraison</div>
           </div>
           <div class="stat-card tip-card stat-card-clickable" onclick="setView('pourboires')" role="button" tabindex="0"
             title="Voir le détail des pourboires">
-            <span class="stat-title">POURBOIRES DU MOIS ➔</span>
+            <span class="stat-title">POURBOIRES DU MOIS</span>
             <div class="stat-value" id="month-tip-pay">0.00 €</div>
             <div class="stat-sub" id="month-tip-count">0 pourboire</div>
           </div>
