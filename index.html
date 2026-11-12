@@ -339,38 +339,8 @@
           </div>
         </div>
 
-        <!-- ASSISTANT IA : SCANNER FEUILLE "ADAM" + DICTÉE VOCALE -->
-        <div class="ai-assistant-box" id="ai-assistant-box">
-          <div class="ai-assistant-row">
-            <div class="ai-assistant-title">🤖 SAISIE IA</div>
-            <div class="ai-assistant-btns">
-              <button type="button" class="pixel-btn btn-gold ai-btn" id="ai-scan-photo-btn" onclick="triggerAiSheetPhotoScan()">
-                📸 SCANNER FEUILLE
-              </button>
-              <button type="button" class="pixel-btn btn-secondary ai-btn" id="ai-voice-btn" onclick="toggleAiVoiceDictation()">
-                🎙️ DICTER
-              </button>
-              <button type="button" class="compact-nav-btn ai-cfg-btn" id="ai-key-toggle-btn" onclick="toggleAiConfigPanel()" title="Configurer la clé API Gemini gratuite">
-                ⚙ CLÉ IA
-              </button>
-            </div>
-          </div>
-          <input type="file" id="ai-sheet-photo-input" accept="image/*" hidden />
-
-          <!-- Panneau de configuration de la clé Gemini (1 seule fois, synchronisée avec Supabase) -->
-          <div id="ai-config-panel" class="ai-config-panel" style="display: none;">
-            <div class="ai-config-help">
-              Clé gratuite sur <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color: var(--gold-soft); text-decoration: underline;">aistudio.google.com/apikey</a> (synchronisée sur ton compte PC &amp; mobile) :
-            </div>
-            <div class="ai-config-input-row">
-              <input type="password" id="ai-api-key-input" placeholder="Colle ta clé AIzaSy..." autocomplete="off" />
-              <button type="button" class="pixel-btn btn-gold ai-save-key-btn" onclick="saveGeminiKeyFromUI()">OK</button>
-            </div>
-          </div>
-
-          <!-- Bandeau de résultat IA (avec bouton Sauvegarder Direct) -->
-          <div id="ai-scan-result-banner" class="ai-result-banner" style="display: none;" aria-live="polite"></div>
-        </div>
+        <!-- Bandeau de résultat IA (affiché automatiquement après un scan photo ou une dictée) -->
+        <div id="ai-scan-result-banner" class="ai-result-banner" style="display: none; margin-bottom: 14px;" aria-live="polite"></div>
 
         <!-- BOÎTE MASQUÉE POUR MOIS ANTÉRIEUR (GAIN GLOBAL SIMPLIFIÉ) -->
         <div id="legacy-container" class="pixel-box"
@@ -652,6 +622,47 @@
       </section>
 
     </div>
+  </div>
+
+  <!-- BOUTON CIRCULAIRE IA GÉNÉRALISÉ EN BAS À GAUCHE + MENU DÉROULANT -->
+  <div id="ai-fab-wrapper" class="ai-fab-wrapper">
+    <!-- Menu déroulant IA -->
+    <div id="ai-fab-menu" class="ai-fab-menu" role="menu" aria-label="Actions Assistant IA">
+      <div class="ai-fab-menu-header">🤖 ASSISTANT IA</div>
+      <button type="button" class="ai-fab-menu-item" id="ai-voice-btn" onclick="handleAiMenuVoiceClick()">
+        <span class="ai-item-icon">🎙️</span>
+        <span>DICTER AU MICRO</span>
+      </button>
+      <button type="button" class="ai-fab-menu-item" id="ai-scan-photo-btn" onclick="handleAiMenuPhotoClick()">
+        <span class="ai-item-icon">📸</span>
+        <span>ENVOYER UNE PHOTO</span>
+      </button>
+      <button type="button" class="ai-fab-menu-item ai-fab-key-item" id="ai-key-toggle-btn" onclick="toggleAiConfigPanel()">
+        <span class="ai-item-icon">⚙</span>
+        <span id="ai-key-status-label">CONFIGURER CLÉ IA</span>
+      </button>
+
+      <!-- Mini-panneau de clé API intégré au menu -->
+      <div id="ai-config-panel" class="ai-config-panel" style="display: none;">
+        <div class="ai-config-help">
+          Clé gratuite sur <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color: var(--gold-soft); text-decoration: underline;">aistudio.google.com/apikey</a> :
+        </div>
+        <div class="ai-config-input-row">
+          <input type="password" id="ai-api-key-input" placeholder="AIzaSy..." autocomplete="off" />
+          <button type="button" class="pixel-btn btn-gold ai-save-key-btn" onclick="saveGeminiKeyFromUI()">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulle d'état flottante pendant l'écoute ou l'analyse IA -->
+    <div id="ai-fab-live-bubble" class="ai-fab-live-bubble" style="display: none;" aria-live="polite"></div>
+
+    <!-- Bouton circulaire principal en bas à gauche -->
+    <button type="button" id="ai-fab-btn" class="ai-fab-btn" onclick="handleAiFabMainClick()" aria-label="Ouvrir l'assistant IA (Voix ou Photo)" aria-expanded="false">
+      <span id="ai-fab-icon">🤖</span>
+    </button>
+
+    <input type="file" id="ai-sheet-photo-input" accept="image/*" hidden />
   </div>
 
   <!-- Navigation basse (mobile / tablette) -->

@@ -1,5 +1,5 @@
 // ==========================================
-// ASSISTANT IA (SCANNER FEUILLE DE ROUTE "ADAM" & DICTÉE VOCALE)
+// ASSISTANT IA GÉNÉRALISÉ (BOUTON CIRCULAIRE FLOTTANT : DICTÉE VOCALE & SCAN PHOTO "ADAM")
 // Propulsé par Google Gemini 2.5 Flash (Gratuit via Google AI Studio)
 // ==========================================
 
@@ -8,9 +8,71 @@ const GEMINI_KEY_COOKIE = 'cp_gemini_key_v1';
 const TARGET_WORKER_NAME = 'ADAM';
 
 let isVoiceRecording = false;
+let isAiMenuOpen = false;
 let activeSpeechRecognition = null;
 let activeMediaRecorder = null;
 let recordedAudioChunks = [];
+let pendingExtraAiEntries = [];
+
+// --- GESTION DU MENU FLOTTANT CIRCULAIRE (BAS GAUCHE) ---
+function toggleAiFabMenu(forceState) {
+  const menu = document.getElementById('ai-fab-menu');
+  const btn = document.getElementById('ai-fab-btn');
+  if (!menu || !btn) return;
+
+  isAiMenuOpen = typeof forceState === 'boolean' ? forceState : !isAiMenuOpen;
+  menu.classList.toggle('open', isAiMenuOpen);
+  btn.setAttribute('aria-expanded', isAiMenuOpen ? 'true' : 'false');
+  if (!isAiMenuOpen) {
+    const cfg = document.getElementById('ai-config-panel');
+    if (cfg) cfg.style.display = 'none';
+  }
+}
+
+function handleAiFabMainClick() {
+  if (typeof playClickSound === 'function') playClickSound();
+  if (isVoiceRecording) {
+    stopAiVoiceDictation();
+    return;
+  }
+  toggleAiFabMenu();
+}
+
+function handleAiMenuVoiceClick() {
+  toggleAiFabMenu(false);
+  toggleAiVoiceDictation();
+}
+
+function handleAiMenuPhotoClick() {
+  if (!getGeminiApiKey()) {
+    toggleAiFabMenu(true);
+    toggleAiConfigPanel(true);
+    showToast('Colle d\'abord ta clé API Gemini gratuite pour scanner tes feuilles !', { type: 'info', duration: 4000 });
+    return;
+  }
+  toggleAiFabMenu(false);
+  triggerAiSheetPhotoScan();
+}
+
+function showAiLiveBubble(html, stateClass = 'loading', autoHideMs = 0) {
+  const bubble = document.getElementById('ai-fab-live-bubble');
+  if (!bubble) return;
+  if (!html) {
+    bubble.style.display = 'none';
+    bubble.innerHTML = '';
+    return;
+  }
+  bubble.className = `ai-fab-live-bubble ${stateClass}`;
+  bubble.innerHTML = html;
+  bubble.style.display = 'block';
+  if (autoHideMs > 0) {
+    setTimeout(() => {
+      if (bubble.innerHTML === html) {
+        bubble.style.display = 'none';
+      }
+    }, autoHideMs);
+  }
+}
 
 // --- GESTION DE LA CLÉ API GEMINI (SYNCHRONISÉE AVEC SUPABASE AUTH) ---
 function getGeminiApiKey() {
@@ -64,7 +126,6 @@ async function saveGeminiKeyFromUI() {
 
   saveGeminiApiKeyLocally(key);
 
-  // Synchroniser dans les métadonnées privées de l'utilisateur Supabase (pour l'avoir automatiquement sur téléphone et PC)
   try {
     if (supabaseClient && supabaseClient.auth) {
       const { data } = await supabaseClient.auth.updateUser({
@@ -113,12 +174,13 @@ function toggleAiConfigPanel(forceState) {
 function updateAiKeyStatusUI() {
   const key = getGeminiApiKey();
   const cfgBtn = document.getElementById('ai-key-toggle-btn');
+  const labelEl = document.getElementById('ai-key-status-label');
   if (cfgBtn) {
     if (key) {
-      cfgBtn.textContent = '⚙ IA PRÊTE ✓';
+      if (labelEl) labelEl.textContent = 'CLÉ IA PRÊTE ✓';
       cfgBtn.classList.add('ai-ready');
     } else {
-      cfgBtn.textContent = '⚙ CLÉ IA';
+      if (labelEl) labelEl.textContent = 'CONFIGURER CLÉ IA';
       cfgBtn.classList.remove('ai-ready');
     }
   }
@@ -128,8 +190,9 @@ function updateAiKeyStatusUI() {
 async function callGeminiStructured(parts, systemInstruction) {
   const apiKey = getGeminiApiKey();
   if (!apiKey) {
+    toggleAiFabMenu(true);
     toggleAiConfigPanel(true);
-    throw new Error('Configure d\'abord ta clé API Gemini gratuite (bouton ⚙ CLÉ IA).');
+    throw new Error('Configure d\'abord ta clé API Gemini gratuite dans le menu 🤖.');
   }
 
   const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
@@ -157,7 +220,7 @@ async function callGeminiStructured(parts, systemInstruction) {
         const errBody = await response.json().catch(() => ({}));
         const msg = (errBody && errBody.error && errBody.error.message) || `Erreur HTTP ${response.status}`;
         if (response.status === 400 && /API_KEY_INVALID|key not valid/i.test(msg)) {
-          throw new Error('Clé API Gemini invalide. Vérifie ta clé dans ⚙ CLÉ IA.');
+          throw new Error('Clé API Gemini invalide. Vérifie ta clé dans le menu 🤖.');
         }
         lastError = new Error(msg);
         continue;
@@ -197,6 +260,7 @@ function blobToBase64(blob) {
 // --- 1. SCANNER PHOTO DE LA FEUILLE DE ROUTE (LIGNE "ADAM") ---
 function triggerAiSheetPhotoScan() {
   if (!getGeminiApiKey()) {
+    toggleAiFabMenu(true);
     toggleAiConfigPanel(true);
     showToast('Colle d\'abord ta clé API Gemini gratuite pour scanner tes feuilles !', { type: 'info', duration: 4000 });
     return;
@@ -213,19 +277,20 @@ async function analyzeSheetPhotoWithAI(file) {
 
   // 1. D'une pierre deux coups : attacher immédiatement la photo comme preuve dans le formulaire
   if (typeof setFormPhotoFile === 'function') {
-    setFormPhotoFile(file, true); // true = éviter une boucle si appelé depuis setFormPhotoFile
+    setFormPhotoFile(file, true);
   }
 
   if (!getGeminiApiKey()) return;
 
-  const scanBtn = document.getElementById('ai-scan-photo-btn');
+  const fabBtn = document.getElementById('ai-fab-btn');
+  const fabIcon = document.getElementById('ai-fab-icon');
   const statusBanner = document.getElementById('ai-scan-result-banner');
-  const origBtnHtml = scanBtn ? scanBtn.innerHTML : '📸 SCANNER FEUILLE';
 
-  if (scanBtn) {
-    scanBtn.disabled = true;
-    scanBtn.innerHTML = '⏳ LECTURE IA...';
-  }
+  if (fabBtn) fabBtn.classList.add('busy');
+  if (fabIcon) fabIcon.textContent = '⏳';
+
+  showAiLiveBubble('🤖 Lecture de la feuille (recherche de <strong>ADAM</strong>)...', 'loading');
+
   if (statusBanner) {
     statusBanner.className = 'ai-result-banner loading';
     statusBanner.style.display = 'block';
@@ -233,7 +298,6 @@ async function analyzeSheetPhotoWithAI(file) {
   }
 
   try {
-    // Compresser l'image pour un envoi ultra-rapide en 4G/5G
     const compressedBlob = typeof compressPhotoBlob === 'function' ? await compressPhotoBlob(file) : file;
     const base64Data = await blobToBase64(compressedBlob);
     const refYear = typeof activePayYear === 'number' ? activePayYear : new Date().getFullYear();
@@ -241,38 +305,45 @@ async function analyzeSheetPhotoWithAI(file) {
 
     const systemPrompt = `Tu es un assistant expert en lecture de feuilles de planning/pointage de traiteur Paella.
 Sur la photo du tableau :
-1. En haut à gauche du tableau figure la date du jour au format "SAM. 07.11" ou "DIM. 15/11" (Jour.Mois). Convertis-la au format "YYYY-MM-DD" en utilisant l'année de référence ${refYear} (ou aujourd'hui ${todayYMD} si illisible).
-2. Cherche dans la colonne "PERSONNELS" la ligne où est écrit "${TARGET_WORKER_NAME}" (insensible à la casse).
-3. Sur cette ligne "${TARGET_WORKER_NAME}" :
+1. Il y a plusieurs lignes pour différents employés (WALID, KAMAL, SAID, WISSAM, ADAM, etc.). Ignore tous les autres employés et cherche UNIQUEMENT la ou les lignes où la colonne "PERSONNELS" contient "${TARGET_WORKER_NAME}" (insensible à la casse).
+2. En haut à gauche du tableau figure la date du jour au format "SAM. 07.11" ou "DIM. 15/11" (Jour.Mois). Convertis-la au format "YYYY-MM-DD" en utilisant l'année de référence ${refYear} (ou aujourd'hui ${todayYMD} si illisible).
+3. Pour CHAQUE ligne où "PERSONNELS" est "${TARGET_WORKER_NAME}" :
    - La colonne "RDV" contient l'heure de début imprimée (ex: "19H15" -> "19:15").
    - La colonne juste à droite de "RDV" contient l'heure de fin écrite à la main au stylo (ex: "23h40" -> "23:40").
-   - La colonne de gauche tout au début indique parfois le véhicule (ex: "P. TRAFIC", "K. LONG", "TB 1").
+   - La colonne de gauche tout au début indique le véhicule (ex: "P. TRAFIC", "K. LONG", "TB 1").
    - La colonne "PRESTATIONS" indique la ville et le détail (ex: "VILLIERS EN BIERE 60 P. (SP 21h00)").
+   - Si la prestation indique uniquement une livraison pure ("LIV 1", "LIV 2" sans service sur place "SP" ni "LIV + SERV") et qu'il s'agit d'une livraison, indique "category": "livraisons" et "has_delivery": true ; sinon indique "category": "prestations".
 4. Réponds UNIQUEMENT avec un objet JSON strict de la forme :
 {
   "found": true,
   "date": "YYYY-MM-DD",
-  "std_start": "HH:MM",
-  "std_end": "HH:MM",
-  "std_break": 0,
-  "has_delivery": false,
-  "tip_pay": 0,
-  "note": "Ville + nombre de parts + véhicule (ex: Villiers-en-Bière 60P - P. Trafic)",
-  "summary": "Résumé court de ce qui a été lu"
-}
-Si le nom "${TARGET_WORKER_NAME}" n'est pas trouvé mais qu'il s'agit d'un horaire écrit autrement, remplis du mieux possible.`;
+  "entries": [
+    {
+      "category": "prestations",
+      "std_start": "HH:MM",
+      "std_end": "HH:MM",
+      "std_break": 0,
+      "has_delivery": false,
+      "tip_pay": 0,
+      "note": "Ville + nombre de parts + véhicule (ex: Villiers-en-Bière 60P - P. Trafic)"
+    }
+  ],
+  "summary": "Résumé court de ce qui a été lu pour ${TARGET_WORKER_NAME}"
+}`;
 
     const result = await callGeminiStructured(
       [
-        { text: `Lis cette feuille de planning, trouve la ligne de ${TARGET_WORKER_NAME} ainsi que la date en haut à gauche, et extrais les horaires.` },
+        { text: `Lis cette feuille de planning, ignore les autres prénoms et trouve uniquement la ou les lignes de ${TARGET_WORKER_NAME} ainsi que la date en haut à gauche.` },
         { inline_data: { mime_type: compressedBlob.type || 'image/webp', data: base64Data } }
       ],
       systemPrompt
     );
 
+    showAiLiveBubble('', '');
     applyAiExtractedShift(result, 'photo');
   } catch (err) {
     if (typeof playErrorSound === 'function') playErrorSound();
+    showAiLiveBubble(`⚠ ${escapeHtml(err.message || 'Impossible de lire la photo')}`, 'error', 4500);
     if (statusBanner) {
       statusBanner.className = 'ai-result-banner error';
       statusBanner.style.display = 'block';
@@ -280,10 +351,8 @@ Si le nom "${TARGET_WORKER_NAME}" n'est pas trouvé mais qu'il s'agit d'un horai
     }
     showToast(`Erreur lecture IA : ${err.message || 'Échec'}`, { type: 'error', duration: 4000 });
   } finally {
-    if (scanBtn) {
-      scanBtn.disabled = false;
-      scanBtn.innerHTML = origBtnHtml;
-    }
+    if (fabBtn) fabBtn.classList.remove('busy');
+    if (fabIcon) fabIcon.textContent = '🤖';
   }
 }
 
@@ -297,12 +366,12 @@ function toggleAiVoiceDictation() {
 }
 
 async function startAiVoiceDictation() {
-  const voiceBtn = document.getElementById('ai-voice-btn');
-  const statusBanner = document.getElementById('ai-scan-result-banner');
+  const fabBtn = document.getElementById('ai-fab-btn');
+  const fabIcon = document.getElementById('ai-fab-icon');
 
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  // Priorité 1 : Enregistrement audio envoyé à Gemini (ultra fiable sur mobile iOS/Android et comprend tout) si clé présente
+  // Priorité 1 : Enregistrement audio envoyé à Gemini (ultra fiable sur mobile iOS/Android) si clé présente
   if (getGeminiApiKey() && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -324,18 +393,12 @@ async function startAiVoiceDictation() {
 
       activeMediaRecorder.start();
       isVoiceRecording = true;
-      if (voiceBtn) {
-        voiceBtn.classList.add('recording');
-        voiceBtn.innerHTML = '⏹ FINI DE PARLER';
-      }
-      if (statusBanner) {
-        statusBanner.className = 'ai-result-banner loading';
-        statusBanner.style.display = 'block';
-        statusBanner.innerHTML = '🎙️ <strong>Parle maintenant !</strong> (Ex: <em>"Aujourd\'hui j\'ai fait 19h15 à 23h40 à Villiers"</em>) puis reclique sur le bouton.';
-      }
+      if (fabBtn) fabBtn.classList.add('recording');
+      if (fabIcon) fabIcon.textContent = '⏹';
+      showAiLiveBubble('🎙️ <strong>Parle maintenant !</strong><br><small>Appuie sur ⏹ quand tu as fini</small>', 'recording');
       return;
     } catch (micErr) {
-      // Si micro refusé ou indisponible, tenter SpeechRecognition en fallback
+      // Fallback vers SpeechRecognition si disponible
     }
   }
 
@@ -348,15 +411,9 @@ async function startAiVoiceDictation() {
       activeSpeechRecognition.maxAlternatives = 1;
 
       isVoiceRecording = true;
-      if (voiceBtn) {
-        voiceBtn.classList.add('recording');
-        voiceBtn.innerHTML = '⏹ ÉCOUTE...';
-      }
-      if (statusBanner) {
-        statusBanner.className = 'ai-result-banner loading';
-        statusBanner.style.display = 'block';
-        statusBanner.innerHTML = '🎙️ <strong>Parle maintenant :</strong> dis tes horaires, livraison ou pourboire...';
-      }
+      if (fabBtn) fabBtn.classList.add('recording');
+      if (fabIcon) fabIcon.textContent = '⏹';
+      showAiLiveBubble('🎙️ <strong>Écoute en cours...</strong><br><small>Dis tes horaires, livraison ou pourboire</small>', 'recording');
 
       activeSpeechRecognition.onresult = async (event) => {
         const transcript = event.results?.[0]?.[0]?.transcript || '';
@@ -368,6 +425,7 @@ async function startAiVoiceDictation() {
 
       activeSpeechRecognition.onerror = (event) => {
         stopAiVoiceDictation();
+        showAiLiveBubble('', '');
         showToast(`Erreur micro : ${event.error || 'Non autorisé'}`, { type: 'error' });
       };
 
@@ -380,16 +438,18 @@ async function startAiVoiceDictation() {
     } catch (e) {}
   }
 
-  showToast('Active l\'accès au micro dans ton navigateur ou configure ta clé IA (⚙ CLÉ IA).', { type: 'warn', duration: 4000 });
+  toggleAiFabMenu(true);
+  toggleAiConfigPanel(true);
+  showToast('Active l\'accès au micro ou configure ta clé IA gratuite.', { type: 'warn', duration: 4000 });
 }
 
 function stopAiVoiceDictation() {
   isVoiceRecording = false;
-  const voiceBtn = document.getElementById('ai-voice-btn');
-  if (voiceBtn) {
-    voiceBtn.classList.remove('recording');
-    voiceBtn.innerHTML = '🎙️ DICTER';
-  }
+  const fabBtn = document.getElementById('ai-fab-btn');
+  const fabIcon = document.getElementById('ai-fab-icon');
+  if (fabBtn) fabBtn.classList.remove('recording');
+  if (fabIcon) fabIcon.textContent = '🤖';
+
   if (activeMediaRecorder && activeMediaRecorder.state !== 'inactive') {
     try { activeMediaRecorder.stop(); } catch (e) {}
   }
@@ -400,12 +460,11 @@ function stopAiVoiceDictation() {
 }
 
 async function processVoiceAudioWithGemini(audioBlob) {
-  const statusBanner = document.getElementById('ai-scan-result-banner');
-  if (statusBanner) {
-    statusBanner.className = 'ai-result-banner loading';
-    statusBanner.style.display = 'block';
-    statusBanner.innerHTML = '🤖 Transcription et analyse de ta voix en cours...';
-  }
+  const fabBtn = document.getElementById('ai-fab-btn');
+  const fabIcon = document.getElementById('ai-fab-icon');
+  if (fabBtn) fabBtn.classList.add('busy');
+  if (fabIcon) fabIcon.textContent = '⏳';
+  showAiLiveBubble('🤖 Analyse de ta voix en cours...', 'loading');
 
   try {
     const base64Audio = await blobToBase64(audioBlob);
@@ -414,55 +473,50 @@ async function processVoiceAudioWithGemini(audioBlob) {
 
     const result = await callGeminiStructured(
       [
-        { text: `Aujourd'hui nous sommes le ${todayYMD}. Écoute cet enregistrement vocal et extrais les informations de pointage au format JSON.` },
+        { text: `Aujourd'hui nous sommes le ${todayYMD}. Écoute cet enregistrement vocal, détermine s'il s'agit d'une prestation (horaires), d'une livraison ou d'un pourboire, et extrais les informations au format JSON.` },
         { inline_data: { mime_type: audioBlob.type || 'audio/webm', data: base64Audio } }
       ],
       systemPrompt
     );
 
+    showAiLiveBubble('', '');
     applyAiExtractedShift(result, 'voice');
   } catch (err) {
     if (typeof playErrorSound === 'function') playErrorSound();
-    if (statusBanner) {
-      statusBanner.className = 'ai-result-banner error';
-      statusBanner.style.display = 'block';
-      statusBanner.textContent = `⚠ ${err.message || 'Erreur analyse vocale'}`;
-    }
+    showAiLiveBubble(`⚠ ${escapeHtml(err.message || 'Erreur analyse vocale')}`, 'error', 4500);
+  } finally {
+    if (fabBtn) fabBtn.classList.remove('busy');
+    if (fabIcon) fabIcon.textContent = '🤖';
   }
 }
 
 async function processVoiceTranscript(transcript) {
-  const statusBanner = document.getElementById('ai-scan-result-banner');
-  if (statusBanner) {
-    statusBanner.className = 'ai-result-banner loading';
-    statusBanner.style.display = 'block';
-    statusBanner.innerHTML = `🎙️ Entendu : <em>"${escapeHtml(transcript)}"</em>...`;
-  }
-
+  showAiLiveBubble(`🎙️ <em>"${escapeHtml(transcript)}"</em>...`, 'loading');
   const todayYMD = typeof toYMD === 'function' ? toYMD(new Date()) : new Date().toISOString().slice(0, 10);
 
-  // Si clé Gemini présente, utiliser Gemini pour comprendre n'importe quelle formulation
   if (getGeminiApiKey()) {
     try {
       const result = await callGeminiStructured(
         [{ text: `Aujourd'hui nous sommes le ${todayYMD}. Phrase dictée : "${transcript}"` }],
         buildVoiceSystemPrompt(todayYMD)
       );
+      showAiLiveBubble('', '');
       applyAiExtractedShift(result, 'voice');
       return;
     } catch (e) {}
   }
 
-  // Fallback local instantané sans clé API (analyse par expressions régulières)
   const localResult = parseVoiceTranscriptLocally(transcript, todayYMD);
+  showAiLiveBubble('', '');
   applyAiExtractedShift(localResult, 'voice');
 }
 
 function buildVoiceSystemPrompt(todayYMD) {
-  return `Tu es un assistant de pointage pour un job étudiant (traiteur Paella).
+  return `Tu es un assistant de pointage intelligent pour un job étudiant (traiteur Paella).
 Date d'aujourd'hui : ${todayYMD}.
-À partir de ce que dit l'utilisateur, extrais un objet JSON strict :
+À partir de ce que dit l'utilisateur, détermine la catégorie principale ("prestations", "livraisons", ou "pourboires") et extrais un objet JSON strict :
 {
+  "category": "prestations | livraisons | pourboires",
   "date": "YYYY-MM-DD",
   "std_start": "HH:MM ou vide",
   "std_end": "HH:MM ou vide",
@@ -509,7 +563,12 @@ function parseVoiceTranscriptLocally(text, todayYMD) {
     tip_pay = parseFloat(String(tipMatch[1] || tipMatch[2]).replace(',', '.')) || 0;
   }
 
+  let category = 'prestations';
+  if (!std_start && has_delivery) category = 'livraisons';
+  else if (!std_start && !has_delivery && tip_pay > 0) category = 'pourboires';
+
   return {
+    category,
     date: dateStr,
     std_start,
     std_end,
@@ -521,19 +580,82 @@ function parseVoiceTranscriptLocally(text, todayYMD) {
   };
 }
 
-// --- APPLICATION DES DONNÉES EXTRAITES DANS LE FORMULAIRE ---
-function applyAiExtractedShift(data, sourceType) {
-  const statusBanner = document.getElementById('ai-scan-result-banner');
-  if (!data) return;
+// --- APPLICATION AUTOMATIQUE DANS LA BONNE SECTION & SAUVEGARDE ---
+async function saveAllAiDetectedEntries() {
+  const extras = [...pendingExtraAiEntries];
+  pendingExtraAiEntries = [];
+  await saveShift(null);
 
-  // Basculer sur l'onglet adéquat si nécessaire
-  const currentView = document.body.getAttribute('data-view');
-  if (data.std_start && data.std_end && currentView !== 'prestations') {
-    if (typeof setView === 'function') setView('prestations');
-  } else if (!data.std_start && data.has_delivery && currentView !== 'livraisons') {
-    if (typeof setView === 'function') setView('livraisons');
-  } else if (!data.std_start && !data.has_delivery && data.tip_pay > 0 && currentView !== 'pourboires') {
-    if (typeof setView === 'function') setView('pourboires');
+  if (extras.length > 0 && navigator.onLine && typeof supabaseClient !== 'undefined') {
+    for (const extra of extras) {
+      const startMin = extra.std_start ? parseTimeMinutes(extra.std_start) : null;
+      const endMin = extra.std_end ? parseTimeMinutes(extra.std_end) : null;
+      let stdMinutes = 0;
+      if (startMin !== null && endMin !== null) {
+        let diff = endMin - startMin;
+        if (diff < 0) diff += 24 * 60;
+        stdMinutes = Math.max(0, diff - (Number(extra.std_break) || 0));
+      }
+      const stdPay = stdMinutes > 0 ? Math.max(STD_MIN_PAY, (stdMinutes / 60) * HOURLY_RATE) : 0;
+      const delPay = extra.has_delivery ? DELIVERY_DEFAULT_PAY : 0;
+      const tipPay = Number(extra.tip_pay) || 0;
+      const totalPay = stdPay + delPay + tipPay;
+
+      await supabaseClient.from('shifts').insert([{
+        date: extra.date,
+        note: extra.note || '',
+        std_start: extra.std_start || '',
+        std_end: extra.std_end || '',
+        std_break: Number(extra.std_break) || 0,
+        std_minutes: stdMinutes,
+        std_pay: Number(stdPay.toFixed(2)),
+        has_delivery: Boolean(extra.has_delivery),
+        del_start: '',
+        del_end: '',
+        del_minutes: 0,
+        del_pay: Number(delPay.toFixed(2)),
+        total_pay: Number(totalPay.toFixed(2)),
+        is_legacy: false
+      }]);
+    }
+    await fetchShifts();
+    showToast(`${extras.length + 1} lignes ADAM enregistrées avec succès !`, { type: 'success' });
+  }
+}
+
+function applyAiExtractedShift(rawData, sourceType) {
+  const statusBanner = document.getElementById('ai-scan-result-banner');
+  if (!rawData) return;
+
+  pendingExtraAiEntries = [];
+  let data = { ...rawData };
+
+  if (Array.isArray(rawData.entries) && rawData.entries.length > 0) {
+    const first = rawData.entries[0];
+    data = {
+      ...rawData,
+      ...first,
+      date: rawData.date || first.date
+    };
+    if (rawData.entries.length > 1) {
+      pendingExtraAiEntries = rawData.entries.slice(1).map(e => ({
+        ...e,
+        date: rawData.date || e.date || toYMD(new Date())
+      }));
+    }
+  }
+
+  // Déterminer automatiquement la bonne section vers laquelle basculer
+  let targetView = 'prestations';
+  if (data.category === 'livraisons' || (!data.std_start && data.has_delivery)) {
+    targetView = 'livraisons';
+  } else if (data.category === 'pourboires' || (!data.std_start && !data.has_delivery && Number(data.tip_pay) > 0)) {
+    targetView = 'pourboires';
+  }
+
+  // Basculer automatiquement sur la bonne section (même si on était sur la page d'accueil Compteur & Bilan !)
+  if (typeof setView === 'function') {
+    setView(targetView);
   }
 
   if (data.date && /^\d{4}-\d{2}-\d{2}$/.test(data.date)) {
@@ -576,12 +698,25 @@ function applyAiExtractedShift(data, sourceType) {
   if (typeof checkFormDuplicateDate === 'function') checkFormDuplicateDate();
   if (typeof playSaveSuccessSound === 'function') playSaveSuccessSound();
 
+  // Faire défiler doucement vers le formulaire rempli
+  if (typeof scrollToForm === 'function') {
+    scrollToForm();
+  }
+
   const detailsParts = [];
   if (data.date) detailsParts.push(`📅 ${formatDateFR(data.date)}`);
   if (data.std_start && data.std_end) detailsParts.push(`⏱ ${data.std_start} - ${data.std_end}`);
   if (data.has_delivery) detailsParts.push(`🚚 Livraison`);
   if (data.tip_pay > 0) detailsParts.push(`💰 +${Number(data.tip_pay).toFixed(2)}€`);
   if (data.note) detailsParts.push(`📝 ${escapeHtml(data.note)}`);
+
+  const extraCount = pendingExtraAiEntries.length;
+  const extraText = extraCount > 0
+    ? `<div style="margin-top:4px; color: var(--gold-soft);">+ ${extraCount} autre(s) ligne(s) ADAM détectée(s) sur cette feuille !</div>`
+    : '';
+  const saveBtnLabel = extraCount > 0
+    ? `⚡ ENREGISTRER LES ${extraCount + 1} LIGNES`
+    : `⚡ SAUVEGARDER DIRECT`;
 
   if (statusBanner) {
     statusBanner.className = 'ai-result-banner success';
@@ -590,10 +725,11 @@ function applyAiExtractedShift(data, sourceType) {
       <div class="ai-banner-row">
         <div>
           <strong>✅ ${sourceType === 'photo' ? 'FEUILLE LUE (LIGNE ADAM) + PHOTO JOINTE' : 'DICTÉE COMPRISE'} :</strong>
-          <div style="margin-top:4px;">${detailsParts.join(' • ') || escapeHtml(data.summary || 'Champs remplis')} ➔ <strong>+${calc.totalPay.toFixed(2)} €</strong></div>
+          <div style="margin-top:4px;">${detailsParts.join(' • ') || escapeHtml(data.summary || 'Champs remplis')} — <strong>+${calc.totalPay.toFixed(2)} €</strong></div>
+          ${extraText}
         </div>
-        <button type="button" class="pixel-btn btn-gold ai-quick-save-btn" onclick="saveShift(null)">
-          ⚡ SAUVEGARDER DIRECT
+        <button type="button" class="pixel-btn btn-gold ai-quick-save-btn" onclick="saveAllAiDetectedEntries()">
+          ${saveBtnLabel}
         </button>
       </div>
     `;
@@ -601,9 +737,9 @@ function applyAiExtractedShift(data, sourceType) {
 
   showToast(`IA : ${data.std_start && data.std_end ? `${data.std_start} - ${data.std_end}` : 'Champs remplis'} (+${calc.totalPay.toFixed(2)} €)`, {
     type: 'success',
-    duration: 5000,
+    duration: 5500,
     actionText: 'SAUVEGARDER',
-    onAction: () => saveShift(null)
+    onAction: () => saveAllAiDetectedEntries()
   });
 }
 
@@ -619,5 +755,13 @@ function initAiAssistant() {
       }
     });
   }
-}
 
+  // Fermer le menu déroulant IA quand on clique ailleurs sur la page
+  document.addEventListener('click', (e) => {
+    if (!isAiMenuOpen) return;
+    const wrapper = document.getElementById('ai-fab-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      toggleAiFabMenu(false);
+    }
+  });
+}
