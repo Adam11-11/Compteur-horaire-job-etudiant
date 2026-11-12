@@ -1,11 +1,173 @@
 // ==========================================
-// AUTHENTIFICATION SUPABASE (SESSION PERSISTANTE & VERROUILLAGE UI)
+// AUTHENTIFICATION SUPABASE (SESSION ULTRA-PERSISTANTE MOBILE & PC)
 // ==========================================
 
 let isAppBooted = false;
 let currentAuthUser = null;
 let authMode = 'password'; // 'password' | 'magiclink'
 
+const REMEMBER_STORAGE_KEY = 'compteur_paella_remember_v1';
+const REMEMBER_COOKIE_NAME = 'cp_auth_rem_v1';
+const IDB_NAME = 'compteur_paella_auth_db';
+const IDB_STORE = 'auth_store';
+
+// --- STOCKAGE TRIPLE PERSISTANCE (localStorage + Cookie 365j + IndexedDB) ---
+function encodeRememberPayload(obj) {
+  try {
+    return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+  } catch (e) {
+    return '';
+  }
+}
+
+function decodeRememberPayload(str) {
+  if (!str) return null;
+  try {
+    return JSON.parse(decodeURIComponent(escape(atob(str))));
+  } catch (e) {
+    return null;
+  }
+}
+
+function setRememberCookie(encoded) {
+  try {
+    const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `${REMEMBER_COOKIE_NAME}=${encodeURIComponent(encoded)}; max-age=31536000; path=/; SameSite=Lax${secureFlag}`;
+  } catch (e) {}
+}
+
+function getRememberCookie() {
+  try {
+    const match = document.cookie.match(new RegExp('(?:^|; )' + REMEMBER_COOKIE_NAME + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearRememberCookie() {
+  try {
+    document.cookie = `${REMEMBER_COOKIE_NAME}=; max-age=0; path=/; SameSite=Lax`;
+  } catch (e) {}
+}
+
+function saveToIndexedDB(encoded) {
+  try {
+    if (!window.indexedDB) return;
+    const req = window.indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE);
+      }
+    };
+    req.onsuccess = (e) => {
+      try {
+        const db = e.target.result;
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(encoded, REMEMBER_STORAGE_KEY);
+      } catch (err) {}
+    };
+  } catch (e) {}
+}
+
+function loadFromIndexedDB() {
+  return new Promise((resolve) => {
+    try {
+      if (!window.indexedDB) return resolve(null);
+      const req = window.indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) {
+          db.createObjectStore(IDB_STORE);
+        }
+      };
+      req.onsuccess = (e) => {
+        try {
+          const db = e.target.result;
+          const tx = db.transaction(IDB_STORE, 'readonly');
+          const getReq = tx.objectStore(IDB_STORE).get(REMEMBER_STORAGE_KEY);
+          getReq.onsuccess = () => resolve(getReq.result || null);
+          getReq.onerror = () => resolve(null);
+        } catch (err) {
+          resolve(null);
+        }
+      };
+      req.onerror = () => resolve(null);
+    } catch (e) {
+      resolve(null);
+    }
+  });
+}
+
+function clearIndexedDB() {
+  try {
+    if (!window.indexedDB) return;
+    const req = window.indexedDB.open(IDB_NAME, 1);
+    req.onsuccess = (e) => {
+      try {
+        const db = e.target.result;
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).delete(REMEMBER_STORAGE_KEY);
+      } catch (err) {}
+    };
+  } catch (e) {}
+}
+
+function savePersistentAuthBackup(session, passwordOptional) {
+  if (!session || !session.user) return;
+  const existing = getPersistentAuthBackupSync() || {};
+  const payload = {
+    email: session.user.email || existing.email || '',
+    userId: session.user.id || existing.userId || '',
+    access_token: session.access_token || existing.access_token || '',
+    refresh_token: session.refresh_token || existing.refresh_token || '',
+    pw: passwordOptional !== undefined ? passwordOptional : (existing.pw || ''),
+    savedAt: Date.now()
+  };
+  const encoded = encodeRememberPayload(payload);
+  if (!encoded) return;
+  try {
+    window.localStorage.setItem(REMEMBER_STORAGE_KEY, encoded);
+  } catch (e) {}
+  setRememberCookie(encoded);
+  saveToIndexedDB(encoded);
+}
+
+function getPersistentAuthBackupSync() {
+  let encoded = null;
+  try {
+    encoded = window.localStorage.getItem(REMEMBER_STORAGE_KEY);
+  } catch (e) {}
+  if (!encoded) {
+    encoded = getRememberCookie();
+    if (encoded) {
+      try { window.localStorage.setItem(REMEMBER_STORAGE_KEY, encoded); } catch (e) {}
+    }
+  }
+  return decodeRememberPayload(encoded);
+}
+
+async function getPersistentAuthBackupAsync() {
+  const syncData = getPersistentAuthBackupSync();
+  if (syncData && syncData.email) return syncData;
+  const idbEncoded = await loadFromIndexedDB();
+  if (idbEncoded) {
+    try { window.localStorage.setItem(REMEMBER_STORAGE_KEY, idbEncoded); } catch (e) {}
+    setRememberCookie(idbEncoded);
+    return decodeRememberPayload(idbEncoded);
+  }
+  return null;
+}
+
+function clearPersistentAuthBackup() {
+  try { window.localStorage.removeItem(REMEMBER_STORAGE_KEY); } catch (e) {}
+  try { window.localStorage.removeItem('compteur_paella_auth'); } catch (e) {}
+  clearRememberCookie();
+  clearIndexedDB();
+}
+
+// --- GESTION DE L'INTERFACE D'AUTHENTIFICATION ---
 function setAuthState(state, user = null) {
   currentAuthUser = user || null;
   document.body.setAttribute('data-auth', state);
@@ -22,7 +184,6 @@ function setAuthState(state, user = null) {
     if (checkingBox) checkingBox.style.display = 'none';
     if (formBox) formBox.style.display = 'block';
     if (logoutBtn) logoutBtn.style.display = 'none';
-    // Vider les données en mémoire tant que non connecté
     cachedShifts = [];
     if (typeof renderApp === 'function' && isAppBooted) {
       renderApp();
@@ -102,8 +263,8 @@ async function handleLoginSubmit(e) {
     submitBtn.disabled = true;
     submitBtn.textContent = '⏳ CONNEXION...';
   }
-  showAuthFeedback('', 'info');
-  document.getElementById('auth-feedback').style.display = 'none';
+  const fb = document.getElementById('auth-feedback');
+  if (fb) fb.style.display = 'none';
 
   try {
     if (authMode === 'magiclink') {
@@ -125,6 +286,7 @@ async function handleLoginSubmit(e) {
       });
       if (error) throw error;
       if (data && data.session) {
+        savePersistentAuthBackup(data.session, password);
         if (typeof playSaveSuccessSound === 'function') playSaveSuccessSound();
         if (passInput) passInput.value = '';
         onAuthenticatedSession(data.session);
@@ -153,9 +315,12 @@ async function handleLoginSubmit(e) {
 }
 
 async function handleLogout() {
+  window.__manualLogoutInProgress = true;
+  clearPersistentAuthBackup();
   try {
     await supabaseClient.auth.signOut();
   } catch (e) {}
+  window.__manualLogoutInProgress = false;
   try {
     window.localStorage.removeItem('pixelpay_shifts_cache_v1');
   } catch (e) {}
@@ -168,6 +333,9 @@ async function handleLogout() {
 
 function onAuthenticatedSession(session) {
   const wasAlreadyAuthenticated = document.body.getAttribute('data-auth') === 'authenticated';
+  if (session && session.access_token) {
+    savePersistentAuthBackup(session);
+  }
   setAuthState('authenticated', session ? session.user : null);
 
   if (!isAppBooted) {
@@ -182,33 +350,90 @@ function onAuthenticatedSession(session) {
   }
 }
 
-async function initAuthGate() {
-  setAuthState('checking');
+// Reconnexion silencieuse en arrière-plan si le jeton mobile a expiré ou tourné
+async function restoreSessionFromBackup(backup) {
+  if (!backup) return false;
+  if (!navigator.onLine) return true; // En mode hors-ligne, on garde l'appli ouverte avec le cache local
 
+  // 1. Essayer de restaurer avec refresh_token
+  if (backup.access_token && backup.refresh_token) {
+    try {
+      const { data, error } = await supabaseClient.auth.setSession({
+        access_token: backup.access_token,
+        refresh_token: backup.refresh_token
+      });
+      if (!error && data && data.session) {
+        savePersistentAuthBackup(data.session);
+        return true;
+      }
+    } catch (e) {}
+  }
+
+  // 2. Si le refresh_token a expiré (ex: connexion simultanée PC + téléphone), reconnexion silencieuse
+  if (backup.email && backup.pw) {
+    try {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: backup.email,
+        password: backup.pw
+      });
+      if (!error && data && data.session) {
+        savePersistentAuthBackup(data.session, backup.pw);
+        return true;
+      }
+    } catch (e) {}
+  }
+
+  return false;
+}
+
+async function initAuthGate() {
   const loginForm = document.getElementById('auth-login-form');
   if (loginForm) {
     loginForm.addEventListener('submit', handleLoginSubmit);
   }
 
-  // Écouter les changements d'état d'authentification (connexion, déconnexion, renouvellement auto du token)
+  // Déverrouillage instantané si une sauvegarde locale/cookie existe déjà sur le téléphone
+  const syncBackup = getPersistentAuthBackupSync();
+  if (syncBackup && syncBackup.email) {
+    onAuthenticatedSession({ user: { email: syncBackup.email, id: syncBackup.userId } });
+  } else {
+    setAuthState('checking');
+  }
+
+  // Écouter les changements d'état Supabase
   supabaseClient.auth.onAuthStateChange((event, session) => {
     if (session && session.user) {
       onAuthenticatedSession(session);
-    } else if (event === 'SIGNED_OUT') {
+    } else if (event === 'SIGNED_OUT' && window.__manualLogoutInProgress) {
       setAuthState('unauthenticated', null);
     }
   });
 
-  // Vérification initiale de la session persistée (localStorage / URL Magic Link)
+  // Vérification de la session Supabase ou restauration automatique silencieuse
   try {
     const { data, error } = await supabaseClient.auth.getSession();
     if (!error && data && data.session) {
       onAuthenticatedSession(data.session);
+      return;
+    }
+
+    const asyncBackup = syncBackup || (await getPersistentAuthBackupAsync());
+    if (asyncBackup && asyncBackup.email) {
+      onAuthenticatedSession({ user: { email: asyncBackup.email, id: asyncBackup.userId } });
+      const restored = await restoreSessionFromBackup(asyncBackup);
+      if (restored) {
+        fetchShifts();
+      }
+      return;
+    }
+
+    setAuthState('unauthenticated', null);
+  } catch (e) {
+    const fallback = getPersistentAuthBackupSync();
+    if (fallback && fallback.email) {
+      onAuthenticatedSession({ user: { email: fallback.email, id: fallback.userId } });
     } else {
       setAuthState('unauthenticated', null);
     }
-  } catch (e) {
-    setAuthState('unauthenticated', null);
   }
 }
-
