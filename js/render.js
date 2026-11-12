@@ -15,11 +15,11 @@ function resetToCurrentPeriod() {
   renderApp();
 }
 
-function setLogFilter(mode) {
+function setLogFilter(mode, scrollToItem = false) {
   logFilterMode = mode;
-  document.getElementById('tab-period').classList.toggle('active', mode === 'period');
-  document.getElementById('tab-noproof').classList.toggle('active', mode === 'noproof');
-  document.getElementById('tab-all').classList.toggle('active', mode === 'all');
+  document.getElementById('tab-period')?.classList.toggle('active', mode === 'period');
+  document.getElementById('tab-noproof')?.classList.toggle('active', mode === 'noproof');
+  document.getElementById('tab-all')?.classList.toggle('active', mode === 'all');
   const histBody = document.getElementById('history-collapsible-body');
   const histBtn = document.getElementById('history-collapse-btn');
   const histIcon = document.getElementById('history-collapse-icon');
@@ -29,7 +29,58 @@ function setLogFilter(mode) {
     if (histIcon) histIcon.textContent = '▲ REPLIER';
   }
   renderApp();
+
+  if (scrollToItem) {
+    setTimeout(() => {
+      const activeMissingCard =
+        document.querySelector('#log-list .in-current-period .photo-miss')?.closest('.log-item') ||
+        document.querySelector('#log-list .photo-miss')?.closest('.log-item') ||
+        document.querySelector('#log-list .log-item');
+
+      if (activeMissingCard) {
+        activeMissingCard.scrollIntoView({
+          behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+          block: 'center'
+        });
+
+        activeMissingCard.classList.remove('just-added-flash');
+        void activeMissingCard.offsetWidth;
+        activeMissingCard.classList.add('just-added-flash');
+
+        const photoBtn = activeMissingCard.querySelector('.photo-miss, [data-photo-act="add"]');
+        if (photoBtn) {
+          photoBtn.classList.add('photo-miss-pulse');
+          setTimeout(() => photoBtn.classList.remove('photo-miss-pulse'), 3500);
+          photoBtn.focus({ preventScroll: true });
+        }
+
+        showToast("Voici l'entrée sans photo — clique sur [+] pour l'ajouter !", {
+          type: 'info',
+          duration: 4000
+        });
+      } else {
+        const histSec = document.getElementById('section-history');
+        if (histSec) {
+          histSec.scrollIntoView({
+            behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+            block: 'start'
+          });
+        }
+      }
+    }, 100);
+  }
 }
+
+function goToMissingProof() {
+  if (typeof playClickSound === 'function') playClickSound();
+
+  if (typeof window.setView === 'function' && document.body.getAttribute('data-view') !== 'counter') {
+    window.setView('counter');
+  }
+
+  setLogFilter('noproof', true);
+}
+window.goToMissingProof = goToMissingProof;
 
 function toggleHistorySection() {
   const body = document.getElementById('history-collapsible-body');
@@ -250,7 +301,7 @@ function renderApp() {
         if (!isLegacy) {
           photoBtnHtml = hasProof
             ? `<button type="button" class="compact-icon-btn photo-ok" data-kind="compact-view" data-photo-act="view" data-photo-id="${item.id}" title="Photo jointe — cliquer pour voir ou remplacer" aria-label="Voir la photo jointe">${CAM_SVG}<span>✓</span></button>`
-            : `<button type="button" class="compact-icon-btn photo-miss" data-kind="compact-add" data-photo-act="add" data-photo-id="${item.id}" title="Ajouter une photo de preuve" aria-label="Ajouter une photo de preuve">${CAM_SVG}<span>+</span></button>`;
+            : `<button type="button" class="compact-icon-btn photo-miss missing-photo" data-kind="compact-add" data-photo-act="add" data-photo-id="${item.id}" title="Ajouter une photo de preuve" aria-label="Ajouter une photo de preuve">${CAM_SVG}<span>+</span></button>`;
         }
 
         const offlineBadge = item._offlinePending || String(item.id).startsWith('offline_')

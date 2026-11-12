@@ -1279,6 +1279,189 @@ body[data-auth="authenticated"] #auth-gate {
   flex-shrink: 0;
 }
 
+/* ==========================================
+   11. FENÊTRE MODALE DE CONFIRMATION IA ("CE QUE L'IA A COMPRIS")
+   ========================================== */
+.ai-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  background: rgba(14, 13, 18, 0.85);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.ai-confirm-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 20px 18px !important;
+  background: var(--bg-panel);
+  border: 3px solid var(--gold-soft) !important;
+  box-shadow: 8px 8px 0 var(--border-shadow), 0 0 24px rgba(229, 181, 103, 0.3) !important;
+  animation: fadeSlideDown 0.16s ease-out;
+}
+
+.ai-confirm-header {
+  text-align: center;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 2px dashed var(--border-soft);
+}
+
+.ai-confirm-badge {
+  display: inline-block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--gold-soft);
+  background: var(--bg-input);
+  border: 2px solid var(--gold-soft);
+  padding: 5px 10px;
+  margin-bottom: 10px;
+  box-shadow: 2px 2px 0 var(--border-shadow);
+}
+
+.ai-confirm-title {
+  font-size: 13px;
+  color: var(--white-cream);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.ai-confirm-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.ai-confirm-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-input);
+  border: 2px solid var(--border-soft);
+  font-size: 20px;
+}
+
+.ai-confirm-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.ai-confirm-val {
+  color: var(--white-cream);
+  text-align: right;
+  font-size: 21px;
+}
+
+.ai-cat-pill {
+  display: inline-block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  padding: 4px 8px;
+  border: 2px solid currentColor;
+}
+
+.ai-cat-pill.cat-prest {
+  color: var(--gold-soft);
+  background: #2b2419;
+}
+
+.ai-cat-pill.cat-del {
+  color: var(--red-light);
+  background: #2b181c;
+}
+
+.ai-cat-pill.cat-tip {
+  color: var(--green-soft);
+  background: #172b20;
+}
+
+.ai-confirm-total-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  background: #0d0c10;
+  border: 2px solid var(--gold-soft);
+  box-shadow: inset 3px 3px 0 #050507, 0 0 12px rgba(229, 181, 103, 0.25);
+}
+
+.ai-confirm-total-box span {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.ai-confirm-total-box strong {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 18px;
+  color: var(--gold-soft);
+  text-shadow: 2px 2px 0 var(--border-shadow);
+}
+
+.ai-confirm-extra-note {
+  font-size: 18px;
+  color: var(--gold-soft);
+  text-align: center;
+  margin-bottom: 12px;
+  padding: 6px 8px;
+  border: 1px dashed var(--gold-soft);
+  background: #292214;
+}
+
+.ai-confirm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-confirm-btn-main {
+  width: 100%;
+  min-height: 50px !important;
+  font-size: 12px !important;
+}
+
+.ai-confirm-sub-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ai-confirm-sub-actions .pixel-btn {
+  width: 100%;
+  min-height: 44px !important;
+  font-size: 10px !important;
+}
+
+/* Animation de pulsation dorée sur le bouton d'ajout de photo manquante ciblé */
+.compact-icon-btn.photo-miss-pulse {
+  animation: photoMissPulse 0.85s ease-in-out infinite alternate !important;
+  border-color: var(--gold-soft) !important;
+  color: var(--gold-soft) !important;
+  background: #332b1c !important;
+}
+
+@keyframes photoMissPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 2px 2px 0 var(--border-shadow);
+  }
+  100% {
+    transform: scale(1.22);
+    box-shadow: 0 0 16px rgba(229, 181, 103, 0.95), 3px 3px 0 var(--border-shadow);
+    border-color: #ffd885 !important;
+  }
+}
+
 
 
 
