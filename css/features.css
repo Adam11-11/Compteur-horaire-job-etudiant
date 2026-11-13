@@ -573,10 +573,10 @@ header {
   box-shadow: 4px 4px 0 var(--border-shadow), inset -3px -3px 0 #1f190d;
 }
 .view-tab[data-view-btn="livraisons"].active {
-  background: var(--red-soft);
-  border-color: var(--white-cream);
-  color: var(--white-cream);
-  box-shadow: 4px 4px 0 var(--border-shadow), inset -3px -3px 0 var(--red-dark);
+  background: #172b3d;
+  border-color: var(--blue-soft);
+  color: var(--blue-light);
+  box-shadow: 4px 4px 0 var(--border-shadow), inset -3px -3px 0 #0d1924;
 }
 .view-tab[data-view-btn="pourboires"].active {
   background: #173021;
@@ -608,8 +608,8 @@ header {
   box-shadow: 4px 4px 0 var(--border-shadow), 0 0 12px rgba(229, 181, 103, 0.2);
 }
 .stat-card.delivery-card {
-  border-color: var(--red-soft);
-  box-shadow: 4px 4px 0 var(--border-shadow), 0 0 14px rgba(217, 75, 87, 0.32);
+  border-color: var(--blue-soft);
+  box-shadow: 4px 4px 0 var(--border-shadow), 0 0 14px rgba(79, 164, 232, 0.32);
 }
 .stat-card.tip-card {
   border-color: var(--green-soft);
@@ -635,9 +635,9 @@ header {
   text-shadow: 0 0 12px rgba(242, 236, 228, 0.55), 2px 2px 0 #000;
 }
 .stat-card.delivery-card .stat-value {
-  color: var(--red-light);
-  border-color: #6e3038;
-  text-shadow: 0 0 14px rgba(235, 124, 133, 0.75), 2px 2px 0 #000;
+  color: var(--blue-light);
+  border-color: #295275;
+  text-shadow: 0 0 14px rgba(128, 194, 247, 0.75), 2px 2px 0 #000;
 }
 .stat-card.tip-card .stat-value {
   color: var(--green-soft);
@@ -660,6 +660,7 @@ header {
 }
 .cat-summary-strip.gold-accent { border-color: var(--gold-soft); }
 .cat-summary-strip.red-accent { border-color: var(--red-soft); }
+.cat-summary-strip.blue-accent { border-color: var(--blue-soft); }
 .cat-summary-strip.green-accent { border-color: var(--green-soft); }
 
 .cat-strip-top {
@@ -783,6 +784,14 @@ header {
 .cat-summary-strip.red-accent .cat-metric-val {
   color: var(--red-light);
   text-shadow: 0 0 10px rgba(235, 124, 133, 0.45);
+}
+.cat-summary-strip.blue-accent .cat-metric-val {
+  color: var(--blue-light);
+  text-shadow: 0 0 10px rgba(128, 194, 247, 0.45);
+}
+.cat-summary-strip.blue-accent .compact-scope-btn.active {
+  background: var(--blue-soft) !important;
+  box-shadow: 3px 3px 0 var(--border-shadow), inset -2px -2px 0 var(--blue-dark) !important;
 }
 .cat-summary-strip.green-accent .cat-metric-val {
   color: var(--green-soft);

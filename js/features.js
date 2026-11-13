@@ -1224,7 +1224,7 @@ function renderCategoryViews() {
       <div class="cat-metric-chip"><span class="cat-metric-label">CUMUL GLOBAL</span><strong class="cat-metric-val">${allPay.toFixed(2)} €</strong></div>
     `;
 
-    delContainer.innerHTML = `${buildCategoryHeaderAndNav('LIVRAISONS', 'red-accent', metricsHtml)}${cardsHtml}`;
+    delContainer.innerHTML = `${buildCategoryHeaderAndNav('LIVRAISONS', 'blue-accent', metricsHtml)}${cardsHtml}`;
   }
 
   // --- 3. ONGLET POURBOIRES (TIPS) ---
