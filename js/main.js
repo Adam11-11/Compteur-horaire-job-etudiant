@@ -24,6 +24,7 @@ function bootMainApp() {
 }
 
 (function initApp() {
+  document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
   loadSoundPreference();
   initAuthGate();
 })();
