@@ -1,6 +1,146 @@
 // ==========================================
-// ANIMATIONS & EFFETS VISUELS (COMPTEURS, SPARKS, BARRES)
+// ANIMATIONS & EFFETS VISUELS (COMPTEURS, SPARKS, BARRES, AMBIANCE)
 // ==========================================
+const lastAnimatedStatValues = new Map();
+
+function animateElementClass(el, className, durationMs = 360) {
+  if (!el || prefersReducedMotion()) return;
+  el.classList.remove(className);
+  void el.offsetWidth;
+  el.classList.add(className);
+  if (el._animTimers && el._animTimers[className]) {
+    clearTimeout(el._animTimers[className]);
+  }
+  el._animTimers = el._animTimers || {};
+  el._animTimers[className] = setTimeout(() => {
+    el.classList.remove(className);
+  }, durationMs);
+}
+
+function spawnMicroPop(targetEl, text, variant = 'gold') {
+  if (!targetEl || prefersReducedMotion()) return;
+  const rect = targetEl.getBoundingClientRect();
+  if (!rect.width && !rect.height) return;
+
+  const pop = document.createElement('span');
+  pop.className = `pixel-micro-pop pop-${variant}`;
+  pop.textContent = text;
+  pop.style.left = `${rect.left + rect.width / 2}px`;
+  pop.style.top = `${Math.max(8, rect.top - 4)}px`;
+  document.body.appendChild(pop);
+
+  setTimeout(() => {
+    if (pop.parentNode) pop.remove();
+  }, 680);
+}
+
+function spawnMiniSparksAt(el, count = 6) {
+  if (!el || prefersReducedMotion()) return;
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const colors = ['', 'spark-cream', 'spark-red'];
+
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.4 - 0.2);
+    const dist = 22 + Math.random() * 18;
+    const tx = `${Math.round(Math.cos(angle) * dist)}px`;
+    const ty = `${Math.round(Math.sin(angle) * dist)}px`;
+    const spark = document.createElement('span');
+    spark.className = `pixel-spark pixel-spark-fixed ${colors[i % colors.length]}`.trim();
+    spark.style.left = `${cx}px`;
+    spark.style.top = `${cy}px`;
+    spark.style.setProperty('--tx', tx);
+    spark.style.setProperty('--ty', ty);
+    document.body.appendChild(spark);
+    setTimeout(() => {
+      if (spark.parentNode) spark.remove();
+    }, 680);
+  }
+}
+
+function initAmbientEffects() {
+  if (prefersReducedMotion()) return;
+
+  if (!document.getElementById('pixel-ambient-bg')) {
+    const bg = document.createElement('div');
+    bg.id = 'pixel-ambient-bg';
+    bg.className = 'pixel-ambient-bg';
+    bg.setAttribute('aria-hidden', 'true');
+
+    const colors = ['ember-gold', 'ember-red', 'ember-cream', 'ember-gold'];
+    const particleCount = 14;
+    for (let i = 0; i < particleCount; i++) {
+      const p = document.createElement('span');
+      const leftPct = Math.round(((i + 0.5) / particleCount) * 96 + (i % 3) * 1.5);
+      const size = i % 3 === 0 ? 4 : 3;
+      const duration = 10 + (i % 5) * 2.4;
+      const delay = -((i * 1.9) % duration);
+      const drift = (i % 2 === 0 ? 1 : -1) * (10 + (i % 4) * 6);
+
+      p.className = `ambient-pixel ${colors[i % colors.length]}`;
+      p.style.left = `${Math.min(98, leftPct)}%`;
+      p.style.width = `${size}px`;
+      p.style.height = `${size}px`;
+      p.style.setProperty('--dur', `${duration.toFixed(1)}s`);
+      p.style.setProperty('--delay', `${delay.toFixed(1)}s`);
+      p.style.setProperty('--drift', `${drift}px`);
+      bg.appendChild(p);
+    }
+    document.body.prepend(bg);
+  }
+
+  document.querySelectorAll('.paella-logo').forEach(logo => {
+    if (logo.dataset.ambientBound) return;
+    logo.dataset.ambientBound = '1';
+    logo.style.cursor = 'pointer';
+    logo.addEventListener('click', (e) => {
+      e.stopPropagation();
+      animateElementClass(logo, 'paella-sizzle-pop', 460);
+      spawnMiniSparksAt(logo, 7);
+      if (typeof playCoinTickSound === 'function') playCoinTickSound(0.65);
+    });
+  });
+}
+
+function triggerViewEntrance(viewName) {
+  if (prefersReducedMotion()) return;
+  const viewSections = {
+    counter: ['section-period', 'section-history', 'section-global'],
+    prestations: ['section-form', 'section-prestations'],
+    livraisons: ['section-form', 'section-livraisons'],
+    pourboires: ['section-form', 'section-pourboires'],
+    calendar: ['section-calendar']
+  };
+  const ids = viewSections[viewName] || [];
+  ids.forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.setProperty('--view-stagger', `${idx * 45}ms`);
+    animateElementClass(el, 'view-section-enter', 320);
+  });
+}
+
+function animateStatIfChanged(elementId, targetVal, duration = 420) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const nextNum = Number(targetVal) || 0;
+  const prevNum = lastAnimatedStatValues.has(elementId)
+    ? lastAnimatedStatValues.get(elementId)
+    : nextNum;
+
+  lastAnimatedStatValues.set(elementId, nextNum);
+
+  if (prefersReducedMotion() || Math.abs(nextNum - prevNum) < 0.01) {
+    if (!activeCountRafs.has(elementId)) {
+      el.textContent = `${nextNum.toFixed(2)} €`;
+    }
+    return;
+  }
+
+  animateValueCounter(elementId, prevNum, nextNum, duration, false);
+}
+
 function animateMonthlyBars() {
   const fills = document.querySelectorAll('#monthly-summary-list .month-bar-fill');
   if (prefersReducedMotion()) {
@@ -160,6 +300,11 @@ async function runPostSaveSequence(oldStats, newStats, shiftTotalPay) {
   if (document.body.getAttribute('data-view') !== 'counter' && typeof window.setView === 'function') {
     window.setView('counter');
   }
+
+  lastAnimatedStatValues.set('month-std-pay', newStats.stdPay);
+  lastAnimatedStatValues.set('month-del-pay', newStats.delPay);
+  lastAnimatedStatValues.set('month-tip-pay', newStats.tipPay || 0);
+  lastAnimatedStatValues.set('month-total-pay', newStats.totalPay);
 
   const totalChanged = Math.abs(newStats.totalPay - oldStats.totalPay) > 0.005;
   const tipChangedOnly = !totalChanged && Math.abs((newStats.tipPay || 0) - (oldStats.tipPay || 0)) > 0.005;

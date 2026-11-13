@@ -53,10 +53,16 @@ function renderPresetPills() {
     btn.textContent = `${s} - ${e}`;
     btn.setAttribute('aria-label', `Remplir horaires de ${s} à ${e}`);
     btn.onclick = () => {
-      document.getElementById('std-start').value = s;
-      document.getElementById('std-end').value = e;
+      const startEl = document.getElementById('std-start');
+      const endEl = document.getElementById('std-end');
+      startEl.value = s;
+      endEl.value = e;
       btn.classList.add('pill-active-flash');
       setTimeout(() => btn.classList.remove('pill-active-flash'), 260);
+      if (typeof animateElementClass === 'function') {
+        animateElementClass(startEl, 'input-pop-flash', 420);
+        animateElementClass(endEl, 'input-pop-flash', 420);
+      }
       calculateCurrentForm();
     };
     container.appendChild(btn);
@@ -76,6 +82,9 @@ function setNowTime(inputId) {
   const input = document.getElementById(inputId);
   if (input) {
     input.value = `${hh}:${mm}`;
+    if (typeof animateElementClass === 'function') {
+      animateElementClass(input, 'input-pop-flash', 420);
+    }
     calculateCurrentForm();
   }
 }
@@ -133,6 +142,12 @@ function addQuickTip(amount) {
   const current = Math.max(0, Number(inp.value) || 0);
   const next = current + Number(amount);
   inp.value = next.toFixed(2);
+  if (typeof animateElementClass === 'function') {
+    animateElementClass(inp, 'tip-input-flash', 440);
+  }
+  if (typeof spawnMicroPop === 'function') {
+    spawnMicroPop(inp, `+${Number(amount)} €`, 'green');
+  }
   playCoinTickSound(0.75);
   calculateCurrentForm();
 }
@@ -187,10 +202,22 @@ function calculateCurrentForm() {
   const liveDetailsEl = document.getElementById('live-details');
   if (liveDetailsEl) liveDetailsEl.textContent = `${stdLabelText} | ${delLabel}${tipLabel}`;
   const liveTotalEl = document.getElementById('live-total');
-  if (liveTotalEl) liveTotalEl.textContent = `+ ${previewTotal.toFixed(2)} €`;
+  const nextTotalText = `+ ${previewTotal.toFixed(2)} €`;
+  if (liveTotalEl) {
+    const changedTotal = liveTotalEl.textContent !== nextTotalText;
+    liveTotalEl.textContent = nextTotalText;
+    if (changedTotal && previewTotal > 0 && typeof animateElementClass === 'function') {
+      animateElementClass(liveTotalEl, 'live-total-pop', 280);
+    }
+  }
   const submitBtn = document.getElementById('shift-submit-btn');
   if (submitBtn && !submitBtn.dataset.saving) {
-    submitBtn.disabled = previewTotal <= 0;
+    const wasDisabled = submitBtn.disabled;
+    const willBeDisabled = previewTotal <= 0;
+    submitBtn.disabled = willBeDisabled;
+    if (wasDisabled && !willBeDisabled && typeof animateElementClass === 'function') {
+      animateElementClass(submitBtn, 'btn-ready-pop', 360);
+    }
   }
   return { stdMinutes, stdPay, hasDelivery, delMinutes, delPay, tipPay, totalPay, previewTotal };
 }

@@ -7,6 +7,7 @@ function bootMainApp() {
   initCalendarAndNavigation();
   initPhotoViewer();
   initNewFeatures();
+  if (typeof initAmbientEffects === 'function') initAmbientEffects();
   if (typeof initAiAssistant === 'function') initAiAssistant();
 
   document.getElementById('shift-date').value = toYMD(new Date());
@@ -96,5 +97,6 @@ function initKeyboardVisibilityObserver() {
     versionBadge.textContent = APP_VERSION;
   }
   loadSoundPreference();
+  if (typeof initAmbientEffects === 'function') initAmbientEffects();
   initAuthGate();
 })();

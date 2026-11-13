@@ -77,6 +77,9 @@ function initCalendarAndNavigation() {
       list.forEach((it, i) => { h += entryHtml(it, list.length > 1 ? i + 1 : 0); });
     }
     el.innerHTML = h;
+    if (typeof animateElementClass === 'function') {
+      animateElementClass(el, 'cal-detail-pop', 260);
+    }
   }
 
   function renderCalendar(dir) {
@@ -177,8 +180,14 @@ function initCalendarAndNavigation() {
       }
       if (typeof renderCategoryViews === 'function') renderCategoryViews();
     }
-    if (changed) window.scrollTo(0, 0);
+    if (changed) {
+      window.scrollTo(0, 0);
+      if (typeof triggerViewEntrance === 'function') triggerViewEntrance(v);
+    }
     window.dispatchEvent(new Event('viewchange'));
+    document.querySelectorAll('.view-tab.active, .bottom-nav a.is-active').forEach(el => {
+      if (typeof animateElementClass === 'function') animateElementClass(el, 'nav-pop', 280);
+    });
   };
 
   const calGridEl = document.getElementById('cal-grid');

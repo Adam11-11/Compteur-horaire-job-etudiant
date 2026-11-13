@@ -193,7 +193,12 @@ function renderLiveClockTick() {
       ? `⏸ EN PAUSE (DÉBUT SERVICE À ${session.startTime})`
       : `EN SERVICE DEPUIS ${session.startTime} (${formatDateFR(session.startDate)})`;
   }
-  if (elapsedEl) elapsedEl.textContent = formatDurationHMS(elapsedWorkMs);
+  if (elapsedEl) {
+    elapsedEl.textContent = formatDurationHMS(elapsedWorkMs);
+    if (!session.isPaused && typeof animateElementClass === 'function') {
+      animateElementClass(elapsedEl, 'chrono-tick', 200);
+    }
+  }
   if (payEl) payEl.textContent = `${estPay.toFixed(2)} €`;
   if (pauseEl) pauseEl.textContent = `${pauseMins} min`;
   if (pauseBtn) pauseBtn.textContent = session.isPaused ? '▶ REPRENDRE' : '⏸ PAUSE';
@@ -1097,7 +1102,7 @@ function buildCategoryHeaderAndNav(titleText, accentClass, summaryMetricsHtml) {
   `;
 }
 
-function buildCategoryCardHtml(item, badgeHtml, amountValue) {
+function buildCategoryCardHtml(item, badgeHtml, amountValue, idx = 0) {
   const hasProof = itemHasProof(item);
   const photoBtnHtml = hasProof
     ? `<button type="button" class="compact-icon-btn has-photo" data-kind="compact-view" data-photo-act="view" data-photo-id="${item.id}" title="Voir la photo jointe">${CAM_SVG}<span>✓</span></button>`
@@ -1106,7 +1111,7 @@ function buildCategoryCardHtml(item, badgeHtml, amountValue) {
   const safeIdAttr = typeof item.id === 'number' ? item.id : `'${escapeHtml(item.id)}'`;
   const noteSpan = item.note ? `<span class="compact-note">— ${escapeHtml(item.note)}</span>` : '';
   return `
-    <div class="log-item compact-row in-current-period" data-shift-id="${escapeHtml(String(item.id))}">
+    <div class="log-item compact-row in-current-period" data-shift-id="${escapeHtml(String(item.id))}" style="--item-index: ${Math.min(idx, 10)};">
       <div class="compact-row-left">
         <span class="compact-date">${formatDateWithDayFR(item.date)}</span>
         ${noteSpan}
@@ -1166,12 +1171,12 @@ function renderCategoryViews() {
     const avgMin = monthPrestDays > 0 ? Math.round(monthMin / monthPrestDays) : 0;
     const cardsHtml = rows.length === 0
       ? `<div class="empty-state">Aucune prestation sur cette sélection.</div>`
-      : `<div class="log-list">${rows.map(({ item, stdMin, stdP }) => {
+      : `<div class="log-list">${rows.map(({ item, stdMin, stdP }, idx) => {
           const pillHtml = `
             <span class="shift-pill pill-standard">${escapeHtml(item.std_start)} - ${escapeHtml(item.std_end)} (${formatHoursMin(stdMin)})</span>
             ${item.std_break > 0 ? `<span class="shift-pill pill-standard">Pause ${Number(item.std_break)}m</span>` : ''}
           `;
-          return buildCategoryCardHtml(item, pillHtml, stdP);
+          return buildCategoryCardHtml(item, pillHtml, stdP, idx);
         }).join('')}</div>`;
 
     const metricsHtml = `
@@ -1214,10 +1219,10 @@ function renderCategoryViews() {
 
     const cardsHtml = rows.length === 0
       ? `<div class="empty-state">Aucune livraison sur cette sélection.</div>`
-      : `<div class="log-list">${rows.map(({ item, delMin, delP }) => {
+      : `<div class="log-list">${rows.map(({ item, delMin, delP }, idx) => {
           const durText = delMin > 150 ? `Longue ${formatHoursMin(delMin)}` : (delMin > 0 ? `${formatHoursMin(delMin)}` : 'Forfait 30€');
           const pillHtml = `<span class="shift-pill pill-delivery">${PX_ICO.crate} ${durText}</span>`;
-          return buildCategoryCardHtml(item, pillHtml, delP);
+          return buildCategoryCardHtml(item, pillHtml, delP, idx);
         }).join('')}</div>`;
 
     const metricsHtml = `
@@ -1258,9 +1263,9 @@ function renderCategoryViews() {
     const avgTip = monthCount > 0 ? (monthPay / monthCount) : 0;
     const cardsHtml = rows.length === 0
       ? `<div class="empty-state">Aucun pourboire sur cette sélection.</div>`
-      : `<div class="log-list">${rows.map(({ item, tipP }) => {
+      : `<div class="log-list">${rows.map(({ item, tipP }, idx) => {
           const pillHtml = `<span class="shift-pill pill-tip">${PX_ICO.gem} Pourboire</span>`;
-          return buildCategoryCardHtml(item, pillHtml, tipP);
+          return buildCategoryCardHtml(item, pillHtml, tipP, idx);
         }).join('')}</div>`;
 
     const metricsHtml = `

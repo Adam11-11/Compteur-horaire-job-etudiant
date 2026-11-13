@@ -293,17 +293,405 @@ textarea:focus {
 
 /* Bouton IA flottant un peu plus intégré au thème doré */
 .ai-fab-btn {
+  position: relative;
   box-shadow:
     0 4px 0 #09080c,
     0 0 14px rgba(229, 181, 103, 0.35),
     inset 2px 2px 0 rgba(255, 255, 255, 0.25);
 }
 
+/* =====================================================================
+   ANIMATIONS & VIE 16-BIT (AMBIANCE, MICRO-INTERACTIONS, TRANSITIONS)
+   ===================================================================== */
+
+/* Couches au-dessus du fond animé */
+.container,
+.auth-gate {
+  position: relative;
+  z-index: 1;
+}
+
+/* Particules pixelisées d'ambiance (braises / étincelles paella) */
+.pixel-ambient-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ambient-pixel {
+  position: absolute;
+  bottom: -12px;
+  opacity: 0;
+  box-shadow: 1px 1px 0 rgba(9, 8, 12, 0.7);
+  animation: ambientFloatUp var(--dur, 12s) linear var(--delay, 0s) infinite;
+  will-change: transform, opacity;
+}
+
+.ambient-pixel.ember-gold { background: rgba(255, 232, 117, 0.55); }
+.ambient-pixel.ember-red { background: rgba(217, 75, 87, 0.48); }
+.ambient-pixel.ember-cream { background: rgba(242, 236, 228, 0.35); }
+
+@keyframes ambientFloatUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.8);
+  }
+  12% {
+    opacity: 0.65;
+  }
+  75% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--drift, 14px), -105vh, 0) scale(1.1);
+  }
+}
+
+/* Logo Paella vivant (léger frémissement + sizzle interactif au clic) */
+@keyframes paellaSimmer {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-1.5px) rotate(-1.5deg); }
+}
+
+@keyframes paellaSizzlePop {
+  0% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.22) rotate(-8deg); }
+  55% { transform: scale(0.94) rotate(7deg); }
+  80% { transform: scale(1.08) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.paella-logo {
+  animation: paellaSimmer 3.2s ease-in-out infinite;
+  transition: transform 0.14s ease, filter 0.18s ease;
+}
+
+.paella-logo:hover {
+  filter: drop-shadow(0 0 9px rgba(255, 232, 117, 0.75)) drop-shadow(2px 2px 0 var(--border-shadow));
+}
+
+.paella-logo.paella-sizzle-pop {
+  animation: paellaSizzlePop 0.44s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Gemmes de titres & Pastille statut SYNCHRO vivantes */
+@keyframes gemTwinkle {
+  0%, 100% { filter: brightness(1); transform: scale(1); }
+  50% { filter: brightness(1.35); transform: scale(1.12); }
+}
+
+.section-title .dot,
+.collapsible-trigger .dot {
+  animation: gemTwinkle 2.8s ease-in-out infinite;
+}
+
+@keyframes statusDotPulse {
+  0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(90, 181, 122, 0.65); }
+  50% { transform: scale(1.25); opacity: 0.85; box-shadow: 0 0 6px 2px rgba(90, 181, 122, 0.4); }
+}
+
+@keyframes statusDotSync {
+  0%, 100% { opacity: 1; transform: scale(1.2); }
+  50% { opacity: 0.25; transform: scale(0.8); }
+}
+
+.status-pill.online .status-dot {
+  animation: statusDotPulse 2.4s ease-in-out infinite;
+}
+
+.status-pill.syncing .status-dot {
+  animation: statusDotSync 0.6s steps(2) infinite;
+}
+
+/* Mascotte Chef IA : respiration idle + aura dorée */
+@keyframes chefIdleBob {
+  0%, 72%, 100% { transform: translateY(0); }
+  80% { transform: translateY(-3px) rotate(-3deg); }
+  90% { transform: translateY(0) rotate(2deg); }
+}
+
+@keyframes fabAuraPulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  60% { opacity: 0; transform: scale(1.36); }
+}
+
+.ai-fab-btn:not(.recording):not(.busy):not(.chef-bounce) #ai-fab-icon {
+  animation: chefIdleBob 4.2s ease-in-out infinite;
+}
+
+.ai-fab-btn:not(.recording):not(.busy)::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 232, 117, 0.65);
+  pointer-events: none;
+  animation: fabAuraPulse 2.8s ease-out infinite;
+}
+
+/* Reflet arcade périodique sur l'écran LED du Total du Mois */
+.stat-card.total-card .stat-value {
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card.total-card .stat-value::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  left: -45%;
+  width: 34%;
+  height: 140%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 249, 214, 0.16) 50%,
+    transparent 100%
+  );
+  transform: skewX(-22deg);
+  pointer-events: none;
+  animation: ledShineSweep 5.5s ease-in-out infinite;
+}
+
+@keyframes ledShineSweep {
+  0%, 72% { left: -45%; opacity: 0; }
+  76% { opacity: 1; }
+  96% { left: 125%; opacity: 0.9; }
+  100% { left: 125%; opacity: 0; }
+}
+
+/* Interaction sur les cartes stats et lignes */
+.stat-card-clickable:hover {
+  transform: translateY(-3px);
+  box-shadow: 6px 6px 0 var(--border-shadow), 0 0 18px rgba(229, 181, 103, 0.25);
+}
+
+.log-item.compact-row {
+  transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+@media (hover: hover) {
+  .log-item.compact-row:hover {
+    transform: translateX(3px);
+  }
+}
+
+/* Transitions d'entrée entre vues / onglets */
+@keyframes viewSectionEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.view-section-enter {
+  animation: viewSectionEnter 0.24s cubic-bezier(0.22, 1, 0.36, 1) var(--view-stagger, 0ms) backwards;
+}
+
+@keyframes navPop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.07) translateY(-2px); }
+  100% { transform: scale(1); }
+}
+
+.view-tab.nav-pop,
+.bottom-nav a.nav-pop::before {
+  animation: navPop 0.26s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Micro-interactions formulaires & Chrono live */
+@keyframes inputPopFlash {
+  0% { border-color: var(--gold-soft); box-shadow: inset 3px 3px 0 #09080c, 0 0 14px rgba(229, 181, 103, 0.6); transform: scale(1.015); }
+  100% { transform: scale(1); }
+}
+
+@keyframes tipInputFlash {
+  0% { border-color: var(--green-soft); box-shadow: inset 3px 3px 0 #09080c, 0 0 14px rgba(90, 181, 122, 0.65); transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.input-pop-flash {
+  animation: inputPopFlash 0.42s ease-out;
+}
+
+.tip-input-flash {
+  animation: tipInputFlash 0.44s ease-out;
+}
+
+@keyframes liveTotalPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.13); color: #fff2a6; }
+  100% { transform: scale(1); }
+}
+
+.live-total-pop {
+  display: inline-block;
+  animation: liveTotalPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes btnReadyPop {
+  0% { transform: scale(0.95); }
+  50% { transform: scale(1.05); box-shadow: 0 4px 0 #09080c, 0 0 16px rgba(229, 181, 103, 0.65); }
+  100% { transform: scale(1); }
+}
+
+.btn-ready-pop {
+  animation: btnReadyPop 0.36s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Micro-pop flottant "+5 €" au clic sur les raccourcis */
+.pixel-micro-pop {
+  position: fixed;
+  transform: translate(-50%, 0);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  padding: 4px 8px;
+  background: #141318;
+  border: 2px solid var(--gold-soft);
+  color: var(--gold-soft);
+  box-shadow: 3px 3px 0 #09080c;
+  pointer-events: none;
+  z-index: 9800;
+  white-space: nowrap;
+  animation: microPopFloat 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.pixel-micro-pop.pop-green {
+  border-color: var(--green-soft);
+  color: #82d99d;
+}
+
+.pixel-spark-fixed {
+  position: fixed;
+  z-index: 9800;
+}
+
+@keyframes microPopFloat {
+  0% { opacity: 0; transform: translate(-50%, 4px) scale(0.75); }
+  22% { opacity: 1; transform: translate(-50%, -8px) scale(1.08); }
+  100% { opacity: 0; transform: translate(-50%, -32px) scale(0.95); }
+}
+
+/* Pointage en direct : barre d'activité animée & pulsation de seconde */
+.live-clock-box.is-running {
+  overflow: hidden;
+  animation: liveBoxGlow 2.4s ease-in-out infinite;
+}
+
+.live-clock-box.is-running::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -40%;
+  width: 40%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #82d99d, #ffe875, transparent);
+  animation: chronoScanBar 2.2s linear infinite;
+}
+
+.live-clock-box.is-paused {
+  animation: pausedBoxGlow 2.4s ease-in-out infinite;
+}
+
+@keyframes chronoScanBar {
+  0% { left: -40%; }
+  100% { left: 100%; }
+}
+
+@keyframes liveBoxGlow {
+  0%, 100% { box-shadow: 4px 4px 0 var(--border-shadow), 0 0 12px rgba(90, 181, 122, 0.25); }
+  50% { box-shadow: 4px 4px 0 var(--border-shadow), 0 0 22px rgba(90, 181, 122, 0.5); }
+}
+
+@keyframes pausedBoxGlow {
+  0%, 100% { box-shadow: 4px 4px 0 var(--border-shadow), 0 0 8px rgba(229, 181, 103, 0.18); }
+  50% { box-shadow: 4px 4px 0 var(--border-shadow), 0 0 18px rgba(229, 181, 103, 0.42); }
+}
+
+@keyframes chronoTickPulse {
+  0% { color: #82d99d; transform: scale(1.03); }
+  100% { color: var(--white-cream); transform: scale(1); }
+}
+
+.live-metric-val.chrono-tick {
+  display: inline-block;
+  animation: chronoTickPulse 0.2s ease-out;
+}
+
+/* Agenda / Calendrier + Modales */
+@keyframes todayCellPulse {
+  0%, 100% { box-shadow: 2px 2px 0 var(--border-shadow), inset 0 0 0 1px rgba(242, 236, 228, 0.25); }
+  50% { box-shadow: 2px 2px 0 var(--border-shadow), 0 0 10px rgba(242, 236, 228, 0.45); }
+}
+
+.cal-cell {
+  transition: transform 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cal-cell.today:not(.sel) {
+  animation: todayCellPulse 2.8s ease-in-out infinite;
+}
+
+@media (hover: hover) {
+  button.cal-cell:hover {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes calDetailPop {
+  0% { opacity: 0.45; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.cal-detail.cal-detail-pop {
+  animation: calDetailPop 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes modalPopIn {
+  0% { opacity: 0; transform: scale(0.92) translateY(8px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.auth-card,
+#photo-dialog[open] {
+  animation: modalPopIn 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .pixel-ambient-bg,
+  .pixel-micro-pop,
+  .pixel-spark-fixed {
+    display: none !important;
+  }
+  .paella-logo,
   .paella-sparkle-a,
   .paella-sparkle-b,
+  .section-title .dot,
+  .collapsible-trigger .dot,
+  .status-pill.online .status-dot,
+  .status-pill.syncing .status-dot,
+  .ai-fab-btn:not(.recording):not(.busy):not(.chef-bounce) #ai-fab-icon,
+  .ai-fab-btn:not(.recording):not(.busy)::after,
   .ai-fab-btn.chef-bounce #ai-fab-icon,
   .ai-fab-btn.chef-bounce .chef-toque,
+  .stat-card.total-card .stat-value::after,
+  .live-clock-box.is-running,
+  .live-clock-box.is-running::before,
+  .live-clock-box.is-paused,
+  .cal-cell.today:not(.sel),
+  .cal-detail.cal-detail-pop,
+  .view-section-enter,
+  .view-tab.nav-pop,
+  .bottom-nav a.nav-pop::before,
+  .auth-card,
+  #photo-dialog[open],
   .px-loader i,
   .live-pulse-dot {
     animation: none !important;
@@ -311,6 +699,9 @@ textarea:focus {
   .log-item.kind-prest,
   .log-item.kind-delivery,
   .log-item.kind-tip,
+  .log-item.compact-row,
+  .cal-cell,
+  .paella-logo,
   .ai-fab-btn,
   .bottom-nav a,
   .bottom-nav a::before {

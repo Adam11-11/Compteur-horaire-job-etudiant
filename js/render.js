@@ -90,6 +90,13 @@ function toggleHistorySection() {
   const isOpen = body.classList.toggle('open');
   btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
   icon.textContent = isOpen ? '▲ REPLIER' : '▼ DÉPLIER';
+  if (isOpen && !prefersReducedMotion()) {
+    body.querySelectorAll('.log-item').forEach(item => {
+      item.style.animation = 'none';
+      void item.offsetWidth;
+      item.style.animation = '';
+    });
+  }
 }
 
 function toggleGlobalSection() {
@@ -101,6 +108,13 @@ function toggleGlobalSection() {
   icon.textContent = isOpen ? '▲ REPLIER' : '▼ DÉPLIER';
   if (isOpen) {
     animateMonthlyBars();
+    const allPayEl = document.getElementById('all-total-pay');
+    if (allPayEl && typeof animateValueCounter === 'function' && !prefersReducedMotion()) {
+      const targetVal = parseFloat(String(allPayEl.textContent).replace(',', '.')) || 0;
+      if (targetVal > 0) {
+        animateValueCounter('all-total-pay', 0, targetVal, 620, false);
+      }
+    }
   }
 }
 
@@ -382,15 +396,28 @@ function renderApp() {
   const displayTipPay = holdCounterDisplayValues ? (holdCounterDisplayValues.tipPay || 0) : monthTipPay;
   const displayTotalPay = holdCounterDisplayValues ? holdCounterDisplayValues.totalPay : currentMonthTotalPay;
 
-  document.getElementById('month-std-pay').textContent = `${displayStdPay.toFixed(2)} €`;
+  if (holdCounterDisplayValues || typeof animateStatIfChanged !== 'function') {
+    document.getElementById('month-std-pay').textContent = `${displayStdPay.toFixed(2)} €`;
+    document.getElementById('month-del-pay').textContent = `${displayDelPay.toFixed(2)} €`;
+    const tipPayEl = document.getElementById('month-tip-pay');
+    if (tipPayEl) tipPayEl.textContent = `${displayTipPay.toFixed(2)} €`;
+    document.getElementById('month-total-pay').textContent = `${displayTotalPay.toFixed(2)} €`;
+    if (typeof lastAnimatedStatValues !== 'undefined') {
+      lastAnimatedStatValues.set('month-std-pay', displayStdPay);
+      lastAnimatedStatValues.set('month-del-pay', displayDelPay);
+      lastAnimatedStatValues.set('month-tip-pay', displayTipPay);
+      lastAnimatedStatValues.set('month-total-pay', displayTotalPay);
+    }
+  } else {
+    animateStatIfChanged('month-std-pay', displayStdPay, 380);
+    animateStatIfChanged('month-del-pay', displayDelPay, 380);
+    animateStatIfChanged('month-tip-pay', displayTipPay, 380);
+    animateStatIfChanged('month-total-pay', displayTotalPay, 440);
+  }
   document.getElementById('month-std-hours').textContent = `${formatHoursMin(monthStdMin)} • Moy. ${formatHoursMin(avgStdMin)}/j`;
-  document.getElementById('month-del-pay').textContent = `${displayDelPay.toFixed(2)} €`;
   document.getElementById('month-del-count').textContent = `${monthDelCount} livraison${monthDelCount > 1 ? 's' : ''}`;
-  const tipPayEl = document.getElementById('month-tip-pay');
   const tipCountEl = document.getElementById('month-tip-count');
-  if (tipPayEl) tipPayEl.textContent = `${displayTipPay.toFixed(2)} €`;
   if (tipCountEl) tipCountEl.textContent = `${monthTipCount} pourboire${monthTipCount > 1 ? 's' : ''}`;
-  document.getElementById('month-total-pay').textContent = `${displayTotalPay.toFixed(2)} €`;
 
   let periodDaysLabel = `${monthWorkedDays} journée${monthWorkedDays > 1 ? 's' : ''} travaillée${monthWorkedDays > 1 ? 's' : ''}`;
   if (monthLegacyCount > 0) {
