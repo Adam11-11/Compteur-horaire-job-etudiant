@@ -1174,7 +1174,6 @@ function renderCategoryViews() {
     const metricsHtml = `
       <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} j)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
       <div class="cat-metric-chip"><span class="cat-metric-label">HEURES (moy. ${formatHoursMin(avgMin)})</span><strong class="cat-metric-val">${formatHoursMin(monthMin)}</strong></div>
-      <div class="cat-metric-chip"><span class="cat-metric-label">CUMUL GLOBAL</span><strong class="cat-metric-val">${allPay.toFixed(2)} €</strong></div>
     `;
 
     prestContainer.innerHTML = `${buildCategoryHeaderAndNav('PRESTATIONS', 'gold-accent', metricsHtml)}${cardsHtml}`;
@@ -1221,7 +1220,6 @@ function renderCategoryViews() {
     const metricsHtml = `
       <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} livr.)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
       <div class="cat-metric-chip"><span class="cat-metric-label">DÉTAIL</span><strong class="cat-metric-val">${monthFlatCount} forf. / ${monthLongCount} &gt;2h30</strong></div>
-      <div class="cat-metric-chip"><span class="cat-metric-label">CUMUL GLOBAL</span><strong class="cat-metric-val">${allPay.toFixed(2)} €</strong></div>
     `;
 
     delContainer.innerHTML = `${buildCategoryHeaderAndNav('LIVRAISONS', 'blue-accent', metricsHtml)}${cardsHtml}`;
@@ -1265,7 +1263,6 @@ function renderCategoryViews() {
     const metricsHtml = `
       <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} tips)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
       <div class="cat-metric-chip"><span class="cat-metric-label">MOY. / MAX</span><strong class="cat-metric-val">${avgTip.toFixed(1)}€ / +${monthMaxTip.toFixed(0)}€</strong></div>
-      <div class="cat-metric-chip"><span class="cat-metric-label">CUMUL GLOBAL</span><strong class="cat-metric-val">${allPay.toFixed(2)} €</strong></div>
     `;
 
     tipContainer.innerHTML = `${buildCategoryHeaderAndNav('POURBOIRES', 'green-accent', metricsHtml)}${cardsHtml}`;
