@@ -31,6 +31,12 @@ function toggleAiFabMenu(forceState) {
 
 function handleAiFabMainClick() {
   if (typeof playClickSound === 'function') playClickSound();
+  const btn = document.getElementById('ai-fab-btn');
+  if (btn) {
+    btn.classList.remove('chef-bounce');
+    void btn.offsetWidth;
+    btn.classList.add('chef-bounce');
+  }
   if (isVoiceRecording) {
     stopAiVoiceDictation();
     return;
