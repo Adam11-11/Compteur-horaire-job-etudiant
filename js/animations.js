@@ -100,7 +100,7 @@ function animateValueCounter(elementId, fromVal, toVal, duration = 1200, withCoi
       const currentVal = fromVal + (toVal - fromVal) * eased;
       el.textContent = `${currentVal.toFixed(2)} €`;
 
-      if (withCoinTicks && now - lastTickTime >= 80 && progress < 0.98) {
+      if (withCoinTicks && now - lastTickTime >= 65 && progress < 0.98) {
         lastTickTime = now;
         playCoinTickSound(progress);
       }

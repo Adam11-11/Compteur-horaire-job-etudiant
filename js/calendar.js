@@ -164,6 +164,9 @@ function initCalendarAndNavigation() {
   window.setView = function (v, preserveEdit) {
     const changed = view !== v;
     view = v;
+    if (changed && typeof playPageSwitchSound === 'function') {
+      playPageSwitchSound();
+    }
     document.body.setAttribute('data-view', v);
     document.querySelectorAll('[data-view-btn]').forEach(b => {
       const on = b.getAttribute('data-view-btn') === v;

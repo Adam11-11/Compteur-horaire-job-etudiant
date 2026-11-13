@@ -3,42 +3,77 @@
 // ==========================================
 let audioCtx = null;
 let isSoundMuted = false;
-let iosHapticLabel = null;
 
-function ensureIosHapticSwitch() {
-  if (iosHapticLabel || !document.body) return iosHapticLabel;
-  const label = document.createElement('label');
-  label.setAttribute('aria-hidden', 'true');
-  label.setAttribute('data-haptic-proxy', '1');
-  label.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden;';
-  const input = document.createElement('input');
-  input.type = 'checkbox';
-  input.setAttribute('switch', '');
-  input.tabIndex = -1;
-  input.setAttribute('data-haptic-proxy', '1');
-  label.appendChild(input);
-  document.body.appendChild(label);
-  iosHapticLabel = label;
-  return iosHapticLabel;
+function fireIosSwitchHaptic() {
+  try {
+    if (!document.body) return;
+    const label = document.createElement('label');
+    label.ariaHidden = 'true';
+    label.setAttribute('data-haptic-proxy', '1');
+    label.style.display = 'none';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.setAttribute('switch', '');
+    input.setAttribute('data-haptic-proxy', '1');
+    label.appendChild(input);
+    document.body.appendChild(label);
+    label.click();
+    label.remove();
+  } catch (e) {}
+}
+
+// Impulsion sub-basse physique (50-95 Hz) : fait vibrer le châssis du téléphone via le haut-parleur
+// même en mode PWA standalone iOS ou pendant l'animation de montée de l'argent
+function playSubBassThump(strength = 0.26, duration = 0.022, startFreq = 115, endFreq = 46) {
+  if (isSoundMuted) return;
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+  try {
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(strength, now + 0.003);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + duration + 0.005);
+  } catch (e) {}
 }
 
 function triggerHaptic(kind = 'light') {
   try {
     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
       const patterns = {
-        light: 10,
-        medium: 18,
-        success: [12, 35, 16, 35, 24],
-        warning: [20, 35, 20],
-        error: [26, 40, 26]
+        tick: 12,
+        light: 14,
+        medium: 22,
+        page: [14, 25, 18],
+        success: [16, 35, 18, 35, 28],
+        warning: [24, 35, 24],
+        error: [30, 40, 30]
       };
-      navigator.vibrate(patterns[kind] || 10);
-      return;
+      navigator.vibrate(patterns[kind] || 14);
+    } else {
+      fireIosSwitchHaptic();
     }
-    // iOS 18+ Safari / PWA : le toggle d'un <input type="checkbox" switch> déclenche le Taptic Engine natif
-    const lbl = ensureIosHapticSwitch();
-    if (lbl) lbl.click();
   } catch (e) {}
+
+  if (kind === 'tick') {
+    playSubBassThump(0.28, 0.018, 130, 52);
+  } else if (kind === 'page' || kind === 'medium') {
+    playSubBassThump(0.34, 0.026, 125, 44);
+  } else if (kind === 'success') {
+    playSubBassThump(0.36, 0.032, 140, 48);
+  } else if (kind === 'warning' || kind === 'error') {
+    playSubBassThump(0.34, 0.03, 95, 40);
+  } else {
+    playSubBassThump(0.25, 0.018, 120, 48);
+  }
 }
 
 function loadSoundPreference() {
@@ -134,10 +169,17 @@ function playSaveSuccessSound() {
   playSquareTone(783.99, 0.13, 0.11, 0.065);
 }
 
+function playPageSwitchSound() {
+  triggerHaptic('page');
+  playSquareTone(420, 0, 0.03, 0.04, 580);
+  playSquareTone(620, 0.028, 0.04, 0.045, 760);
+}
+
 function playCoinTickSound(progress) {
   const clamped = Math.max(0, Math.min(1, progress));
+  triggerHaptic('tick');
   const baseFreq = 560 + clamped * 680;
-  playSquareTone(baseFreq, 0, 0.038, 0.045, baseFreq * 1.18);
+  playSquareTone(baseFreq, 0, 0.038, 0.05, baseFreq * 1.18);
 }
 
 function playCelebrationJingle() {
@@ -164,10 +206,23 @@ function playDeleteSound() {
   playSquareTone(190, 0.10, 0.09, 0.055);
 }
 
+// Déclenchement dès touchend (geste matériel actif sur iOS) + click
+let lastTouchHapticTs = 0;
+document.addEventListener('touchend', (e) => {
+  if (e.target && e.target.closest && e.target.closest('[data-haptic-proxy]')) return;
+  const el = e.target && e.target.closest
+    ? e.target.closest('button, .bottom-nav a, .view-tab, .month-bar-item, .delivery-toggle, .preset-pill, .tip-pill-btn, .cal-cell')
+    : null;
+  if (!el || el.disabled) return;
+  lastTouchHapticTs = Date.now();
+  fireIosSwitchHaptic();
+}, { passive: true });
+
 document.addEventListener('click', (e) => {
   if (e.target && e.target.closest && e.target.closest('[data-haptic-proxy]')) return;
-  const el = e.target.closest('button, .bottom-nav a, .month-bar-item, .delivery-toggle, .preset-pill, .tip-pill-btn, .cal-cell');
+  const el = e.target.closest('button, .bottom-nav a, .view-tab, .month-bar-item, .delivery-toggle, .preset-pill, .tip-pill-btn, .cal-cell');
   if (!el || el.disabled) return;
+  if (el.matches('.bottom-nav a, .view-tab')) return; // géré directement par setView() avec playPageSwitchSound()
   if (el.classList.contains('btn-danger') || el.classList.contains('del-btn') || el.classList.contains('del')) {
     triggerHaptic('warning');
     return;
