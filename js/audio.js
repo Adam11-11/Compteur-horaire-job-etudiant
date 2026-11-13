@@ -16,7 +16,9 @@ function loadSoundPreference() {
 function updateSoundButtonUI() {
   const btn = document.getElementById('sound-toggle-btn');
   if (!btn) return;
-  btn.textContent = isSoundMuted ? '🔇' : '🔊';
+  btn.innerHTML = isSoundMuted
+    ? (typeof PX_ICO !== 'undefined' ? PX_ICO.soundOff : '🔇')
+    : (typeof PX_ICO !== 'undefined' ? PX_ICO.soundOn : '🔊');
   btn.classList.toggle('muted', isSoundMuted);
   btn.setAttribute('aria-pressed', isSoundMuted ? 'true' : 'false');
   btn.setAttribute('title', isSoundMuted ? 'Son coupé (cliquer pour activer)' : 'Son activé (cliquer pour couper)');

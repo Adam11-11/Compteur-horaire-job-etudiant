@@ -231,7 +231,7 @@ function renderApp() {
 
   const proofAlertBtn = document.getElementById('period-missing-proof-badge');
   if (monthMissingProofs > 0) {
-    proofAlertBtn.textContent = `⚠ ${monthMissingProofs} sans photo`;
+    proofAlertBtn.innerHTML = `${PX_ICO.warn} ${monthMissingProofs} sans photo`;
     proofAlertBtn.classList.remove('all-ok');
     proofAlertBtn.style.display = 'inline-flex';
   } else {
@@ -305,7 +305,7 @@ function renderApp() {
         }
 
         const offlineBadge = item._offlinePending || String(item.id).startsWith('offline_')
-          ? `<span class="shift-pill pill-offline-sync">⏳ HORS-LIGNE</span>`
+          ? `<span class="shift-pill pill-offline-sync">${PX_ICO.hourglass} HORS-LIGNE</span>`
           : '';
 
         let mainLineHtml = '';
@@ -323,9 +323,9 @@ function renderApp() {
           if (item.has_delivery || delP > 0) {
             const delMin = item.del_minutes || 0;
             const detailDur = delMin > 150 ? ` ${formatHoursMin(delMin)}` : '';
-            delText = `<span class="shift-pill pill-delivery">🚚 Livr.${detailDur} (${delP.toFixed(0)}€)</span>`;
+            delText = `<span class="shift-pill pill-delivery">${PX_ICO.crate} Livr.${detailDur} (${delP.toFixed(0)}€)</span>`;
           }
-          const tipText = tipP > 0 ? `<span class="shift-pill pill-tip">💰 +${tipP.toFixed(2)}€</span>` : '';
+          const tipText = tipP > 0 ? `<span class="shift-pill pill-tip">${PX_ICO.gem} +${tipP.toFixed(2)}€</span>` : '';
           const noteSpan = item.note ? `<span class="compact-note">— ${escapeHtml(item.note)}</span>` : '';
           mainLineHtml = `
             <span class="compact-date">${formatDateWithDayFR(item.date)}</span>

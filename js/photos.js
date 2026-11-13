@@ -23,22 +23,22 @@ function updateFormPhotoUI() {
     title.textContent = '✓ PHOTO PRÊTE';
     sub.textContent = `${formSelectedPhotoFile.name || 'Image'} (${Math.max(1, Math.round(formSelectedPhotoFile.size / 1024))} Ko)`;
     sub.style.display = 'block';
-    pickBtn.textContent = '📷 CHANGER';
+    pickBtn.innerHTML = `${CAM_SVG} CHANGER`;
     clearBtn.style.display = 'inline-flex';
   } else if (existingFormProofPath && !removeExistingFormPhoto) {
     block.classList.add('has-photo');
     title.textContent = '✓ PHOTO JOINTE';
     sub.textContent = '';
     sub.style.display = 'none';
-    pickBtn.textContent = '📷 REMPLACER';
+    pickBtn.innerHTML = `${CAM_SVG} REMPLACER`;
     clearBtn.style.display = 'inline-flex';
   } else {
     block.classList.remove('has-photo');
     thumb.removeAttribute('src');
-    title.textContent = '📷 PHOTO DE PREUVE (OPTIONNEL)';
+    title.innerHTML = `${CAM_SVG} PHOTO DE PREUVE (OPTIONNEL)`;
     sub.textContent = '';
     sub.style.display = 'none';
-    pickBtn.textContent = '📷 JOINDRE PHOTO';
+    pickBtn.innerHTML = `${CAM_SVG} JOINDRE PHOTO`;
     clearBtn.style.display = 'none';
   }
 }

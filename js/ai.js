@@ -417,7 +417,7 @@ async function analyzeSheetPhotoWithAI(file) {
   const statusBanner = document.getElementById('ai-scan-result-banner');
 
   if (fabBtn) fabBtn.classList.add('busy');
-  if (fabIcon) fabIcon.textContent = '⏳';
+  if (fabIcon) fabIcon.innerHTML = PX_ICO.hourglass;
 
   showAiLiveBubble('🤖 Lecture de la feuille (recherche de <strong>ADAM</strong>)...', 'loading');
 
@@ -488,7 +488,7 @@ Sur la photo du tableau :
     showToast(`Erreur lecture IA : ${err.message || 'Échec'}`, { type: 'error', duration: 4000 });
   } finally {
     if (fabBtn) fabBtn.classList.remove('busy');
-    if (fabIcon) fabIcon.textContent = '🤖';
+    if (fabIcon) fabIcon.innerHTML = PX_ICO.robot;
   }
 }
 
@@ -530,7 +530,7 @@ async function startAiVoiceDictation() {
       activeMediaRecorder.start();
       isVoiceRecording = true;
       if (fabBtn) fabBtn.classList.add('recording');
-      if (fabIcon) fabIcon.textContent = '⏹';
+      if (fabIcon) fabIcon.innerHTML = PX_ICO.stop;
       showAiLiveBubble('🎙️ <strong>Parle maintenant !</strong><br><small>Appuie sur ⏹ quand tu as fini</small>', 'recording');
       return;
     } catch (micErr) {
@@ -548,7 +548,7 @@ async function startAiVoiceDictation() {
 
       isVoiceRecording = true;
       if (fabBtn) fabBtn.classList.add('recording');
-      if (fabIcon) fabIcon.textContent = '⏹';
+      if (fabIcon) fabIcon.innerHTML = PX_ICO.stop;
       showAiLiveBubble('🎙️ <strong>Écoute en cours...</strong><br><small>Dis tes horaires, livraison ou pourboire</small>', 'recording');
 
       activeSpeechRecognition.onresult = async (event) => {
@@ -584,7 +584,7 @@ function stopAiVoiceDictation() {
   const fabBtn = document.getElementById('ai-fab-btn');
   const fabIcon = document.getElementById('ai-fab-icon');
   if (fabBtn) fabBtn.classList.remove('recording');
-  if (fabIcon) fabIcon.textContent = '🤖';
+  if (fabIcon) fabIcon.innerHTML = PX_ICO.robot;
 
   if (activeMediaRecorder && activeMediaRecorder.state !== 'inactive') {
     try { activeMediaRecorder.stop(); } catch (e) {}
@@ -599,7 +599,7 @@ async function processVoiceAudioWithGemini(audioBlob) {
   const fabBtn = document.getElementById('ai-fab-btn');
   const fabIcon = document.getElementById('ai-fab-icon');
   if (fabBtn) fabBtn.classList.add('busy');
-  if (fabIcon) fabIcon.textContent = '⏳';
+  if (fabIcon) fabIcon.innerHTML = PX_ICO.hourglass;
   showAiLiveBubble('🤖 Analyse de ta voix en cours...', 'loading');
 
   try {
@@ -622,7 +622,7 @@ async function processVoiceAudioWithGemini(audioBlob) {
     showAiLiveBubble(`⚠ ${escapeHtml(err.message || 'Erreur analyse vocale')}`, 'error', 4500);
   } finally {
     if (fabBtn) fabBtn.classList.remove('busy');
-    if (fabIcon) fabIcon.textContent = '🤖';
+    if (fabIcon) fabIcon.innerHTML = PX_ICO.robot;
   }
 }
 
@@ -944,9 +944,9 @@ function openAiConfirmModal(data, calc, sourceType) {
 
   let catBadgeHtml = `<span class="ai-cat-pill cat-prest">🍳 PRESTATION</span>`;
   if (data.category === 'livraisons') {
-    catBadgeHtml = `<span class="ai-cat-pill cat-del">🚚 LIVRAISON</span>`;
+    catBadgeHtml = `<span class="ai-cat-pill cat-del">${PX_ICO.crate} LIVRAISON</span>`;
   } else if (data.category === 'pourboires') {
-    catBadgeHtml = `<span class="ai-cat-pill cat-tip">💰 POURBOIRE (HORS PAIE)</span>`;
+    catBadgeHtml = `<span class="ai-cat-pill cat-tip">${PX_ICO.gem} POURBOIRE (HORS PAIE)</span>`;
   }
 
   const rowsHtml = [];

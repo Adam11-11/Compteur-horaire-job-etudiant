@@ -1213,7 +1213,7 @@ function renderCategoryViews() {
       ? `<div class="empty-state">Aucune livraison sur cette sélection.</div>`
       : `<div class="log-list">${rows.map(({ item, delMin, delP }) => {
           const durText = delMin > 150 ? `Longue ${formatHoursMin(delMin)}` : (delMin > 0 ? `${formatHoursMin(delMin)}` : 'Forfait 30€');
-          const pillHtml = `<span class="shift-pill pill-delivery">🚚 ${durText}</span>`;
+          const pillHtml = `<span class="shift-pill pill-delivery">${PX_ICO.crate} ${durText}</span>`;
           return buildCategoryCardHtml(item, pillHtml, delP);
         }).join('')}</div>`;
 
@@ -1256,7 +1256,7 @@ function renderCategoryViews() {
     const cardsHtml = rows.length === 0
       ? `<div class="empty-state">Aucun pourboire sur cette sélection.</div>`
       : `<div class="log-list">${rows.map(({ item, tipP }) => {
-          const pillHtml = `<span class="shift-pill pill-tip">💰 Pourboire</span>`;
+          const pillHtml = `<span class="shift-pill pill-tip">${PX_ICO.gem} Pourboire</span>`;
           return buildCategoryCardHtml(item, pillHtml, tipP);
         }).join('')}</div>`;
 
