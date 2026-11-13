@@ -123,9 +123,6 @@ function renderApp() {
   const activeShifts = cachedShifts.filter(s => !pendingDeletes.has(s.id));
   const bounds = getPayPeriodBounds(activePayYear, activePayMonth);
 
-  const prevDate = new Date(activePayYear, activePayMonth - 1, 1, 12, 0, 0);
-  const prevBounds = getPayPeriodBounds(prevDate.getFullYear(), prevDate.getMonth());
-
   document.getElementById('period-title').textContent = `PAIE DE ${MONTH_NAMES[activePayMonth]} ${activePayYear}`;
   document.getElementById('period-range-text').innerHTML = `Du <strong>${formatDateWithDayFR(bounds.startYMD)}</strong> au <strong>${formatDateWithDayFR(bounds.endYMD)}</strong>`;
 
@@ -147,16 +144,9 @@ function renderApp() {
   let monthStdMin = 0, monthStdPay = 0, monthDelCount = 0, monthDelPay = 0;
   let monthTipCount = 0, monthTipPay = 0;
   let monthLegacyCount = 0, monthMissingProofs = 0;
-  let prevMonthTotalPay = 0;
-  let prevSameDatePay = 0;
   const allWorkedDatesSet = new Set();
   const monthWorkedDatesSet = new Set();
   const monthStdDatesSet = new Set();
-
-  const isCurrentInProgress = todayStr >= bounds.startYMD && todayStr <= bounds.endYMD;
-  const elapsedDays = isCurrentInProgress ? Math.max(0, Math.round((todayObj - bounds.startObj) / (1000 * 60 * 60 * 24))) : 0;
-  const prevCutoffObj = new Date(prevBounds.startObj.getFullYear(), prevBounds.startObj.getMonth(), prevBounds.startObj.getDate() + elapsedDays, 12, 0, 0);
-  const prevCutoffYMD = prevCutoffObj > prevBounds.endObj ? prevBounds.endYMD : toYMD(prevCutoffObj);
 
   const displayedShifts = [];
   const periodBuckets = new Map();
@@ -193,13 +183,6 @@ function renderApp() {
     else if (item.date && hasWork) {
       bucket.workedDates.add(item.date);
       bucket.workedDays = bucket.workedDates.size;
-    }
-
-    if (item.date >= prevBounds.startYMD && item.date <= prevBounds.endYMD) {
-      prevMonthTotalPay += employerPay;
-      if (isCurrentInProgress && item.date <= prevCutoffYMD) {
-        prevSameDatePay += employerPay;
-      }
     }
 
     const inPeriod = item.date >= bounds.startYMD && item.date <= bounds.endYMD;
@@ -242,23 +225,6 @@ function renderApp() {
     tipPay: monthTipPay,
     totalPay: currentMonthTotalPay
   };
-
-  const diffBadge = document.getElementById('period-diff-badge');
-  if (isCurrentInProgress) {
-    const jLabel = diffDays === 0 ? 'J-0' : `J-${diffDays}`;
-    const totalSpanDays = Math.max(1, Math.round((bounds.endObj - bounds.startObj) / (1000 * 60 * 60 * 24)) + 1);
-    const elapsedInclusive = Math.max(1, elapsedDays + 1);
-    let estSuffix = '';
-    if (currentMonthTotalPay > 0 && diffDays > 0) {
-      const estimatedTotal = (currentMonthTotalPay / elapsedInclusive) * totalSpanDays;
-      estSuffix = ` • estimation fin : ~${estimatedTotal.toFixed(0)} €`;
-    }
-    diffBadge.textContent = `à ${jLabel} : ${currentMonthTotalPay.toFixed(2)} € vs ${prevSameDatePay.toFixed(2)} € à la même date de la période préc.${estSuffix}`;
-    diffBadge.className = 'meta-badge neutral-compare';
-  } else {
-    diffBadge.textContent = `Total période : ${currentMonthTotalPay.toFixed(2)} € vs ${prevMonthTotalPay.toFixed(2)} € période préc.`;
-    diffBadge.className = 'meta-badge neutral-compare';
-  }
 
   const proofAlertBtn = document.getElementById('period-missing-proof-badge');
   if (monthMissingProofs > 0) {

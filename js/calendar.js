@@ -135,6 +135,12 @@ function initCalendarAndNavigation() {
       grid.classList.remove('period-transition-next', 'period-transition-prev');
       void grid.offsetWidth;
       grid.classList.add(dir > 0 ? 'period-transition-next' : 'period-transition-prev');
+      if (!prefersReducedMotion()) {
+        grid.querySelectorAll('.cal-cell.worked').forEach((cell, idx) => {
+          cell.style.setProperty('--cal-stagger', `${Math.min(idx, 12) * 28}ms`);
+          cell.classList.add('cal-cell-pop');
+        });
+      }
     }
     renderDetail(d);
   }
@@ -173,7 +179,7 @@ function initCalendarAndNavigation() {
       b.classList.toggle('active', on);
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
-    if (v === 'calendar') renderCalendar();
+    if (v === 'calendar') renderCalendar(1);
     if (v === 'prestations' || v === 'livraisons' || v === 'pourboires') {
       if (!preserveEdit && editingShiftId === null && editingLegacyId === null && typeof syncFormForCategoryView === 'function') {
         syncFormForCategoryView(v);

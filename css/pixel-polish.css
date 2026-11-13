@@ -322,104 +322,135 @@ textarea:focus {
 
 .ambient-pixel {
   position: absolute;
-  bottom: -12px;
+  bottom: -14px;
   opacity: 0;
-  box-shadow: 1px 1px 0 rgba(9, 8, 12, 0.7);
-  animation: ambientFloatUp var(--dur, 12s) linear var(--delay, 0s) infinite;
+  box-shadow: 2px 2px 0 rgba(9, 8, 12, 0.8);
+  animation: ambientFloatUp var(--dur, 9s) linear var(--delay, 0s) infinite;
   will-change: transform, opacity;
 }
 
-.ambient-pixel.ember-gold { background: rgba(255, 232, 117, 0.55); }
-.ambient-pixel.ember-red { background: rgba(217, 75, 87, 0.48); }
-.ambient-pixel.ember-cream { background: rgba(242, 236, 228, 0.35); }
+.ambient-pixel.ambient-star {
+  clip-path: polygon(35% 0%, 65% 0%, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 65% 100%, 35% 100%, 35% 65%, 0% 65%, 0% 35%, 35% 35%);
+}
+
+.ambient-pixel.ember-gold { background: rgba(255, 232, 117, 0.82); box-shadow: 0 0 6px rgba(255, 232, 117, 0.55); }
+.ambient-pixel.ember-red { background: rgba(235, 102, 114, 0.72); box-shadow: 0 0 6px rgba(217, 75, 87, 0.45); }
+.ambient-pixel.ember-cream { background: rgba(242, 236, 228, 0.55); }
+.ambient-pixel.ember-blue { background: rgba(128, 194, 247, 0.65); box-shadow: 0 0 6px rgba(79, 164, 232, 0.45); }
+
+.pixel-spark.spark-green { background: #82d99d; width: 7px; height: 7px; }
+.pixel-spark.spark-blue { background: #80c2f7; width: 7px; height: 7px; }
 
 @keyframes ambientFloatUp {
   0% {
     opacity: 0;
-    transform: translate3d(0, 0, 0) scale(0.8);
+    transform: translate3d(0, 0, 0) scale(0.75);
   }
-  12% {
+  10% {
+    opacity: 0.9;
+  }
+  50% {
     opacity: 0.65;
+    transform: translate3d(calc(var(--drift, 18px) * 0.5), -50vh, 0) scale(1.15);
   }
-  75% {
-    opacity: 0.45;
+  82% {
+    opacity: 0.75;
   }
   100% {
     opacity: 0;
-    transform: translate3d(var(--drift, 14px), -105vh, 0) scale(1.1);
+    transform: translate3d(var(--drift, 18px), -106vh, 0) scale(0.9);
   }
 }
 
-/* Logo Paella vivant (léger frémissement + sizzle interactif au clic) */
+/* Logo Paella vivant (mijote joyeusement + sizzle interactif au clic) */
 @keyframes paellaSimmer {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-1.5px) rotate(-1.5deg); }
+  0%, 100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    filter: drop-shadow(0 0 5px rgba(255, 232, 117, 0.45)) drop-shadow(2px 2px 0 var(--border-shadow));
+  }
+  35% {
+    transform: translateY(-2.5px) rotate(-3deg) scale(1.03);
+    filter: drop-shadow(0 0 9px rgba(255, 232, 117, 0.75)) drop-shadow(2px 2px 0 var(--border-shadow));
+  }
+  70% {
+    transform: translateY(0.5px) rotate(2.5deg) scale(0.99);
+  }
 }
 
 @keyframes paellaSizzlePop {
   0% { transform: scale(1) rotate(0deg); }
-  25% { transform: scale(1.22) rotate(-8deg); }
-  55% { transform: scale(0.94) rotate(7deg); }
-  80% { transform: scale(1.08) rotate(-3deg); }
+  25% { transform: scale(1.26) rotate(-10deg); }
+  55% { transform: scale(0.92) rotate(8deg); }
+  80% { transform: scale(1.1) rotate(-4deg); }
   100% { transform: scale(1) rotate(0deg); }
 }
 
 .paella-logo {
-  animation: paellaSimmer 3.2s ease-in-out infinite;
+  animation: paellaSimmer 2.4s ease-in-out infinite;
   transition: transform 0.14s ease, filter 0.18s ease;
 }
 
 .paella-logo:hover {
-  filter: drop-shadow(0 0 9px rgba(255, 232, 117, 0.75)) drop-shadow(2px 2px 0 var(--border-shadow));
+  filter: drop-shadow(0 0 12px rgba(255, 232, 117, 0.9)) drop-shadow(2px 2px 0 var(--border-shadow));
 }
 
 .paella-logo.paella-sizzle-pop {
   animation: paellaSizzlePop 0.44s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Gemmes de titres & Pastille statut SYNCHRO vivantes */
+/* Gemmes de titres, Titre période & Pastille statut SYNCHRO vivantes */
 @keyframes gemTwinkle {
-  0%, 100% { filter: brightness(1); transform: scale(1); }
-  50% { filter: brightness(1.35); transform: scale(1.12); }
+  0%, 100% { filter: brightness(1); transform: scale(1) rotate(0deg); }
+  50% { filter: brightness(1.45); transform: scale(1.22) rotate(45deg); }
 }
 
 .section-title .dot,
 .collapsible-trigger .dot {
-  animation: gemTwinkle 2.8s ease-in-out infinite;
+  animation: gemTwinkle 2.4s ease-in-out infinite;
+}
+
+@keyframes periodTitleGlow {
+  0%, 100% { text-shadow: 2px 2px 0 #09080c, 0 0 6px rgba(229, 181, 103, 0.2); }
+  50% { text-shadow: 2px 2px 0 #09080c, 0 0 14px rgba(255, 232, 117, 0.55); }
+}
+
+.period-month-title {
+  animation: periodTitleGlow 3.2s ease-in-out infinite;
 }
 
 @keyframes statusDotPulse {
-  0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(90, 181, 122, 0.65); }
-  50% { transform: scale(1.25); opacity: 0.85; box-shadow: 0 0 6px 2px rgba(90, 181, 122, 0.4); }
+  0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(90, 181, 122, 0.75); }
+  50% { transform: scale(1.35); opacity: 0.9; box-shadow: 0 0 8px 3px rgba(90, 181, 122, 0.45); }
 }
 
 @keyframes statusDotSync {
-  0%, 100% { opacity: 1; transform: scale(1.2); }
-  50% { opacity: 0.25; transform: scale(0.8); }
+  0%, 100% { opacity: 1; transform: scale(1.25); }
+  50% { opacity: 0.2; transform: scale(0.75); }
 }
 
 .status-pill.online .status-dot {
-  animation: statusDotPulse 2.4s ease-in-out infinite;
+  animation: statusDotPulse 2s ease-in-out infinite;
 }
 
 .status-pill.syncing .status-dot {
-  animation: statusDotSync 0.6s steps(2) infinite;
+  animation: statusDotSync 0.55s steps(2) infinite;
 }
 
-/* Mascotte Chef IA : respiration idle + aura dorée */
+/* Mascotte Chef IA : sautillante en continu + halo radar */
 @keyframes chefIdleBob {
-  0%, 72%, 100% { transform: translateY(0); }
-  80% { transform: translateY(-3px) rotate(-3deg); }
-  90% { transform: translateY(0) rotate(2deg); }
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-3px) rotate(-4deg); }
+  50% { transform: translateY(0) rotate(0deg); }
+  75% { transform: translateY(-2px) rotate(4deg); }
 }
 
 @keyframes fabAuraPulse {
-  0%, 100% { opacity: 0.55; transform: scale(1); }
-  60% { opacity: 0; transform: scale(1.36); }
+  0% { opacity: 0.8; transform: scale(1); }
+  75%, 100% { opacity: 0; transform: scale(1.48); }
 }
 
 .ai-fab-btn:not(.recording):not(.busy):not(.chef-bounce) #ai-fab-icon {
-  animation: chefIdleBob 4.2s ease-in-out infinite;
+  animation: chefIdleBob 2.6s ease-in-out infinite;
 }
 
 .ai-fab-btn:not(.recording):not(.busy)::after {
@@ -427,18 +458,37 @@ textarea:focus {
   position: absolute;
   inset: -4px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 232, 117, 0.65);
+  border: 2px solid rgba(255, 232, 117, 0.85);
   pointer-events: none;
-  animation: fabAuraPulse 2.8s ease-out infinite;
+  animation: fabAuraPulse 2.1s ease-out infinite;
 }
 
-/* Reflet arcade périodique sur l'écran LED du Total du Mois */
-.stat-card.total-card .stat-value {
+/* Écrans LED Arcade des 4 cartes stats : reflets lumineux & aura respirante */
+@keyframes totalCardGlow {
+  0%, 100% {
+    box-shadow: 0 5px 0 #09080c, 0 0 14px rgba(229, 181, 103, 0.16), inset 0 0 0 2px #402e23, inset 2px 2px 0 rgba(255, 232, 117, 0.18);
+  }
+  50% {
+    box-shadow: 0 5px 0 #09080c, 0 0 26px rgba(255, 232, 117, 0.36), inset 0 0 0 2px #5c432e, inset 2px 2px 0 rgba(255, 232, 117, 0.3);
+  }
+}
+
+.stat-card.total-card:not(.counting-pulse) {
+  animation: totalCardGlow 3.2s ease-in-out infinite;
+}
+
+.stat-card.total-card .stat-value,
+.stat-card.std-card .stat-value,
+.stat-card.delivery-card .stat-value,
+.stat-card.tip-card .stat-value {
   position: relative;
   overflow: hidden;
 }
 
-.stat-card.total-card .stat-value::after {
+.stat-card.total-card .stat-value::after,
+.stat-card.std-card .stat-value::after,
+.stat-card.delivery-card .stat-value::after,
+.stat-card.tip-card .stat-value::after {
   content: "";
   position: absolute;
   top: -20%;
@@ -448,26 +498,101 @@ textarea:focus {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 249, 214, 0.16) 50%,
+    rgba(255, 249, 214, 0.22) 50%,
     transparent 100%
   );
   transform: skewX(-22deg);
   pointer-events: none;
-  animation: ledShineSweep 5.5s ease-in-out infinite;
+  animation: ledShineSweep 3.8s ease-in-out infinite;
 }
 
+.stat-card.std-card .stat-value::after { animation-delay: 0.7s; }
+.stat-card.delivery-card .stat-value::after { animation-delay: 1.4s; }
+.stat-card.tip-card .stat-value::after { animation-delay: 2.1s; }
+
 @keyframes ledShineSweep {
-  0%, 72% { left: -45%; opacity: 0; }
-  76% { opacity: 1; }
-  96% { left: 125%; opacity: 0.9; }
+  0%, 60% { left: -45%; opacity: 0; }
+  66% { opacity: 1; }
+  94% { left: 125%; opacity: 0.95; }
   100% { left: 125%; opacity: 0; }
 }
 
-/* Interaction sur les cartes stats et lignes */
-.stat-card-clickable:hover {
-  transform: translateY(-3px);
-  box-shadow: 6px 6px 0 var(--border-shadow), 0 0 18px rgba(229, 181, 103, 0.25);
+@keyframes statCardPop {
+  0% { opacity: 0.35; transform: translateY(8px) scale(0.95); }
+  65% { opacity: 1; transform: translateY(-2px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+.stat-card-pop {
+  animation: statCardPop 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) var(--card-stagger, 0ms) backwards;
+}
+
+/* Interaction sur les cartes stats, barres mensuelles et lignes */
+.stat-card-clickable:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 6px 6px 0 var(--border-shadow), 0 0 22px rgba(229, 181, 103, 0.35);
+}
+
+.month-bar-fill {
+  position: relative;
+  overflow: hidden;
+}
+
+.month-bar-fill.bar-filled::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.28) 50%, transparent 100%);
+  transform: translateX(-100%);
+  animation: barShimmer 2.8s ease-in-out infinite;
+}
+
+@keyframes barShimmer {
+  0%, 40% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Bouton ENREGISTRER lumineux quand il est prêt */
+@keyframes submitBtnGlow {
+  0%, 100% { box-shadow: inset -4px -4px 0 var(--red-dark), inset 4px 4px 0 var(--red-light), 0 4px 0 var(--border-shadow); }
+  50% { box-shadow: inset -4px -4px 0 var(--red-dark), inset 4px 4px 0 var(--red-light), 0 4px 0 var(--border-shadow), 0 0 18px rgba(229, 181, 103, 0.55); }
+}
+
+#shift-submit-btn:not(:disabled) {
+  animation: submitBtnGlow 2.2s ease-in-out infinite;
+}
+
+/* États vides légèrement flottants */
+@keyframes emptyStateFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.empty-state {
+  animation: emptyStateFloat 3.2s ease-in-out infinite;
+}
+
+/* Cellules d'agenda animées */
+@keyframes calCellPop {
+  0% { opacity: 0.2; transform: scale(0.84); }
+  70% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.cal-cell-pop {
+  animation: calCellPop 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) var(--cal-stagger, 0ms) backwards;
+}
+
+@keyframes calDotTwinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.65; transform: scale(1.22); }
+}
+
+.cal-cell.worked .cal-dots .d {
+  animation: calDotTwinkle 2.6s ease-in-out infinite;
+}
+.cal-cell.worked .cal-dots .d:nth-child(2) { animation-delay: 0.4s; }
+.cal-cell.worked .cal-dots .d:nth-child(3) { animation-delay: 0.8s; }
 
 .log-item.compact-row {
   transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
@@ -681,7 +806,18 @@ textarea:focus {
   .ai-fab-btn:not(.recording):not(.busy)::after,
   .ai-fab-btn.chef-bounce #ai-fab-icon,
   .ai-fab-btn.chef-bounce .chef-toque,
+  .stat-card.total-card:not(.counting-pulse),
   .stat-card.total-card .stat-value::after,
+  .stat-card.std-card .stat-value::after,
+  .stat-card.delivery-card .stat-value::after,
+  .stat-card.tip-card .stat-value::after,
+  .stat-card-pop,
+  .period-month-title,
+  .month-bar-fill.bar-filled::after,
+  #shift-submit-btn:not(:disabled),
+  .empty-state,
+  .cal-cell-pop,
+  .cal-cell.worked .cal-dots .d,
   .live-clock-box.is-running,
   .live-clock-box.is-running::before,
   .live-clock-box.is-paused,
