@@ -290,8 +290,12 @@ function renderApp() {
 
         const card = document.createElement('div');
         const isJustAdded = highlightedShiftId && item.id === highlightedShiftId;
+        const kindClass = isLegacy
+          ? ' legacy-item'
+          : (stdP > 0 ? ' kind-prest' : ((item.has_delivery || delP > 0) ? ' kind-delivery' : (tipP > 0 ? ' kind-tip' : '')));
         card.className = 'log-item compact-row'
-          + (isLegacy ? ' legacy-item' : (inPeriod ? ' in-current-period' : ''))
+          + (isLegacy ? '' : (inPeriod ? ' in-current-period' : ''))
+          + kindClass
           + (isJustAdded ? ' just-added-flash' : '');
         card.setAttribute('data-shift-id', String(item.id));
         card.style.setProperty('--item-index', String(Math.min(cascadeIndex, 10)));

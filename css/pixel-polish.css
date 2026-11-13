@@ -197,6 +197,30 @@ textarea:focus {
   background: #1d1a24;
 }
 
+.log-item.kind-prest {
+  border-left: 6px solid #eb5e6a;
+  box-shadow:
+    0 4px 0 #09080c,
+    inset 7px 0 14px -6px rgba(235, 94, 106, 0.85),
+    inset 2px 2px 0 rgba(255, 255, 255, 0.06);
+}
+
+.log-item.kind-delivery {
+  border-left: 6px solid #5bb2f5;
+  box-shadow:
+    0 4px 0 #09080c,
+    inset 7px 0 14px -6px rgba(91, 178, 245, 0.85),
+    inset 2px 2px 0 rgba(255, 255, 255, 0.06);
+}
+
+.log-item.kind-tip {
+  border-left: 6px solid #63cc87;
+  box-shadow:
+    0 4px 0 #09080c,
+    inset 7px 0 14px -6px rgba(99, 204, 135, 0.85),
+    inset 2px 2px 0 rgba(255, 255, 255, 0.06);
+}
+
 /* Barre de navigation basse façon barre d'action RPG (sprites pixel art Habitica) */
 .bottom-nav {
   background: linear-gradient(180deg, #252131 0%, #1b1824 100%);
