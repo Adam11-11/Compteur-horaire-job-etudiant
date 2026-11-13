@@ -45,6 +45,10 @@ function disableMobileZoom() {
 
 (function initApp() {
   disableMobileZoom();
+  const versionBadge = document.getElementById('app-version-badge');
+  if (versionBadge && typeof APP_VERSION !== 'undefined') {
+    versionBadge.textContent = APP_VERSION;
+  }
   loadSoundPreference();
   initAuthGate();
 })();

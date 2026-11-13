@@ -20,6 +20,19 @@ header h1 { justify-content: flex-start; font-size: clamp(13px, 4vw, 22px); line
 header h1::after { content: "_"; color: var(--gold-soft); text-shadow: none; animation: blinkCursor 1s steps(1) infinite; }
 header p { font-size: 18px; line-height: 1.2; }
 .sound-toggle-btn { top: 12px; right: 12px; width: 48px; height: 48px; font-size: 20px; }
+.app-version-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--gold-soft);
+  background: var(--bg-input);
+  border: 2px solid var(--border-soft);
+  padding: 6px 8px;
+  box-shadow: 2px 2px 0 var(--border-shadow);
+  letter-spacing: 0.5px;
+  user-select: none;
+}
 
 /* Logo Paella Pixel Art Brillant */
 @keyframes paellaSparkle {
