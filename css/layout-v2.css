@@ -2,8 +2,9 @@
    COUCHE UI/UX V2 — rétro gaming / pixel-art, mobile & PC
    ===================================================================== */
 :root { --nav-h: 60px; --gap: 16px; --box-pad: 14px; --text-muted: #b9b2bf; --gold-glow: rgba(229,181,103,.45); }
-html { overflow-x: hidden; -webkit-text-size-adjust: 100%; touch-action: manipulation; }
-* { scrollbar-width: thin; scrollbar-color: var(--border-soft) var(--bg-dark); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+html { overflow-x: hidden; -webkit-text-size-adjust: 100%; touch-action: pan-x pan-y; scrollbar-width: none; -ms-overflow-style: none; }
+* { scrollbar-width: none; -ms-overflow-style: none; -webkit-tap-highlight-color: transparent; touch-action: pan-x pan-y; }
+*::-webkit-scrollbar, html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; width: 0; height: 0; }
 ::selection { background: var(--red-soft); color: var(--white-cream); }
 :focus-visible { outline: 3px solid var(--gold-soft); outline-offset: 3px; }
 input:focus-visible, select:focus-visible { outline: none; }
