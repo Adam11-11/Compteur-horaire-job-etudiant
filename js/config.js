@@ -3,7 +3,7 @@
 // ==========================================
 const SUPABASE_URL = 'https://pvfdcgphreklscoexyip.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_sXfoxxLGM44ypipf2oyJWQ_hPc1cp_t';
-const APP_VERSION = 'v1.39';
+const APP_VERSION = 'v1.40';
 
 // Stockage persistant renforcé (localStorage + Cookie longue durée 365j pour mobile)
 const AUTH_STORAGE_KEY = 'compteur_paella_auth';
@@ -43,6 +43,7 @@ const PHOTO_BUCKET = 'proofs';
 const HOURLY_RATE = 12;
 const STD_MIN_PAY = 60;
 const DELIVERY_DEFAULT_PAY = 30;
+const DELIVERY_VEHICLE_BONUS = 10;
 const MONTH_NAMES = ['JANVIER','FÉVRIER','MARS','AVRIL','MAI','JUIN','JUILLET','AOÛT','SEPTEMBRE','OCTOBRE','NOVEMBRE','DÉCEMBRE'];
 const MONTH_NAMES_SHORT = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 const DAY_NAMES_SHORT = ['Dim.', 'Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.'];

@@ -116,6 +116,8 @@ function setDeliveryState(state) {
     document.getElementById('del-start').value = '';
     document.getElementById('del-end').value = '';
     document.getElementById('del-duration-min').value = '';
+    const vCheck = document.getElementById('del-vehicle-check');
+    if (vCheck) vCheck.checked = false;
   }
   calculateCurrentForm();
 }
@@ -164,12 +166,15 @@ function calculateCurrentForm() {
     const timeRangeMin = getMinutesBetween(delStart, delEnd);
     delMinutes = timeRangeMin > 0 ? timeRangeMin : delManualMin;
 
+    const hasPersonalVehicle = Boolean(document.getElementById('del-vehicle-check')?.checked);
+    const vehicleBonus = hasPersonalVehicle ? DELIVERY_VEHICLE_BONUS : 0;
     const hourlyEquivalent = (delMinutes / 60) * HOURLY_RATE;
-    delPay = Math.max(DELIVERY_DEFAULT_PAY, hourlyEquivalent);
+    delPay = Math.max(DELIVERY_DEFAULT_PAY, hourlyEquivalent) + vehicleBonus;
+    const vehLabel = hasPersonalVehicle ? ' + 10€ véhicule' : '';
 
-    if (delMinutes > 150) delLabel = `Livraison longue (${formatHoursMin(delMinutes)} x 12€ = ${delPay.toFixed(2)}€)`;
-    else if (delMinutes > 0) delLabel = `Livraison (${formatHoursMin(delMinutes)} -> forfait ${delPay.toFixed(2)}€)`;
-    else delLabel = `Livraison (forfait 30.00€)`;
+    if (delMinutes > 150) delLabel = `Livraison longue (${formatHoursMin(delMinutes)} x 12€${vehLabel} = ${delPay.toFixed(2)}€)`;
+    else if (delMinutes > 0) delLabel = `Livraison (${formatHoursMin(delMinutes)} -> forfait ${delPay.toFixed(2)}€${vehLabel})`;
+    else delLabel = `Livraison (forfait ${delPay.toFixed(2)}€${vehLabel})`;
   }
 
   const tipInputEl = document.getElementById('tip-amount');
@@ -191,7 +196,7 @@ function calculateCurrentForm() {
 }
 
 function initFormCalculationListeners() {
-  ['std-start', 'std-end', 'std-break', 'del-start', 'del-end', 'del-duration-min', 'tip-amount'].forEach(id => {
+  ['std-start', 'std-end', 'std-break', 'del-start', 'del-end', 'del-duration-min', 'del-vehicle-check', 'tip-amount'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', calculateCurrentForm);
@@ -288,6 +293,9 @@ function startEditShift(id) {
   setDeliveryState(Boolean(item.has_delivery || (item.del_pay && item.del_pay > 0)));
   if (hasDelivery) {
     document.getElementById('del-duration-min').value = item.del_minutes ? String(item.del_minutes) : '';
+    const baseDelPay = Math.max(DELIVERY_DEFAULT_PAY, ((item.del_minutes || 0) / 60) * HOURLY_RATE);
+    const vCheck = document.getElementById('del-vehicle-check');
+    if (vCheck) vCheck.checked = Number(item.del_pay || 0) >= baseDelPay + DELIVERY_VEHICLE_BONUS - 0.01;
   }
 
   const tipEl = document.getElementById('tip-amount');
