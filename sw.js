@@ -1,7 +1,7 @@
 // ==========================================
 // SERVICE WORKER — CACHE APP SHELL (OFFLINE-FIRST)
 // ==========================================
-const CACHE_NAME = 'compteur-paella-v44';
+const CACHE_NAME = 'compteur-paella-v45';
 const APP_SHELL = [
   './',
   './index.html',
@@ -34,7 +34,7 @@ const APP_SHELL = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).catch(() => {})
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)).catch(() => { })
   );
   self.skipWaiting();
 });
@@ -65,7 +65,7 @@ self.addEventListener('fetch', (event) => {
       .then((res) => {
         if (res && res.status === 200 && (url.origin === self.location.origin || url.hostname.includes('fonts.g') || url.hostname.includes('cdn.jsdelivr.net'))) {
           const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => {});
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => { });
         }
         return res;
       })
