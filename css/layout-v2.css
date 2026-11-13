@@ -12,7 +12,7 @@ body { padding: calc(14px + env(safe-area-inset-top)) max(12px, env(safe-area-in
 body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: var(--bg-dark); z-index: 9000; pointer-events: none; }
 .container { max-width: 100%; }
 @keyframes blinkCursor { 50% { opacity: 0; } }
-@keyframes boxIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes boxIn { from { opacity: 0; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
 
 /* En-tête */
 header { text-align: left; padding: 14px 68px 14px 14px; margin-bottom: var(--gap); }
@@ -60,7 +60,7 @@ header p { font-size: 18px; line-height: 1.2; }
 #section-form { order: 1; } #section-period { order: 2; } #section-history { order: 3; } #section-global { order: 4; }
 #app-content > section { scroll-margin-top: 12px; }
 .pixel-box { padding: var(--box-pad); margin-bottom: 0; }
-#app-content > .pixel-box { animation: boxIn .32s steps(5) backwards; }
+#app-content > .pixel-box { animation: boxIn .22s cubic-bezier(0.22, 1, 0.36, 1) backwards; will-change: transform, opacity; }
 #app-content > #section-period { animation-delay: .04s; }
 #app-content > #section-global { animation-delay: .08s; }
 #app-content > #section-history { animation-delay: .12s; }
