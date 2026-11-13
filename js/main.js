@@ -43,8 +43,54 @@ function disableMobileZoom() {
   }, { passive: false });
 }
 
+function toggleHeaderSettingsMenu(forceState) {
+  const menu = document.getElementById('header-settings-menu');
+  const btn = document.getElementById('settings-toggle-btn');
+  if (!menu || !btn) return;
+  const next = typeof forceState === 'boolean' ? forceState : !menu.classList.contains('open');
+  menu.classList.toggle('open', next);
+  btn.setAttribute('aria-expanded', next ? 'true' : 'false');
+}
+
+function confirmLogout() {
+  toggleHeaderSettingsMenu(false);
+  if (window.confirm('Se déconnecter de Compteur Paella ?')) {
+    if (typeof handleLogout === 'function') handleLogout();
+  }
+}
+
+function toggleExportMenu(forceState) {
+  const menu = document.getElementById('export-dropdown');
+  const btn = document.getElementById('export-menu-btn');
+  if (!menu || !btn) return;
+  const next = typeof forceState === 'boolean' ? forceState : !menu.classList.contains('open');
+  menu.classList.toggle('open', next);
+  btn.setAttribute('aria-expanded', next ? 'true' : 'false');
+}
+
+function initKeyboardVisibilityObserver() {
+  const isTextField = (el) => el && /^(INPUT|TEXTAREA|SELECT)$/i.test(el.tagName) && !['checkbox', 'radio', 'file', 'button', 'submit'].includes(el.type);
+  const update = () => {
+    const vv = window.visualViewport;
+    const vvShrunk = vv ? (window.innerHeight - vv.height > 140) : false;
+    const activeInput = isTextField(document.activeElement);
+    document.body.classList.toggle('keyboard-open', Boolean(vvShrunk || activeInput));
+  };
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', update);
+  }
+  document.addEventListener('focusin', update);
+  document.addEventListener('focusout', () => setTimeout(update, 120));
+}
+
 (function initApp() {
-  disableMobileZoom();
+  initKeyboardVisibilityObserver();
+  document.addEventListener('click', (e) => {
+    const settingsWrap = document.getElementById('header-settings-wrap');
+    if (settingsWrap && !settingsWrap.contains(e.target)) toggleHeaderSettingsMenu(false);
+    const exportWrap = document.getElementById('export-menu-wrap');
+    if (exportWrap && !exportWrap.contains(e.target)) toggleExportMenu(false);
+  });
   const versionBadge = document.getElementById('app-version-badge');
   if (versionBadge && typeof APP_VERSION !== 'undefined') {
     versionBadge.textContent = APP_VERSION;

@@ -179,8 +179,14 @@ function calculateCurrentForm() {
   const totalPay = stdPay + delPay;
   const previewTotal = totalPay > 0 ? totalPay : tipPay;
   const stdLabelText = stdMinutes > 0 ? `${formatHoursMin(stdMinutes)} prestation (${stdPay.toFixed(2)}€${rawStdPay < STD_MIN_PAY ? ' min 60€' : ''})` : `0h00 prestation`;
-  document.getElementById('live-details').textContent = `${stdLabelText} | ${delLabel}${tipLabel}`;
-  document.getElementById('live-total').textContent = `+ ${previewTotal.toFixed(2)} €`;
+  const liveDetailsEl = document.getElementById('live-details');
+  if (liveDetailsEl) liveDetailsEl.textContent = `${stdLabelText} | ${delLabel}${tipLabel}`;
+  const liveTotalEl = document.getElementById('live-total');
+  if (liveTotalEl) liveTotalEl.textContent = `+ ${previewTotal.toFixed(2)} €`;
+  const submitBtn = document.getElementById('shift-submit-btn');
+  if (submitBtn && !submitBtn.dataset.saving) {
+    submitBtn.disabled = previewTotal <= 0;
+  }
   return { stdMinutes, stdPay, hasDelivery, delMinutes, delPay, tipPay, totalPay, previewTotal };
 }
 
@@ -308,7 +314,7 @@ function startEditShift(id) {
 function cancelEdit() {
   editingShiftId = null;
   editingLegacyId = null;
-  document.getElementById('shift-submit-btn').textContent = 'SAUVEGARDER DANS LE CLOUD';
+  document.getElementById('shift-submit-btn').textContent = 'ENREGISTRER';
   document.getElementById('shift-cancel-btn').style.display = 'none';
 
   document.getElementById('legacy-form-title').textContent = 'IMPORT MOIS PASSÉ (DEPUIS AVRIL 2025)';

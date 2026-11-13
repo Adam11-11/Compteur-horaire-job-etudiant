@@ -232,13 +232,15 @@ textarea:focus {
 
 .bottom-nav a {
   border-right: 2px solid #09080c;
-  gap: 5px;
+  gap: 4px;
+  font-size: 11px !important;
+  color: #d6d0e0;
   transition: background-color 0.12s ease, color 0.12s ease, transform 0.08s ease;
 }
 
 .bottom-nav a::before {
-  width: 20px !important;
-  height: 20px !important;
+  width: 24px !important;
+  height: 24px !important;
   background-color: transparent !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
@@ -246,8 +248,8 @@ textarea:focus {
   clip-path: none !important;
   border: 0 !important;
   image-rendering: pixelated;
-  opacity: 0.72;
-  filter: saturate(0.75);
+  opacity: 0.94;
+  filter: none;
   transition: transform 0.12s ease, opacity 0.12s ease, filter 0.12s ease;
 }
 
@@ -295,5 +297,29 @@ textarea:focus {
     0 4px 0 #09080c,
     0 0 14px rgba(229, 181, 103, 0.35),
     inset 2px 2px 0 rgba(255, 255, 255, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paella-sparkle-a,
+  .paella-sparkle-b,
+  .ai-fab-btn.chef-bounce #ai-fab-icon,
+  .ai-fab-btn.chef-bounce .chef-toque,
+  .px-loader i,
+  .live-pulse-dot {
+    animation: none !important;
+  }
+  .log-item.kind-prest,
+  .log-item.kind-delivery,
+  .log-item.kind-tip,
+  .ai-fab-btn,
+  .bottom-nav a,
+  .bottom-nav a::before {
+    transition: none !important;
+  }
+  .stat-card.total-card .stat-value,
+  .stat-card.alltime-card .stat-value,
+  .bottom-nav a.is-active {
+    text-shadow: none !important;
+  }
 }
 

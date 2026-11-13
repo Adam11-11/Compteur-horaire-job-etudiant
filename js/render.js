@@ -134,8 +134,15 @@ function renderApp() {
   let monthTipCount = 0, monthTipPay = 0;
   let monthLegacyCount = 0, monthMissingProofs = 0;
   let prevMonthTotalPay = 0;
+  let prevSameDatePay = 0;
   const allWorkedDatesSet = new Set();
   const monthWorkedDatesSet = new Set();
+  const monthStdDatesSet = new Set();
+
+  const isCurrentInProgress = todayStr >= bounds.startYMD && todayStr <= bounds.endYMD;
+  const elapsedDays = isCurrentInProgress ? Math.max(0, Math.round((todayObj - bounds.startObj) / (1000 * 60 * 60 * 24))) : 0;
+  const prevCutoffObj = new Date(prevBounds.startObj.getFullYear(), prevBounds.startObj.getMonth(), prevBounds.startObj.getDate() + elapsedDays, 12, 0, 0);
+  const prevCutoffYMD = prevCutoffObj > prevBounds.endObj ? prevBounds.endYMD : toYMD(prevCutoffObj);
 
   const displayedShifts = [];
   const periodBuckets = new Map();
@@ -176,6 +183,9 @@ function renderApp() {
 
     if (item.date >= prevBounds.startYMD && item.date <= prevBounds.endYMD) {
       prevMonthTotalPay += employerPay;
+      if (isCurrentInProgress && item.date <= prevCutoffYMD) {
+        prevSameDatePay += employerPay;
+      }
     }
 
     const inPeriod = item.date >= bounds.startYMD && item.date <= bounds.endYMD;
@@ -186,6 +196,7 @@ function renderApp() {
         monthLegacyCount++;
       } else {
         monthStdPay += stdP;
+        if ((stdMin > 0 || stdP > 0) && item.date) monthStdDatesSet.add(item.date);
         if (isDel) monthDelCount++;
         monthDelPay += delP;
         if (tipP > 0) {
@@ -219,15 +230,21 @@ function renderApp() {
   };
 
   const diffBadge = document.getElementById('period-diff-badge');
-  const diffEuro = currentMonthTotalPay - prevMonthTotalPay;
-  const sign = diffEuro >= 0 ? '+' : '';
-  let pctText = '';
-  if (prevMonthTotalPay > 0) {
-    const pct = Math.round((diffEuro / prevMonthTotalPay) * 100);
-    pctText = ` (${sign}${pct}%)`;
+  if (isCurrentInProgress) {
+    const jLabel = diffDays === 0 ? 'J-0' : `J-${diffDays}`;
+    const totalSpanDays = Math.max(1, Math.round((bounds.endObj - bounds.startObj) / (1000 * 60 * 60 * 24)) + 1);
+    const elapsedInclusive = Math.max(1, elapsedDays + 1);
+    let estSuffix = '';
+    if (currentMonthTotalPay > 0 && diffDays > 0) {
+      const estimatedTotal = (currentMonthTotalPay / elapsedInclusive) * totalSpanDays;
+      estSuffix = ` • estimation fin : ~${estimatedTotal.toFixed(0)} €`;
+    }
+    diffBadge.textContent = `à ${jLabel} : ${currentMonthTotalPay.toFixed(2)} € vs ${prevSameDatePay.toFixed(2)} € à la même date de la période préc.${estSuffix}`;
+    diffBadge.className = 'meta-badge neutral-compare';
+  } else {
+    diffBadge.textContent = `Total période : ${currentMonthTotalPay.toFixed(2)} € vs ${prevMonthTotalPay.toFixed(2)} € période préc.`;
+    diffBadge.className = 'meta-badge neutral-compare';
   }
-  diffBadge.textContent = `${sign}${diffEuro.toFixed(2)} €${pctText} vs période préc.`;
-  diffBadge.className = 'meta-badge ' + (diffEuro >= 0 ? 'positive' : 'negative');
 
   const proofAlertBtn = document.getElementById('period-missing-proof-badge');
   if (monthMissingProofs > 0) {
@@ -322,7 +339,7 @@ function renderApp() {
           const stdMin = item.std_minutes || 0;
           const startSafe = escapeHtml(item.std_start);
           const endSafe = escapeHtml(item.std_end);
-          const stdText = stdMin > 0 ? `<span class="shift-pill pill-standard">${startSafe} - ${endSafe} (${formatHoursMin(stdMin)})</span>` : '';
+          const stdText = stdMin > 0 ? `<span class="shift-pill pill-standard">${PX_ICO.prest} Prest. ${startSafe} - ${endSafe} (${formatHoursMin(stdMin)})</span>` : '';
           let delText = '';
           if (item.has_delivery || delP > 0) {
             const delMin = item.del_minutes || 0;
@@ -358,7 +375,8 @@ function renderApp() {
     });
   }
 
-  const avgStdMin = monthWorkedDays > 0 ? Math.round(monthStdMin / monthWorkedDays) : 0;
+  const monthStdDays = monthStdDatesSet.size;
+  const avgStdMin = monthStdDays > 0 ? Math.round(monthStdMin / monthStdDays) : 0;
   const displayStdPay = holdCounterDisplayValues ? holdCounterDisplayValues.stdPay : monthStdPay;
   const displayDelPay = holdCounterDisplayValues ? holdCounterDisplayValues.delPay : monthDelPay;
   const displayTipPay = holdCounterDisplayValues ? (holdCounterDisplayValues.tipPay || 0) : monthTipPay;
@@ -447,11 +465,14 @@ function renderMonthlyChart(periodBuckets) {
       }
     };
 
+    const legacyBadge = b.legacyCount > 0 ? `<span class="month-legacy-badge">import</span>` : '';
+    const daysBadge = b.workedDays > 0 ? `<span class="month-days-meta">${b.workedDays} j</span>` : '';
+
     const fillClass = isGlobalOpen ? 'month-bar-fill bar-filled' : 'month-bar-fill';
     row.innerHTML = `
       <div class="month-bar-top">
-        <span>${MONTH_NAMES[b.month]} ${b.year} ${details.length ? '(' + details.join(', ') + ')' : ''}</span>
-        <strong style="color: var(--gold-soft);">${b.total.toFixed(2)} €</strong>
+        <span class="month-bar-label">${MONTH_NAMES[b.month]} ${b.year} ${daysBadge}${legacyBadge}</span>
+        <strong class="month-bar-amount">${b.total.toFixed(2)} €</strong>
       </div>
       <div class="month-bar-track">
         <div class="${fillClass}" style="width: ${widthPct}%; --bar-index: ${Math.min(idx, 8)};"></div>

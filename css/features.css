@@ -774,8 +774,8 @@ header {
 }
 .cat-metric-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
-  color: var(--text-muted);
+  font-size: 11px;
+  color: #cbc5d6;
   line-height: 1.4;
 }
 .cat-metric-val {
@@ -865,14 +865,14 @@ header {
 .compact-row-btns {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .compact-icon-btn {
   font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
-  padding: 6px 9px;
-  min-height: 34px;
-  min-width: 34px;
+  font-size: 11px;
+  padding: 6px 10px;
+  min-height: 44px;
+  min-width: 44px;
   background: var(--bg-panel);
   color: var(--white-cream);
   border: 2px solid var(--border-soft);
@@ -1079,40 +1079,51 @@ body[data-auth="authenticated"] #auth-gate {
 }
 
 /* ==========================================
-   10. BOUTON CIRCULAIRE IA GÉNÉRALISÉ EN BAS À GAUCHE & MENU DÉROULANT
+   10. BOUTON CIRCULAIRE IA EN BAS À DROITE & MENU DÉROULANT
    ========================================== */
 .ai-fab-wrapper {
   position: fixed;
-  left: max(14px, env(safe-area-inset-left));
-  bottom: calc(var(--nav-h) + 14px + env(safe-area-inset-bottom));
+  right: max(12px, env(safe-area-inset-right));
+  bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom));
   z-index: 120;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+body.keyboard-open .ai-fab-wrapper {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(16px);
 }
 
 @media (min-width: 768px) {
   .ai-fab-wrapper {
-    left: 24px;
+    right: 24px;
     bottom: 24px;
   }
 }
 
 .ai-fab-btn {
-  width: 58px;
-  height: 58px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border-radius: 50%;
   background: var(--bg-panel);
   color: var(--gold-soft);
   border: 3px solid var(--gold-soft);
-  box-shadow: 0 5px 0 var(--border-shadow), 0 0 16px rgba(229, 181, 103, 0.45);
-  font-size: 26px;
+  box-shadow: 0 4px 0 var(--border-shadow), 0 0 12px rgba(229, 181, 103, 0.4);
+  font-size: 20px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.12s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.ai-fab-btn .chef-svg {
+  width: 26px;
+  height: 26px;
 }
 
 #ai-fab-icon {

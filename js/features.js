@@ -1133,6 +1133,7 @@ function renderCategoryViews() {
   if (prestContainer) {
     let monthCount = 0, monthMin = 0, monthPay = 0;
     let allCount = 0, allMin = 0, allPay = 0;
+    const monthPrestDates = new Set();
     const rows = [];
 
     activeShifts.forEach(item => {
@@ -1153,6 +1154,7 @@ function renderCategoryViews() {
         monthCount++;
         monthMin += stdMin;
         monthPay += stdP;
+        if (item.date) monthPrestDates.add(item.date);
       }
 
       if (categoryScopeMode === 'all' || inPeriod) {
@@ -1160,7 +1162,8 @@ function renderCategoryViews() {
       }
     });
 
-    const avgMin = monthCount > 0 ? Math.round(monthMin / monthCount) : 0;
+    const monthPrestDays = monthPrestDates.size;
+    const avgMin = monthPrestDays > 0 ? Math.round(monthMin / monthPrestDays) : 0;
     const cardsHtml = rows.length === 0
       ? `<div class="empty-state">Aucune prestation sur cette sélection.</div>`
       : `<div class="log-list">${rows.map(({ item, stdMin, stdP }) => {

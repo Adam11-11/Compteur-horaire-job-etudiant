@@ -20,15 +20,15 @@ function parseYMD(dateStr) {
 
 function formatDateFR(dateStr) {
   if (!dateStr) return '';
-  const [y, m, d] = String(dateStr).split('-');
-  return `${d}/${m}/${y}`;
+  const dt = parseYMD(dateStr);
+  const dayName = DAY_NAMES_SHORT[dt.getDay()];
+  const dayNum = String(dt.getDate()).padStart(2, '0');
+  const monthShort = (typeof MONTH_NAMES_SHORT !== 'undefined' && MONTH_NAMES_SHORT[dt.getMonth()]) || String(dt.getMonth() + 1).padStart(2, '0');
+  return `${dayName} ${dayNum} ${monthShort}`;
 }
 
 function formatDateWithDayFR(dateStr) {
-  if (!dateStr) return '';
-  const dt = parseYMD(dateStr);
-  const dayName = DAY_NAMES_SHORT[dt.getDay()];
-  return `${dayName} ${formatDateFR(dateStr)}`;
+  return formatDateFR(dateStr);
 }
 
 function getMinutesBetween(startStr, endStr) {
@@ -92,7 +92,7 @@ function getWeekInfo(dateStr) {
   const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6, 12, 0, 0);
   return {
     key: toYMD(mon),
-    label: `SEMAINE DU LUN. ${formatDateFR(toYMD(mon))} AU DIM. ${formatDateFR(toYMD(sun))}`
+    label: `SEMAINE DU ${formatDateFR(toYMD(mon)).toUpperCase()} AU ${formatDateFR(toYMD(sun)).toUpperCase()}`
   };
 }
 

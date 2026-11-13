@@ -472,17 +472,16 @@ input:focus, select:focus { border-color: var(--red-soft); background: #2b2631; 
 }
 .form-photo-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
 }
 .form-photo-info {
   display: flex;
   align-items: center;
   gap: 12px;
   min-width: 0;
-  flex: 1;
+  width: 100%;
 }
 .form-photo-thumb {
   width: 56px;
@@ -500,7 +499,11 @@ input:focus, select:focus { border-color: var(--red-soft); background: #2b2631; 
 .form-photo-actions {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
+  width: 100%;
+}
+.form-photo-actions .photo-add {
+  flex: 1 1 auto;
+  width: 100%;
 }
 
 .sticky-submit-bar {

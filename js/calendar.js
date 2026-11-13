@@ -203,7 +203,10 @@ function initCalendarAndNavigation() {
     const curView = document.body.getAttribute('data-view') || 'counter';
     links.forEach(a => {
       const targetView = a.getAttribute('data-bottom-view') || 'counter';
-      a.classList.toggle('is-active', targetView === curView);
+      const isCur = targetView === curView;
+      a.classList.toggle('is-active', isCur);
+      if (isCur) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
     });
   }
   window.addEventListener('viewchange', setActive);
