@@ -336,7 +336,65 @@ body[data-view="pourboires"] #shift-submit-btn:not(:disabled) {
   background: rgba(18, 17, 23, 0.72);
   padding: 12px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.period-card .period-nav {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-bottom: 0;
+  box-sizing: border-box;
+}
+
+.period-card .period-controls {
+  min-width: 0;
+  width: 100%;
+  gap: 8px;
+}
+
+.period-card .period-current-label {
+  min-width: 0;
+}
+
+.period-card .period-meta-row,
+.period-card .period-quick-tools {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.period-card .meta-badge {
+  max-width: 100%;
+  min-width: 0;
+  word-break: break-word;
+}
+
+@media (max-width: 480px) {
+  .period-controls .nav-btn-text {
+    display: none;
+  }
+  .period-controls .nav-btn {
+    min-width: 44px;
+    padding: 8px 12px;
+  }
+  .period-quick-tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .period-quick-tools .pixel-btn {
+    width: 100%;
+  }
+}
+
+.pixel-box {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .period-card-heading {
