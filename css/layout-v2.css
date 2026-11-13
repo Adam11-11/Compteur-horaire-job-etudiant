@@ -19,6 +19,18 @@ header h1::after { content: "_"; color: var(--gold-soft); text-shadow: none; ani
 header p { font-size: 18px; line-height: 1.2; }
 .sound-toggle-btn { top: 12px; right: 12px; width: 48px; height: 48px; font-size: 20px; }
 
+/* Logo Paella Pixel Art Brillant */
+@keyframes paellaSparkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.paella-logo {
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 5px rgba(255, 232, 117, 0.45)) drop-shadow(2px 2px 0 var(--border-shadow));
+}
+.paella-sparkle-a { animation: paellaSparkle 1.8s steps(2) infinite; }
+.paella-sparkle-b { animation: paellaSparkle 2.4s steps(2) 0.9s infinite; }
+
 /* Barre d'onglets principale COMPTEUR / AGENDA — toujours visible sur PC et mobile */
 .view-tabs {
   display: grid;
