@@ -323,3 +323,48 @@ textarea:focus {
   }
 }
 
+
+/* Verrouillage anti-débordement mobile sur tous les conteneurs et cartes */
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.container,
+#app-content,
+#app-content > section,
+.pixel-box,
+.period-card,
+.period-nav,
+.period-controls,
+.period-current-label,
+.period-meta-row,
+.period-quick-tools,
+.stats-grid,
+.stat-card,
+.role-block,
+.log-list,
+.log-item {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.pixel-box,
+.period-card {
+  overflow-x: hidden;
+}
+
+.period-meta-row {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.period-month-title,
+.period-dates-badge,
+.meta-badge,
+.stat-title,
+.stat-sub {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

@@ -395,17 +395,21 @@ header {
    6. OUTILS RAPIDES PÉRIODE (FICHE PDF & COMPARATEUR DE PAIE)
    ========================================== */
 .period-quick-tools {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 4px;
+  min-width: 0;
+  max-width: 100%;
 }
 .period-quick-tools .pixel-btn {
-  flex: 1 1 180px;
-  width: auto;
+  width: 100%;
+  min-width: 0;
   min-height: 44px;
-  font-size: 10px;
+  font-size: 11px;
   padding: 10px 12px;
+  white-space: normal;
+  text-align: center;
 }
 
 .inline-config-panel {
