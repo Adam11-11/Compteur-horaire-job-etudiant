@@ -566,11 +566,18 @@ header {
   }
 }
 
-.view-tab[data-view-btn="prestations"].active {
+.view-tab[data-view-btn="counter"].active,
+.view-tab[data-view-btn="calendar"].active {
   background: #3a301c;
   border-color: var(--gold-soft);
   color: var(--gold-soft);
   box-shadow: 4px 4px 0 var(--border-shadow), inset -3px -3px 0 #1f190d;
+}
+.view-tab[data-view-btn="prestations"].active {
+  background: var(--red-soft);
+  border-color: var(--white-cream);
+  color: var(--white-cream);
+  box-shadow: 4px 4px 0 var(--border-shadow), inset -3px -3px 0 var(--red-dark);
 }
 .view-tab[data-view-btn="livraisons"].active {
   background: #172b3d;
@@ -604,8 +611,8 @@ header {
 
 /* Cartes de statistiques du mois avec encadrement et écran lumineux (comme le Total 192.00 €) */
 .stat-card.std-card {
-  border-color: var(--gold-soft);
-  box-shadow: 4px 4px 0 var(--border-shadow), 0 0 12px rgba(229, 181, 103, 0.2);
+  border-color: var(--red-soft);
+  box-shadow: 4px 4px 0 var(--border-shadow), 0 0 14px rgba(217, 75, 87, 0.32);
 }
 .stat-card.delivery-card {
   border-color: var(--blue-soft);
@@ -630,9 +637,9 @@ header {
 }
 
 .stat-card.std-card .stat-value {
-  color: var(--white-cream);
-  border-color: #635c48;
-  text-shadow: 0 0 12px rgba(242, 236, 228, 0.55), 2px 2px 0 #000;
+  color: var(--red-light);
+  border-color: #6e3038;
+  text-shadow: 0 0 14px rgba(235, 124, 133, 0.75), 2px 2px 0 #000;
 }
 .stat-card.delivery-card .stat-value {
   color: var(--blue-light);

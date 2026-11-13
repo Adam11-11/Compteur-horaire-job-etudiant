@@ -39,8 +39,8 @@ body[data-view="pourboires"] #section-form #form-roles-grid { display: none !imp
 div.cal-cell.out { opacity: .3; box-shadow: none; cursor: default; }
 .cal-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 2px; flex-wrap: wrap; }
 .cal-dots { display: flex; gap: 2px; margin-top: 3px; }
-.cal-dots .d { width: 7px; height: 7px; background: var(--gold-soft); }
-.cal-dots .d.l { background: var(--red-soft); }
+.cal-dots .d { width: 7px; height: 7px; background: var(--red-soft); }
+.cal-dots .d.l { background: var(--blue-soft); }
 .cal-dots .d.p { background: var(--green-soft); }
 .cal-amt { color: var(--gold-soft); font-size: 19px; }
 .cal-cell.worked { background: #2a2418; border-color: var(--gold-soft); }
@@ -50,8 +50,8 @@ div.cal-cell.out { opacity: .3; box-shadow: none; cursor: default; }
 @media (hover: hover) { button.cal-cell:hover { border-color: var(--gold-soft); } }
 button.cal-cell:active { transform: translateY(2px); }
 .cal-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font-size: 18px; color: var(--text-muted); }
-.cal-legend .d { display: inline-block; width: 10px; height: 10px; margin-right: 6px; background: var(--gold-soft); }
-.cal-legend .d.l { background: var(--red-soft); }
+.cal-legend .d { display: inline-block; width: 10px; height: 10px; margin-right: 6px; background: var(--red-soft); }
+.cal-legend .d.l { background: var(--blue-soft); }
 .cal-legend .d.p { background: var(--green-soft); }
 .cal-detail { background: var(--bg-input); border: 3px solid var(--border-soft); box-shadow: 4px 4px 0 var(--border-shadow); padding: 14px; scroll-margin-bottom: calc(var(--nav-h) + 16px); }
 .cal-detail-title { font-size: 13px; line-height: 1.6; }

@@ -1176,7 +1176,7 @@ function renderCategoryViews() {
       <div class="cat-metric-chip"><span class="cat-metric-label">HEURES (moy. ${formatHoursMin(avgMin)})</span><strong class="cat-metric-val">${formatHoursMin(monthMin)}</strong></div>
     `;
 
-    prestContainer.innerHTML = `${buildCategoryHeaderAndNav('PRESTATIONS', 'gold-accent', metricsHtml)}${cardsHtml}`;
+    prestContainer.innerHTML = `${buildCategoryHeaderAndNav('PRESTATIONS', 'red-accent', metricsHtml)}${cardsHtml}`;
   }
 
   // --- 2. ONGLET LIVRAISONS ---
