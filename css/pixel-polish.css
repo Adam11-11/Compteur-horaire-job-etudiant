@@ -49,7 +49,7 @@ header {
   box-shadow: 0 1px 0 #09080c;
 }
 
-/* Titres de section avec liseré pixelisé */
+/* Titres de section avec gemme pixelisée façon Habitica */
 .section-title {
   border-bottom: 3px dashed #433e50;
   color: #f7f1e8;
@@ -57,17 +57,20 @@ header {
 }
 
 .section-title .dot {
-  box-shadow: 2px 2px 0 #09080c, inset 1px 1px 0 rgba(255, 255, 255, 0.45);
+  width: 12px !important;
+  height: 12px !important;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.55);
 }
 
-/* Bannière de période façon panneau de quête */
+/* Bannière de période façon panneau de quête Habitica */
 .period-nav {
-  background: #17151d;
+  background: linear-gradient(180deg, #1e1929 0%, #16131f 100%);
   border: 3px solid #d94b57;
   box-shadow:
     0 4px 0 #09080c,
-    inset 0 0 0 2px #2c242b,
-    inset 3px 3px 0 rgba(255, 255, 255, 0.05);
+    inset 0 0 0 2px #36283d,
+    inset 3px 3px 0 rgba(255, 255, 255, 0.06);
 }
 
 .period-month-title {
@@ -194,29 +197,72 @@ textarea:focus {
   background: #1d1a24;
 }
 
-/* Barre de navigation basse façon barre d'action RPG */
+/* Barre de navigation basse façon barre d'action RPG (sprites pixel art Habitica) */
 .bottom-nav {
-  background: #1e1c25;
+  background: linear-gradient(180deg, #252131 0%, #1b1824 100%);
   border-top: 4px solid #f2ece4;
   box-shadow:
     0 -4px 0 #09080c,
-    inset 0 2px 0 rgba(255, 255, 255, 0.08);
+    inset 0 2px 0 rgba(255, 255, 255, 0.1);
 }
 
 .bottom-nav a {
   border-right: 2px solid #09080c;
+  gap: 5px;
   transition: background-color 0.12s ease, color 0.12s ease, transform 0.08s ease;
+}
+
+.bottom-nav a::before {
+  width: 20px !important;
+  height: 20px !important;
+  background-color: transparent !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  clip-path: none !important;
+  border: 0 !important;
+  image-rendering: pixelated;
+  opacity: 0.72;
+  filter: saturate(0.75);
+  transition: transform 0.12s ease, opacity 0.12s ease, filter 0.12s ease;
+}
+
+/* 1. PAIE : Pièce d'or pixel art */
+.bottom-nav a:nth-child(1)::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect x='5' y='1' width='6' height='14' fill='%238a5a14'/%3E%3Crect x='3' y='3' width='10' height='10' fill='%238a5a14'/%3E%3Crect x='2' y='5' width='12' height='6' fill='%238a5a14'/%3E%3Crect x='5' y='2' width='6' height='12' fill='%23e5b567'/%3E%3Crect x='3' y='4' width='10' height='8' fill='%23e5b567'/%3E%3Crect x='5' y='3' width='5' height='2' fill='%23fff2a6'/%3E%3Crect x='4' y='4' width='2' height='4' fill='%23fff2a6'/%3E%3Crect x='7' y='5' width='2' height='6' fill='%23a66f1c'/%3E%3Crect x='7' y='5' width='1' height='5' fill='%23fff9d6'/%3E%3C/svg%3E");
+}
+
+/* 2. PREST. : Parchemin de quête RPG */
+.bottom-nav a:nth-child(2)::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect x='3' y='2' width='10' height='12' fill='%233a2d42'/%3E%3Crect x='4' y='3' width='8' height='10' fill='%23f2ece4'/%3E%3Crect x='2' y='2' width='11' height='2' fill='%23d4a359'/%3E%3Crect x='3' y='12' width='11' height='2' fill='%23b5823b'/%3E%3Crect x='5' y='5' width='6' height='1' fill='%236c627a'/%3E%3Crect x='5' y='7' width='5' height='1' fill='%236c627a'/%3E%3Crect x='5' y='9' width='4' height='1' fill='%236c627a'/%3E%3Crect x='10' y='9' width='2' height='2' fill='%23d94b57'/%3E%3C/svg%3E");
+}
+
+/* 3. LIVR. : Colis / Coffre de livraison pixel art */
+.bottom-nav a:nth-child(3)::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect x='2' y='4' width='12' height='9' fill='%232e1d16'/%3E%3Crect x='3' y='5' width='10' height='7' fill='%23c47d43'/%3E%3Crect x='3' y='5' width='10' height='2' fill='%23e09f63'/%3E%3Crect x='2' y='7' width='12' height='1' fill='%23593825'/%3E%3Crect x='7' y='5' width='2' height='7' fill='%23ffe875'/%3E%3Crect x='7' y='7' width='2' height='2' fill='%23d94b57'/%3E%3C/svg%3E");
+}
+
+/* 4. TIPS : Gemme rubis brillante pixel art */
+.bottom-nav a:nth-child(4)::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect x='4' y='2' width='8' height='3' fill='%238c2a34'/%3E%3Crect x='2' y='5' width='12' height='4' fill='%238c2a34'/%3E%3Crect x='4' y='9' width='8' height='3' fill='%238c2a34'/%3E%3Crect x='6' y='12' width='4' height='2' fill='%238c2a34'/%3E%3Crect x='5' y='3' width='6' height='2' fill='%23eb7c85'/%3E%3Crect x='3' y='5' width='10' height='3' fill='%23d94b57'/%3E%3Crect x='5' y='8' width='6' height='3' fill='%23d94b57'/%3E%3Crect x='7' y='11' width='2' height='2' fill='%23b5333f'/%3E%3Crect x='4' y='4' width='2' height='2' fill='%23fff6f7'/%3E%3C/svg%3E");
+}
+
+/* 5. AGENDA : Calendrier pixel art */
+.bottom-nav a:nth-child(5)::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect x='2' y='3' width='12' height='11' fill='%23121017'/%3E%3Crect x='4' y='1' width='2' height='3' fill='%23e5b567'/%3E%3Crect x='10' y='1' width='2' height='3' fill='%23e5b567'/%3E%3Crect x='3' y='4' width='10' height='2' fill='%23d94b57'/%3E%3Crect x='3' y='6' width='10' height='7' fill='%23f2ece4'/%3E%3Crect x='5' y='8' width='2' height='2' fill='%235ab57a'/%3E%3Crect x='9' y='8' width='2' height='2' fill='%234e4959'/%3E%3Crect x='5' y='11' width='2' height='1' fill='%234e4959'/%3E%3Crect x='9' y='11' width='2' height='1' fill='%23e5b567'/%3E%3C/svg%3E");
 }
 
 .bottom-nav a.is-active {
   color: #ffe875;
-  background: linear-gradient(180deg, #332c3d 0%, #241f2c 100%);
+  background: linear-gradient(180deg, #372d47 0%, #241e30 100%);
   box-shadow: inset 0 4px 0 #e5b567;
   text-shadow: 0 0 8px rgba(229, 181, 103, 0.35);
 }
 
 .bottom-nav a.is-active::before {
-  filter: drop-shadow(0 0 4px rgba(229, 181, 103, 0.55));
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(255, 232, 117, 0.55));
+  transform: translateY(-1px);
 }
 
 /* Bouton IA flottant un peu plus intégré au thème doré */
