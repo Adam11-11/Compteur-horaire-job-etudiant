@@ -83,6 +83,7 @@ header p { font-size: 18px; line-height: 1.2; }
 .section-title-left { min-width: 0; }
 
 /* Navigation de période */
+#period-stats-grid { margin-bottom: 16px; }
 .period-nav { padding: 12px; gap: 12px; }
 .period-controls .nav-btn { min-height: 52px; min-width: 52px; font-size: 11px; }
 .nav-btn { min-height: 48px; }

@@ -333,7 +333,7 @@
             <svg class="px-ico" width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="6" width="3" height="4" fill="#f2ece4"/><rect x="5" y="4" width="2" height="8" fill="#f2ece4"/><rect x="7" y="2" width="2" height="12" fill="#e5b567"/><rect x="11" y="5" width="1" height="6" fill="#5ab57a"/><rect x="13" y="3" width="1" height="10" fill="#5ab57a"/></svg>
           </button>
 
-          <span id="app-version-badge" class="app-version-badge" title="Version de l'application">v1.35</span>
+          <span id="app-version-badge" class="app-version-badge" title="Version de l'application">v1.36</span>
         </div>
       </div>
     </header>
@@ -363,32 +363,6 @@
             aria-label="Revenir à la période d'aujourd'hui">AUJOURD'HUI</button>
         </h2>
 
-        <div class="period-nav">
-          <div class="period-controls">
-            <button type="button" class="nav-btn" onclick="changePeriod(-1)" aria-label="Mois précédent">
-              <span>◀</span><span class="nav-btn-text">MOIS PRÉC.</span>
-            </button>
-            <div class="period-current-label" id="period-label-box">
-              <div class="period-month-title" id="period-title">PAIE DE ...</div>
-              <div class="period-dates-badge" id="period-range-text">Du <strong>--/--/----</strong> au
-                <strong>--/--/----</strong>
-              </div>
-            </div>
-            <button type="button" class="nav-btn" onclick="changePeriod(1)" aria-label="Mois suivant">
-              <span class="nav-btn-text">MOIS SUIV.</span><span>▶</span>
-            </button>
-          </div>
-
-          <div class="period-meta-row">
-            <div class="meta-badge" id="period-remaining-badge">Fin de période : --/--/----</div>
-            <div class="meta-badge" id="period-diff-badge">Vs mois préc. : --</div>
-            <button type="button" class="meta-badge alert-proof" id="period-missing-proof-badge"
-              onclick="goToMissingProof()" title="Voir directement l'entrée sans photo">
-              0 sans photo
-            </button>
-          </div>
-        </div>
-
         <div class="stats-grid" id="period-stats-grid">
           <div class="stat-card std-card stat-card-clickable" onclick="setView('prestations')" role="button" tabindex="0"
             title="Voir le détail des prestations">
@@ -412,6 +386,32 @@
             <span class="stat-title">TOTAL PAIE DU MOIS</span>
             <div class="stat-value" id="month-total-pay">0.00 €</div>
             <div class="stat-sub" id="month-total-days">0 journée travaillée</div>
+          </div>
+        </div>
+
+        <div class="period-nav">
+          <div class="period-controls">
+            <button type="button" class="nav-btn" onclick="changePeriod(-1)" aria-label="Mois précédent">
+              <span>◀</span><span class="nav-btn-text">MOIS PRÉC.</span>
+            </button>
+            <div class="period-current-label" id="period-label-box">
+              <div class="period-month-title" id="period-title">PAIE DE ...</div>
+              <div class="period-dates-badge" id="period-range-text">Du <strong>--/--/----</strong> au
+                <strong>--/--/----</strong>
+              </div>
+            </div>
+            <button type="button" class="nav-btn" onclick="changePeriod(1)" aria-label="Mois suivant">
+              <span class="nav-btn-text">MOIS SUIV.</span><span>▶</span>
+            </button>
+          </div>
+
+          <div class="period-meta-row">
+            <div class="meta-badge" id="period-remaining-badge">Fin de période : --/--/----</div>
+            <div class="meta-badge" id="period-diff-badge">Vs mois préc. : --</div>
+            <button type="button" class="meta-badge alert-proof" id="period-missing-proof-badge"
+              onclick="goToMissingProof()" title="Voir directement l'entrée sans photo">
+              0 sans photo
+            </button>
           </div>
         </div>
 
