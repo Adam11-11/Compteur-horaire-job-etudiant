@@ -8,7 +8,8 @@ html { overflow-x: hidden; -webkit-text-size-adjust: 100%; touch-action: pan-x p
 ::selection { background: var(--red-soft); color: var(--white-cream); }
 :focus-visible { outline: 3px solid var(--gold-soft); outline-offset: 3px; }
 input:focus-visible, select:focus-visible { outline: none; }
-body { padding: 14px max(12px, env(safe-area-inset-right)) calc(var(--nav-h) + 28px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+body { padding: calc(14px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) calc(var(--nav-h) + 28px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: var(--bg-dark); z-index: 9000; pointer-events: none; }
 .container { max-width: 100%; }
 @keyframes blinkCursor { 50% { opacity: 0; } }
 @keyframes boxIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
