@@ -328,7 +328,7 @@ body[data-view="pourboires"] #shift-submit-btn:not(:disabled) {
 }
 
 .container {
-  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 72px);
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 56px);
 }
 
 .period-card {

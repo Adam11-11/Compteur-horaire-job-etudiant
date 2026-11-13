@@ -351,9 +351,8 @@ body {
   box-sizing: border-box;
 }
 
-.pixel-box,
 .period-card {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .period-meta-row {
