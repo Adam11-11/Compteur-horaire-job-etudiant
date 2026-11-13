@@ -673,17 +673,19 @@ header {
   border-bottom: 3px dashed var(--border-soft);
 }
 .cat-strip-period {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  flex-wrap: wrap;
   gap: 8px;
+  width: 100%;
 }
 .cat-strip-month-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: 11px;
+  font-size: clamp(9px, 2.8vw, 11px);
   color: var(--gold-soft);
-  padding: 0 6px;
+  padding: 0 4px;
   line-height: 1.4;
+  text-align: center;
 }
 .compact-nav-btn {
   font-family: 'Press Start 2P', monospace !important;
@@ -710,6 +712,15 @@ header {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  width: 100%;
+}
+.compact-today-btn {
+  margin-left: auto;
+}
+@media (min-width: 640px) {
+  .cat-strip-period { width: auto; }
+  .cat-strip-scope { width: auto; }
+  .compact-today-btn { margin-left: 0; }
 }
 .compact-scope-btn {
   font-family: 'Press Start 2P', monospace !important;

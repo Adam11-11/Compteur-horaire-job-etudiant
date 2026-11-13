@@ -1083,11 +1083,11 @@ function buildCategoryHeaderAndNav(titleText, accentClass, summaryMetricsHtml) {
           <button type="button" class="nav-btn compact-nav-btn" onclick="changePeriod(-1)" aria-label="Mois précédent">◀</button>
           <span class="cat-strip-month-label">PAIE DE ${MONTH_NAMES[activePayMonth]} ${activePayYear}</span>
           <button type="button" class="nav-btn compact-nav-btn" onclick="changePeriod(1)" aria-label="Mois suivant">▶</button>
-          <button type="button" class="nav-btn compact-nav-btn" onclick="resetToCurrentPeriod()" title="Revenir à aujourd'hui">AUJ.</button>
         </div>
         <div class="cat-strip-scope">
           <button type="button" class="tab-btn compact-scope-btn ${categoryScopeMode === 'period' ? 'active' : ''}" onclick="setCategoryScope('period')">MOIS</button>
           <button type="button" class="tab-btn compact-scope-btn ${categoryScopeMode === 'all' ? 'active' : ''}" onclick="setCategoryScope('all')">TOUT</button>
+          <button type="button" class="nav-btn compact-nav-btn compact-today-btn" onclick="resetToCurrentPeriod()" title="Revenir à aujourd'hui">AUJ.</button>
         </div>
       </div>
       <div class="cat-strip-metrics">
