@@ -1065,13 +1065,45 @@ function initSupabaseRealtime() {
 // ==========================================
 let categoryScopeMode = 'period'; // 'period' | 'all'
 
-function syncFormForCategoryView(viewName) {
+function setCounterQuickFormMode(mode, interactive = false) {
+  const validModes = ['all', 'prestations', 'livraisons', 'pourboires'];
+  const nextMode = validModes.includes(mode) ? mode : 'all';
+  const formSec = document.getElementById('section-form');
+  if (formSec) formSec.setAttribute('data-form-mode', nextMode);
+
+  document.querySelectorAll('.mobile-quick-mode-btn').forEach(btn => {
+    const active = btn.getAttribute('data-quick-mode') === nextMode;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+
+  if (interactive) {
+    if (typeof playClickSound === 'function') playClickSound();
+    if (editingShiftId === null && editingLegacyId === null) {
+      if (nextMode === 'all') {
+        const titleEl = document.getElementById('form-section-title');
+        if (titleEl) titleEl.textContent = 'AJOUTER UNE JOURNÉE';
+        if (typeof calculateCurrentForm === 'function') calculateCurrentForm();
+        if (typeof checkFormDuplicateDate === 'function') checkFormDuplicateDate();
+      } else {
+        syncFormForCategoryView(nextMode, true);
+      }
+    }
+  }
+}
+window.setCounterQuickFormMode = setCounterQuickFormMode;
+
+function syncFormForCategoryView(viewName, keepQuickMode = false) {
   const titleEl = document.getElementById('form-section-title');
   const startInp = document.getElementById('std-start');
   const endInp = document.getElementById('std-end');
   const breakInp = document.getElementById('std-break');
   const tipInp = document.getElementById('tip-amount');
   const legacyBox = document.getElementById('legacy-container');
+
+  if (!keepQuickMode) {
+    setCounterQuickFormMode('all');
+  }
 
   if (viewName === 'livraisons') {
     if (titleEl) titleEl.textContent = 'ENREGISTRER UNE LIVRAISON';
@@ -1089,7 +1121,11 @@ function syncFormForCategoryView(viewName) {
     if (breakInp) breakInp.value = '0';
     setDeliveryState(false);
   } else {
-    if (titleEl) titleEl.textContent = 'ENREGISTRER UNE PRESTATION';
+    if (titleEl) {
+      titleEl.textContent = viewName === 'counter'
+        ? 'AJOUTER UNE JOURNÉE'
+        : 'ENREGISTRER UNE PRESTATION';
+    }
     if (tipInp) tipInp.value = '';
     setDeliveryState(false);
   }

@@ -184,11 +184,11 @@ function initCalendarAndNavigation() {
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
     if (v === 'calendar') renderCalendar(1);
-    if (v === 'prestations' || v === 'livraisons' || v === 'pourboires') {
+    if (v === 'counter' || v === 'prestations' || v === 'livraisons' || v === 'pourboires') {
       if (!preserveEdit && editingShiftId === null && editingLegacyId === null && typeof syncFormForCategoryView === 'function') {
         syncFormForCategoryView(v);
       }
-      if (typeof renderCategoryViews === 'function') renderCategoryViews();
+      if (v !== 'counter' && typeof renderCategoryViews === 'function') renderCategoryViews();
     }
     if (changed) {
       window.scrollTo(0, 0);

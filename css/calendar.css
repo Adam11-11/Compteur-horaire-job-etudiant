@@ -1,29 +1,43 @@
 /* ---------- Onglets Vues Spécialisées (COMPTEUR / PRESTATIONS / LIVRAISONS / POURBOIRES / AGENDA) ---------- */
-body[data-view="counter"] #section-form,
 body[data-view="counter"] #section-prestations,
 body[data-view="counter"] #section-livraisons,
 body[data-view="counter"] #section-pourboires,
 body[data-view="counter"] #section-calendar { display: none; }
+
+@media (min-width: 768px) {
+  body[data-view="counter"] #section-form { display: none; }
+}
 
 body[data-view="calendar"] #app-content > section:not(#section-calendar),
 body[data-view="prestations"] #app-content > section:not(#section-prestations):not(#section-form),
 body[data-view="livraisons"] #app-content > section:not(#section-livraisons):not(#section-form),
 body[data-view="pourboires"] #app-content > section:not(#section-pourboires):not(#section-form) { display: none; }
 
-/* Filtrage des blocs du formulaire selon l'onglet actif */
+/* Filtrage des blocs du formulaire selon l'onglet actif (ou le sélecteur rapide mobile) */
 body[data-view="prestations"] #section-form .role-block.delivery,
-body[data-view="prestations"] #section-form .role-block.tip-block { display: none; }
+body[data-view="prestations"] #section-form .role-block.tip-block,
+body[data-view="counter"] #section-form[data-form-mode="prestations"] .role-block.delivery,
+body[data-view="counter"] #section-form[data-form-mode="prestations"] .role-block.tip-block { display: none; }
 
 body[data-view="livraisons"] #section-form #live-clock-box,
 body[data-view="livraisons"] #section-form #legacy-toggle-btn,
 body[data-view="livraisons"] #section-form #legacy-container,
 body[data-view="livraisons"] #section-form .role-block.std-block,
-body[data-view="livraisons"] #section-form .role-block.tip-block { display: none !important; }
+body[data-view="livraisons"] #section-form .role-block.tip-block,
+body[data-view="counter"] #section-form[data-form-mode="livraisons"] #live-clock-box,
+body[data-view="counter"] #section-form[data-form-mode="livraisons"] #legacy-toggle-btn,
+body[data-view="counter"] #section-form[data-form-mode="livraisons"] #legacy-container,
+body[data-view="counter"] #section-form[data-form-mode="livraisons"] .role-block.std-block,
+body[data-view="counter"] #section-form[data-form-mode="livraisons"] .role-block.tip-block { display: none !important; }
 
 body[data-view="pourboires"] #section-form #live-clock-box,
 body[data-view="pourboires"] #section-form #legacy-toggle-btn,
 body[data-view="pourboires"] #section-form #legacy-container,
-body[data-view="pourboires"] #section-form #form-roles-grid { display: none !important; }
+body[data-view="pourboires"] #section-form #form-roles-grid,
+body[data-view="counter"] #section-form[data-form-mode="pourboires"] #live-clock-box,
+body[data-view="counter"] #section-form[data-form-mode="pourboires"] #legacy-toggle-btn,
+body[data-view="counter"] #section-form[data-form-mode="pourboires"] #legacy-container,
+body[data-view="counter"] #section-form[data-form-mode="pourboires"] #form-roles-grid { display: none !important; }
 .cal-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .cal-nav { display: grid; grid-template-columns: 52px 1fr 52px; gap: 10px; align-items: center; margin-bottom: 12px; }
 .cal-nav .nav-btn { min-height: 52px; padding: 0; }

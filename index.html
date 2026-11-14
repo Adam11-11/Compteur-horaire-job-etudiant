@@ -177,7 +177,7 @@
             </div>
           </div>
 
-          <span id="app-version-badge" class="app-version-badge" title="Version de l'application">v1.52</span>
+          <span id="app-version-badge" class="app-version-badge" title="Version de l'application">v1.53</span>
         </div>
       </div>
     </header>
@@ -331,11 +331,11 @@
       </section>
 
       <!-- FORMULAIRE ENREGISTRER / MODIFIER UNE JOURNÉE -->
-      <section class="pixel-box" id="section-form">
+      <section class="pixel-box" id="section-form" data-form-mode="all">
         <h2 class="section-title">
           <div class="section-title-left">
             <span class="dot"></span>
-            <span id="form-section-title">ENREGISTRER UNE PRESTATION</span>
+            <span id="form-section-title">AJOUTER UNE JOURNÉE</span>
           </div>
           <button type="button" class="pixel-btn btn-secondary" id="legacy-toggle-btn" onclick="toggleLegacyForm()"
             aria-label="Ajouter un mois antérieur">
@@ -343,6 +343,13 @@
             <span class="show-mobile">+ MOIS PASSÉ</span>
           </button>
         </h2>
+
+        <div class="mobile-quick-mode-bar" role="group" aria-label="Type d'ajout rapide">
+          <button type="button" class="mobile-quick-mode-btn active" data-quick-mode="all" aria-pressed="true" onclick="setCounterQuickFormMode('all', true)">TOUT</button>
+          <button type="button" class="mobile-quick-mode-btn" data-quick-mode="prestations" aria-pressed="false" onclick="setCounterQuickFormMode('prestations', true)">PRESTATION</button>
+          <button type="button" class="mobile-quick-mode-btn" data-quick-mode="livraisons" aria-pressed="false" onclick="setCounterQuickFormMode('livraisons', true)">LIVRAISON</button>
+          <button type="button" class="mobile-quick-mode-btn" data-quick-mode="pourboires" aria-pressed="false" onclick="setCounterQuickFormMode('pourboires', true)">POURBOIRE</button>
+        </div>
 
         <!-- POINTAGE EN DIRECT 1-CLIC ("DÉMARRER / TERMINER MON SERVICE") -->
         <div class="live-clock-box" id="live-clock-box">

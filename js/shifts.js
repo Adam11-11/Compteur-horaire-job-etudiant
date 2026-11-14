@@ -338,7 +338,7 @@ function startEditShift(id) {
 
   const curView = document.body.getAttribute('data-view') || 'counter';
   let targetView = curView;
-  if (curView === 'counter' || curView === 'calendar') {
+  if (curView === 'calendar' || (curView === 'counter' && window.innerWidth >= 768)) {
     if ((item.std_minutes || 0) > 0 || (item.std_pay || 0) > 0) {
       targetView = 'prestations';
     } else if (item.has_delivery || (item.del_pay || 0) > 0) {
@@ -351,11 +351,14 @@ function startEditShift(id) {
     if (typeof window.setView === 'function') {
       window.setView(targetView, true);
     }
+  } else if (curView === 'counter' && typeof setCounterQuickFormMode === 'function') {
+    setCounterQuickFormMode('all');
   }
 
   editingShiftId = item.id;
   editingLegacyId = null;
   const editTitleMap = {
+    counter: 'MODIFIER LA JOURNÉE',
     prestations: 'MODIFIER LA PRESTATION',
     livraisons: 'MODIFIER LA LIVRAISON',
     pourboires: 'MODIFIER LE POURBOIRE'

@@ -69,9 +69,68 @@ header p { font-size: 18px; line-height: 1.2; }
   box-shadow: 4px 4px 0 var(--border-shadow), inset -3px -3px 0 var(--red-dark);
 }
 
-/* Layout : ordre mobile = saisie, paie, historique, bilan */
+/* Layout : ordre mobile = saisie, paie/récap, historique, bilan */
 #app-content { gap: var(--gap); }
-#section-form { order: 1; } #section-period { order: 2; } #section-history { order: 3; } #section-global { order: 4; }
+#section-form { order: 1; }
+#section-period, #section-prestations, #section-livraisons, #section-pourboires { order: 2; }
+#section-history { order: 3; }
+#section-global { order: 4; }
+
+/* Sélecteur rapide d'ajout sur mobile dans la vue d'accueil (Tout / Prestation / Livraison / Pourboire) */
+.mobile-quick-mode-bar {
+  display: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+body[data-view="counter"] .mobile-quick-mode-bar {
+  display: grid;
+}
+@media (min-width: 768px) {
+  body[data-view="counter"] .mobile-quick-mode-bar {
+    display: none;
+  }
+}
+.mobile-quick-mode-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  line-height: 1.3;
+  min-height: 42px;
+  padding: 6px 8px;
+  border: 3px solid var(--border-soft);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  box-shadow: 3px 3px 0 var(--border-shadow);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-transform: uppercase;
+}
+.mobile-quick-mode-btn:active {
+  transform: translateY(2px);
+}
+.mobile-quick-mode-btn.active[data-quick-mode="all"] {
+  background: #3a301c;
+  border-color: var(--gold-soft);
+  color: var(--gold-soft);
+}
+.mobile-quick-mode-btn.active[data-quick-mode="prestations"] {
+  background: var(--red-soft);
+  border-color: var(--white-cream);
+  color: var(--white-cream);
+}
+.mobile-quick-mode-btn.active[data-quick-mode="livraisons"] {
+  background: #172b3d;
+  border-color: var(--blue-soft);
+  color: var(--blue-light);
+}
+.mobile-quick-mode-btn.active[data-quick-mode="pourboires"] {
+  background: #173021;
+  border-color: var(--green-soft);
+  color: var(--green-soft);
+}
 #app-content > section { scroll-margin-top: 12px; }
 .pixel-box { padding: var(--box-pad); margin-bottom: 0; }
 #app-content > .pixel-box { animation: boxIn .22s cubic-bezier(0.22, 1, 0.36, 1) backwards; will-change: transform, opacity; }
@@ -205,7 +264,8 @@ input:focus, select:focus { border-color: var(--gold-soft); box-shadow: inset 3p
   cursor: not-allowed;
   opacity: 0.72;
 }
-body[data-view="prestations"] #shift-submit-btn:not(:disabled) {
+body[data-view="prestations"] #shift-submit-btn:not(:disabled),
+body[data-view="counter"] #section-form[data-form-mode="prestations"] #shift-submit-btn:not(:disabled) {
   --submit-bevel-dark: var(--red-dark);
   --submit-bevel-light: var(--red-light);
   --submit-glow: rgba(217, 75, 87, 0.55);
@@ -214,7 +274,8 @@ body[data-view="prestations"] #shift-submit-btn:not(:disabled) {
   color: var(--white-cream);
   box-shadow: inset -4px -4px 0 var(--red-dark), inset 4px 4px 0 var(--red-light), 0 4px 0 var(--border-shadow);
 }
-body[data-view="livraisons"] #shift-submit-btn:not(:disabled) {
+body[data-view="livraisons"] #shift-submit-btn:not(:disabled),
+body[data-view="counter"] #section-form[data-form-mode="livraisons"] #shift-submit-btn:not(:disabled) {
   --submit-bevel-dark: var(--blue-dark);
   --submit-bevel-light: var(--blue-light);
   --submit-glow: rgba(79, 164, 232, 0.6);
@@ -223,7 +284,8 @@ body[data-view="livraisons"] #shift-submit-btn:not(:disabled) {
   color: #18171c;
   box-shadow: inset -4px -4px 0 var(--blue-dark), inset 4px 4px 0 var(--blue-light), 0 4px 0 var(--border-shadow);
 }
-body[data-view="pourboires"] #shift-submit-btn:not(:disabled) {
+body[data-view="pourboires"] #shift-submit-btn:not(:disabled),
+body[data-view="counter"] #section-form[data-form-mode="pourboires"] #shift-submit-btn:not(:disabled) {
   --submit-bevel-dark: #2e6b43;
   --submit-bevel-light: #8be0a9;
   --submit-glow: rgba(90, 181, 122, 0.6);

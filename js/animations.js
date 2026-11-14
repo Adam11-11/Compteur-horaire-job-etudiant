@@ -125,7 +125,9 @@ function initAmbientEffects() {
 function triggerViewEntrance(viewName) {
   if (prefersReducedMotion()) return;
   const viewSections = {
-    counter: ['section-period', 'section-history', 'section-global'],
+    counter: window.innerWidth < 768
+      ? ['section-form', 'section-period', 'section-history', 'section-global']
+      : ['section-period', 'section-history', 'section-global'],
     prestations: ['section-form', 'section-prestations'],
     livraisons: ['section-form', 'section-livraisons'],
     pourboires: ['section-form', 'section-pourboires'],
