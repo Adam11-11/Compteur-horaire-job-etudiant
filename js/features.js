@@ -802,7 +802,7 @@ function openPrintablePaySheet() {
             <th style="text-align:center">Heure d'entrée</th>
             <th style="text-align:center">Heure de sortie</th>
             <th style="text-align:right">Heures cumulées</th>
-            <th style="text-align:right">Argent gagné théorique</th>
+            <th style="text-align:right">Montant estimé</th>
           </tr>
         </thead>
         <tbody>
