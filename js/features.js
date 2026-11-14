@@ -694,67 +694,71 @@ function getCurrentPeriodShiftsDetailed() {
 
 function openPrintablePaySheet() {
   const recap = getCurrentPeriodShiftsDetailed();
-  if (recap.lines.length === 0) {
-    showToast('Aucune journée sur cette période pour générer la fiche PDF.', { type: 'warn' });
+  const reportLines = recap.lines.filter(r => r.stdMin > 0 || r.employerRowTotal > 0);
+  if (reportLines.length === 0) {
+    showToast('Aucune heure sur cette période pour générer le PDF.', { type: 'warn' });
     return;
   }
 
-  const rowsHtml = recap.lines.map(r => `
-    <tr>
-      <td><strong>${escapeHtml(formatDateWithDayFR(r.item.date))}</strong></td>
-      <td>${escapeHtml(r.item.note || '—')}</td>
-      <td>${r.stdMin > 0 ? `${escapeHtml(r.item.std_start)} - ${escapeHtml(r.item.std_end)} (${formatHoursMin(r.stdMin)})` : '—'}</td>
-      <td style="text-align:right">${r.stdP.toFixed(2)} €</td>
-      <td style="text-align:right">${r.isDel ? `${r.delP.toFixed(2)} €${r.delKm > 0 ? ` <small style="color:#666">(${formatKm(r.delKm)}${r.delFuelEst > 0 ? ` • ~${r.delFuelEst.toFixed(2)}€ ess.` : ''})</small>` : ''}` : '—'}</td>
-      <td style="text-align:right"><strong>${r.employerRowTotal.toFixed(2)} €</strong></td>
-      <td style="text-align:center">${itemHasProof(r.item) ? '✓ Oui' : '—'}</td>
-    </tr>
-  `).join('');
+  const rawMonth = MONTH_NAMES[activePayMonth] || '';
+  const monthTitle = rawMonth.charAt(0).toUpperCase() + rawMonth.slice(1).toLowerCase();
+  const sheetTitle = `Horaire Adam ${monthTitle}`;
 
-  const delSummaryExtras = [];
-  if (recap.totalDelKm > 0) delSummaryExtras.push(formatKm(recap.totalDelKm));
-  if (recap.totalDelFuelEst > 0) delSummaryExtras.push(`ess. ~${recap.totalDelFuelEst.toFixed(2)} €`);
-  const delSummarySuffix = delSummaryExtras.length > 0 ? ` • ${delSummaryExtras.join(' • ')}` : '';
-  const fuelFootnoteHtml = recap.vehicle && recap.totalDelKm > 0
-    ? `<div class="sub" style="margin-top:12px;">${PX_ICO.fuel} <strong>Estimation essence stricte</strong> (${escapeHtml(recap.vehicle.name)}, ${recap.vehicle.consumption.toFixed(1)} L/100km à ${recap.vehicle.fuelPrice.toFixed(2)} €/L) : <strong>~${recap.totalDelFuelEst.toFixed(2)} €</strong> pour ${formatKm(recap.totalDelKm)} aller-retour.</div>`
-    : '';
+  let totalHoursMin = 0;
+  let totalTheoreticalPay = 0;
+
+  const rowsHtml = reportLines.map(r => {
+    const entryMin = r.stdMin > 0 ? r.stdMin : r.delMin;
+    totalHoursMin += entryMin;
+    totalTheoreticalPay += r.employerRowTotal;
+
+    const startText = r.stdMin > 0 && r.item.std_start ? escapeHtml(r.item.std_start) : '—';
+    const endText = r.stdMin > 0 && r.item.std_end ? escapeHtml(r.item.std_end) : '—';
+    const hoursText = entryMin > 0 ? formatHoursMin(entryMin) : 'Forfait';
+
+    return `
+      <tr>
+        <td><strong>${escapeHtml(formatDateWithDayFR(r.item.date))}</strong></td>
+        <td style="text-align:center">${startText}</td>
+        <td style="text-align:center">${endText}</td>
+        <td style="text-align:right">${hoursText}</td>
+        <td style="text-align:right"><strong>${r.employerRowTotal.toFixed(2)} €</strong></td>
+      </tr>
+    `;
+  }).join('');
 
   const sheetInnerHtml = `
-    <h1>FICHE RÉCAPITULATIVE — PAIE DE ${escapeHtml(recap.monthLabel)}</h1>
-    <div class="sub">Période du <strong>${formatDateWithDayFR(recap.bounds.startYMD)}</strong> au <strong>${formatDateWithDayFR(recap.bounds.endYMD)}</strong> • ${recap.lines.length} journée(s) travaillée(s)</div>
-
-    <div class="summary-grid">
-      <div class="box"><span>Heures Prestations (${formatHoursMin(recap.totalStdMin)})</span><strong>${recap.totalStdPay.toFixed(2)} €</strong></div>
-      <div class="box"><span>Livraisons (${recap.totalDelCount}${delSummarySuffix})</span><strong>${recap.totalDelPay.toFixed(2)} €</strong></div>
-      <div class="box"><span>Total Paie Période</span><strong>${recap.employerTotal.toFixed(2)} €</strong></div>
-      <div class="box"><span>${recap.advance > 0 ? `Reste à payer (Acompte -${recap.advance.toFixed(0)}€)` : 'Net à percevoir'}</span><strong>${recap.remainingEmployer.toFixed(2)} €</strong></div>
-    </div>
-
+    <h1>${escapeHtml(sheetTitle)}</h1>
     <div class="pay-sheet-table-wrap">
       <table>
         <thead>
           <tr>
             <th>Date</th>
-            <th>Note / Détail</th>
-            <th>Horaires Prestation</th>
-            <th style="text-align:right">Gain Prestation</th>
-            <th style="text-align:right">Livraison</th>
-            <th style="text-align:right">Total Jour</th>
-            <th style="text-align:center">Preuve Photo</th>
+            <th style="text-align:center">Heure d'entrée</th>
+            <th style="text-align:center">Heure de sortie</th>
+            <th style="text-align:right">Heures cumulées</th>
+            <th style="text-align:right">Argent gagné théorique</th>
           </tr>
         </thead>
         <tbody>
           ${rowsHtml}
         </tbody>
+        <tfoot>
+          <tr class="pay-sheet-total-row">
+            <td colspan="3"><strong>TOTAL</strong></td>
+            <td style="text-align:right"><strong>${formatHoursMin(totalHoursMin)}</strong></td>
+            <td style="text-align:right"><strong>${totalTheoreticalPay.toFixed(2)} €</strong></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
-    ${fuelFootnoteHtml}
   `;
 
   const overlay = document.getElementById('pay-sheet-overlay');
   const paper = document.getElementById('pay-sheet-paper');
   if (!overlay || !paper) return;
 
+  paper.dataset.printTitle = sheetTitle;
   paper.innerHTML = sheetInnerHtml;
   overlay.style.display = 'flex';
   overlay.scrollTop = 0;
@@ -786,7 +790,15 @@ function closePrintablePaySheet(fromPopState = false) {
 }
 
 function printPrintablePaySheet() {
+  const paper = document.getElementById('pay-sheet-paper');
+  const prevTitle = document.title;
+  if (paper && paper.dataset.printTitle) {
+    document.title = paper.dataset.printTitle;
+  }
   window.print();
+  setTimeout(() => {
+    document.title = prevTitle;
+  }, 500);
 }
 
 // ==========================================
