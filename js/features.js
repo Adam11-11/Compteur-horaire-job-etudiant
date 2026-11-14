@@ -1183,8 +1183,11 @@ function renderCategoryViews() {
     const monthPrestDays = monthPrestDates.size;
     const avgMin = monthPrestDays > 0 ? Math.round(monthMin / monthPrestDays) : 0;
     const metricsHtml = `
-      <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} j)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
-      <div class="cat-metric-chip"><span class="cat-metric-label">HEURES (moy. ${formatHoursMin(avgMin)})</span><strong class="cat-metric-val">${formatHoursMin(monthMin)}</strong></div>
+      <div class="stat-card std-card">
+        <span class="stat-title">PRESTATIONS DU MOIS (12€/H, MIN. 60€)</span>
+        <div class="stat-value">${monthPay.toFixed(2)} €</div>
+        <div class="stat-sub">${monthCount} j • ${formatHoursMin(monthMin)} • Moy. ${formatHoursMin(avgMin)}/j</div>
+      </div>
     `;
 
     prestContainer.innerHTML = buildCategoryHeaderAndNav('PRESTATIONS', 'red-accent', metricsHtml);
@@ -1219,20 +1222,18 @@ function renderCategoryViews() {
     monthKm = Math.round(monthKm * 10) / 10;
     monthFuelEst = Math.round(monthFuelEst * 100) / 100;
 
-    const kmChipHtml = monthKm > 0
-      ? `<div class="cat-metric-chip"><span class="cat-metric-label">KM A/R MOIS</span><strong class="cat-metric-val">${formatKm(monthKm)}</strong></div>`
-      : '';
-    const fuelChipHtml = vehicle && monthKm > 0
-      ? `<div class="cat-metric-chip"><span class="cat-metric-label">ESSENCE ESTIMÉE</span><strong class="cat-metric-val">~${monthFuelEst.toFixed(2)} €</strong></div>`
+    const kmSubText = monthKm > 0
+      ? (vehicle ? ` • ${formatKm(monthKm)} (~${monthFuelEst.toFixed(2)}€ ess.)` : ` • ${formatKm(monthKm)}`)
       : '';
     const vehBarHtml = vehicle
       ? `<div class="cat-veh-bar"><span>${PX_ICO.fuel} ${escapeHtml(vehicle.name)} (${vehicle.consumption.toFixed(1)} L/100 × ${vehicle.fuelPrice.toFixed(2)} €/L = ~${getVehicleCostPerKm(vehicle).toFixed(3)} €/km)</span><button type="button" class="cat-veh-config-btn" onclick="openVehicleSettingsModal()">${PX_ICO.gear} Modifier véhicule</button></div>`
       : `<div class="cat-veh-bar"><span>${PX_ICO.fuel} Estime le remboursement essence de tes livraisons :</span><button type="button" class="cat-veh-config-btn" onclick="openVehicleSettingsModal()">${PX_ICO.gear} Ajouter mon véhicule</button></div>`;
     const metricsHtml = `
-      <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} livr.)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
-      <div class="cat-metric-chip"><span class="cat-metric-label">DÉTAIL</span><strong class="cat-metric-val">${monthFlatCount} forf. / ${monthLongCount} &gt;2h30</strong></div>
-      ${kmChipHtml}
-      ${fuelChipHtml}
+      <div class="stat-card delivery-card">
+        <span class="stat-title">LIVRAISONS DU MOIS</span>
+        <div class="stat-value">${monthPay.toFixed(2)} €</div>
+        <div class="stat-sub">${monthCount} livraison${monthCount > 1 ? 's' : ''} • ${monthFlatCount} forf. / ${monthLongCount} &gt;2h30${kmSubText}</div>
+      </div>
     `;
 
     delContainer.innerHTML = buildCategoryHeaderAndNav('LIVRAISONS', 'blue-accent', metricsHtml, vehBarHtml);
@@ -1256,8 +1257,11 @@ function renderCategoryViews() {
 
     const avgTip = monthCount > 0 ? (monthPay / monthCount) : 0;
     const metricsHtml = `
-      <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} tips)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
-      <div class="cat-metric-chip"><span class="cat-metric-label">MOY. / MAX</span><strong class="cat-metric-val">${avgTip.toFixed(1)}€ / +${monthMaxTip.toFixed(0)}€</strong></div>
+      <div class="stat-card tip-card">
+        <span class="stat-title">POURBOIRES DU MOIS</span>
+        <div class="stat-value">${monthPay.toFixed(2)} €</div>
+        <div class="stat-sub">${monthCount} pourboire${monthCount > 1 ? 's' : ''} • Moy. ${avgTip.toFixed(1)}€ / Max +${monthMaxTip.toFixed(0)}€</div>
+      </div>
     `;
 
     tipContainer.innerHTML = buildCategoryHeaderAndNav('POURBOIRES', 'green-accent', metricsHtml);
