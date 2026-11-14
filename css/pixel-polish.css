@@ -68,18 +68,20 @@ header {
   box-shadow: 0 1px 0 #09080c;
 }
 
-/* Titres de section avec gemme pixelisée façon Habitica */
+/* Titres de section avec icônes pixelisées nettes */
 .section-title {
   border-bottom: 3px dashed #433e50;
   color: #f7f1e8;
   text-shadow: 2px 2px 0 #09080c;
 }
 
-.section-title .dot {
-  width: 12px !important;
-  height: 12px !important;
-  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-  box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.55);
+.section-ico {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 0 4px rgba(255, 216, 77, 0.42));
+}
+.collapsible-trigger .section-ico {
+  margin-top: 1px;
 }
 
 /* Bannière de période façon panneau de quête Habitica */
@@ -544,17 +546,7 @@ textarea:focus {
   transform: scale(1.1);
 }
 
-/* Gemmes de titres, Titre période & Pastille statut SYNCHRO vivantes */
-@keyframes gemTwinkle {
-  0%, 100% { filter: brightness(1); transform: scale(1) rotate(0deg); }
-  50% { filter: brightness(1.45); transform: scale(1.22) rotate(45deg); }
-}
-
-.section-title .dot,
-.collapsible-trigger .dot {
-  animation: gemTwinkle 2.4s ease-in-out infinite;
-}
-
+/* Titre période & Pastille statut SYNCHRO vivantes */
 @keyframes periodTitleGlow {
   0%, 100% { text-shadow: 2px 2px 0 #09080c, 0 0 6px rgba(229, 181, 103, 0.2); }
   50% { text-shadow: 2px 2px 0 #09080c, 0 0 14px rgba(255, 232, 117, 0.55); }
@@ -962,8 +954,6 @@ textarea:focus {
   .paella-steam-b,
   .paella-sparkle-a,
   .paella-sparkle-b,
-  .section-title .dot,
-  .collapsible-trigger .dot,
   .status-pill.online .status-dot,
   .status-pill.syncing .status-dot,
   .ai-fab-btn:not(.recording):not(.busy):not(.chef-bounce) #ai-fab-icon,
