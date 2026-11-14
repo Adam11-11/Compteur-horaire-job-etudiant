@@ -348,7 +348,7 @@
             </div>
           </div>
 
-          <span id="app-version-badge" class="app-version-badge" title="Version de l'application">v1.48</span>
+          <span id="app-version-badge" class="app-version-badge" title="Version de l'application">v1.49</span>
         </div>
       </div>
     </header>
@@ -1024,6 +1024,15 @@
 
   <!-- Conteneur de notifications Toasts -->
   <div id="toast-container" aria-live="polite"></div>
+
+  <!-- Aperçu & Impression Fiche de Paie PDF (In-app pour Mobile/PWA & PC) -->
+  <div id="pay-sheet-overlay" class="pay-sheet-overlay" style="display: none;" role="dialog" aria-modal="true" aria-label="Fiche récapitulative de paie">
+    <div class="pay-sheet-toolbar">
+      <button type="button" class="pay-sheet-back-btn" onclick="closePrintablePaySheet()">◀ RETOUR</button>
+      <button type="button" class="pay-sheet-print-btn" onclick="printPrintablePaySheet()">🖨 IMPRIMER / PDF</button>
+    </div>
+    <div id="pay-sheet-paper" class="pay-sheet-paper"></div>
+  </div>
 
   <!-- Modules JavaScript de l'application -->
   <script src="js/config.js"></script>

@@ -718,69 +718,74 @@ function openPrintablePaySheet() {
     ? `<div class="sub" style="margin-top:12px;">⛽ <strong>Estimation essence stricte</strong> (${escapeHtml(recap.vehicle.name)}, ${recap.vehicle.consumption.toFixed(1)} L/100km à ${recap.vehicle.fuelPrice.toFixed(2)} €/L) : <strong>~${recap.totalDelFuelEst.toFixed(2)} €</strong> pour ${formatKm(recap.totalDelKm)} aller-retour.</div>`
     : '';
 
-  const html = `<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Fiche Récapitulative — Paie ${escapeHtml(recap.monthLabel)}</title>
-  <style>
-    body { font-family: system-ui, -apple-system, sans-serif; color: #18171c; margin: 28px; line-height: 1.45; }
-    h1 { margin: 0 0 4px; font-size: 22px; text-transform: uppercase; }
-    .sub { color: #555; margin-bottom: 20px; font-size: 14px; }
-    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
-    .box { border: 2px solid #222; padding: 12px; background: #fafafa; }
-    .box span { display: block; font-size: 11px; text-transform: uppercase; color: #555; }
-    .box strong { font-size: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
-    th, td { border: 1px solid #ccc; padding: 8px 10px; text-align: left; }
-    th { background: #24222a; color: #fff; font-size: 12px; text-transform: uppercase; }
-    tr:nth-child(even) { background: #f6f6f6; }
-    .print-bar { margin-bottom: 20px; display: flex; gap: 10px; }
-    .btn { background: #d94b57; color: #fff; border: none; padding: 10px 16px; font-weight: bold; cursor: pointer; border-radius: 4px; }
-    @media print { .print-bar { display: none; } body { margin: 10px; } }
-  </style>
-</head>
-<body>
-  <div class="print-bar">
-    <button class="btn" onclick="window.print()">🖨 IMPRIMER / ENREGISTRER EN PDF</button>
-  </div>
-  <h1>FICHE RÉCAPITULATIVE — PAIE DE ${escapeHtml(recap.monthLabel)}</h1>
-  <div class="sub">Période du <strong>${formatDateWithDayFR(recap.bounds.startYMD)}</strong> au <strong>${formatDateWithDayFR(recap.bounds.endYMD)}</strong> • ${recap.lines.length} journée(s) travaillée(s)</div>
+  const sheetInnerHtml = `
+    <h1>FICHE RÉCAPITULATIVE — PAIE DE ${escapeHtml(recap.monthLabel)}</h1>
+    <div class="sub">Période du <strong>${formatDateWithDayFR(recap.bounds.startYMD)}</strong> au <strong>${formatDateWithDayFR(recap.bounds.endYMD)}</strong> • ${recap.lines.length} journée(s) travaillée(s)</div>
 
-  <div class="summary-grid">
-    <div class="box"><span>Heures Prestations (${formatHoursMin(recap.totalStdMin)})</span><strong>${recap.totalStdPay.toFixed(2)} €</strong></div>
-    <div class="box"><span>Livraisons (${recap.totalDelCount}${delSummarySuffix})</span><strong>${recap.totalDelPay.toFixed(2)} €</strong></div>
-    <div class="box"><span>Total Paie Période</span><strong>${recap.employerTotal.toFixed(2)} €</strong></div>
-    <div class="box"><span>${recap.advance > 0 ? `Reste à payer (Acompte -${recap.advance.toFixed(0)}€)` : 'Net à percevoir'}</span><strong>${recap.remainingEmployer.toFixed(2)} €</strong></div>
-  </div>
+    <div class="summary-grid">
+      <div class="box"><span>Heures Prestations (${formatHoursMin(recap.totalStdMin)})</span><strong>${recap.totalStdPay.toFixed(2)} €</strong></div>
+      <div class="box"><span>Livraisons (${recap.totalDelCount}${delSummarySuffix})</span><strong>${recap.totalDelPay.toFixed(2)} €</strong></div>
+      <div class="box"><span>Total Paie Période</span><strong>${recap.employerTotal.toFixed(2)} €</strong></div>
+      <div class="box"><span>${recap.advance > 0 ? `Reste à payer (Acompte -${recap.advance.toFixed(0)}€)` : 'Net à percevoir'}</span><strong>${recap.remainingEmployer.toFixed(2)} €</strong></div>
+    </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Note / Détail</th>
-        <th>Horaires Prestation</th>
-        <th style="text-align:right">Gain Prestation</th>
-        <th style="text-align:right">Livraison</th>
-        <th style="text-align:right">Total Jour</th>
-        <th style="text-align:center">Preuve Photo</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${rowsHtml}
-    </tbody>
-  </table>
-  ${fuelFootnoteHtml}
-</body>
-</html>`;
+    <div class="pay-sheet-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Note / Détail</th>
+            <th>Horaires Prestation</th>
+            <th style="text-align:right">Gain Prestation</th>
+            <th style="text-align:right">Livraison</th>
+            <th style="text-align:right">Total Jour</th>
+            <th style="text-align:center">Preuve Photo</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+    </div>
+    ${fuelFootnoteHtml}
+  `;
 
-  const win = window.open('', '_blank');
-  if (win) {
-    win.document.write(html);
-    win.document.close();
-  } else {
-    showToast('Autorise les pop-ups pour ouvrir la fiche PDF.', { type: 'warn' });
+  const overlay = document.getElementById('pay-sheet-overlay');
+  const paper = document.getElementById('pay-sheet-paper');
+  if (!overlay || !paper) return;
+
+  paper.innerHTML = sheetInnerHtml;
+  overlay.style.display = 'flex';
+  overlay.scrollTop = 0;
+  document.body.classList.add('pay-sheet-open');
+  if (typeof playClickSound === 'function') playClickSound();
+
+  try {
+    if (!window.history.state || !window.history.state.paySheetOpen) {
+      window.history.pushState({ paySheetOpen: true }, '');
+    }
+  } catch (e) {}
+}
+
+function closePrintablePaySheet(fromPopState = false) {
+  const overlay = document.getElementById('pay-sheet-overlay');
+  if (!overlay || overlay.style.display === 'none') return;
+
+  overlay.style.display = 'none';
+  document.body.classList.remove('pay-sheet-open');
+  if (typeof playClickSound === 'function' && !fromPopState) playClickSound();
+
+  if (!fromPopState) {
+    try {
+      if (window.history.state && window.history.state.paySheetOpen) {
+        window.history.back();
+      }
+    } catch (e) {}
   }
+}
+
+function printPrintablePaySheet() {
+  window.print();
 }
 
 // ==========================================
@@ -1466,10 +1471,21 @@ function initVehicleSettingsEvents() {
   }
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      const sheetOverlay = document.getElementById('pay-sheet-overlay');
+      if (sheetOverlay && sheetOverlay.style.display !== 'none') {
+        closePrintablePaySheet();
+        return;
+      }
       const modal = document.getElementById('vehicle-settings-modal');
       if (modal && modal.style.display === 'flex') {
         closeVehicleSettingsModal();
       }
+    }
+  });
+  window.addEventListener('popstate', () => {
+    const sheetOverlay = document.getElementById('pay-sheet-overlay');
+    if (sheetOverlay && sheetOverlay.style.display !== 'none') {
+      closePrintablePaySheet(true);
     }
   });
   updateVehicleSettingsUI();
