@@ -38,6 +38,7 @@ header,
 
 header {
   border-color: #f2ece4;
+  padding-bottom: 9px;
   background-color: #25222f;
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Crect x='0' y='0' width='8' height='2' fill='%23ffe875'/%3E%3Crect x='0' y='0' width='2' height='8' fill='%23ffe875'/%3E%3Crect x='3' y='3' width='2' height='2' fill='%23d94b57'/%3E%3C/svg%3E"),
@@ -48,6 +49,141 @@ header {
   background-position: 5px 5px, calc(100% - 5px) 5px, 5px calc(100% - 5px), calc(100% - 5px) calc(100% - 5px), 0 0;
   background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat;
   background-size: 8px 8px, 8px 8px, 8px 8px, 8px 8px, auto;
+}
+
+/* Piste animée du camion de livraison tout le long du header */
+.header-road-strip {
+  position: relative;
+  width: 100%;
+  height: 22px;
+  margin-top: 8px;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: 0;
+}
+
+@media (min-width: 1024px) {
+  .header-road-strip {
+    margin-top: 2px;
+  }
+}
+
+.road-stars {
+  position: absolute;
+  inset: 0 0 6px 0;
+}
+
+.road-star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: #ffe875;
+  opacity: 0.25;
+  animation: roadStarTwinkle 2.6s steps(2) infinite;
+}
+
+.road-star.s1 { left: 12%; top: 3px; animation-delay: 0s; }
+.road-star.s2 { left: 31%; top: 6px; animation-delay: 0.7s; background: #80d8ff; }
+.road-star.s3 { left: 53%; top: 2px; animation-delay: 1.3s; }
+.road-star.s4 { left: 74%; top: 5px; animation-delay: 0.4s; background: #fff9f5; }
+.road-star.s5 { left: 90%; top: 3px; animation-delay: 1.8s; background: #80d8ff; }
+
+.road-asphalt {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  background: #13111a;
+  border-top: 1px solid #484257;
+  box-shadow: inset 0 -1px 0 #09080c;
+}
+
+.road-dashes {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 2px;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(229, 181, 103, 0.55) 0 10px,
+    transparent 10px 22px
+  );
+}
+
+.delivery-convoy {
+  position: absolute;
+  left: -48px;
+  bottom: 2px;
+  display: flex;
+  align-items: flex-end;
+  animation: convoyCross 12s linear infinite;
+  will-change: left;
+}
+
+.truck-bounce {
+  position: relative;
+  display: flex;
+  align-items: center;
+  animation: truckDriveBounce 0.36s steps(2) infinite;
+}
+
+.truck-svg {
+  display: block;
+  filter: drop-shadow(0 0 4px rgba(56, 182, 255, 0.45));
+}
+
+.truck-headlight {
+  width: 24px;
+  height: 7px;
+  margin-left: -2px;
+  margin-top: 5px;
+  background: linear-gradient(90deg, rgba(255, 232, 77, 0.58) 0%, rgba(255, 232, 77, 0.14) 55%, transparent 100%);
+  clip-path: polygon(0 30%, 100% 0, 100% 100%, 0 70%);
+}
+
+.truck-smoke {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  margin-right: -2px;
+  margin-bottom: 2px;
+}
+
+.smoke-puff {
+  position: absolute;
+  right: 1px;
+  bottom: 2px;
+  width: 3px;
+  height: 3px;
+  background: #c7c1d4;
+  opacity: 0;
+  animation: exhaustPuff 0.9s steps(3) infinite;
+}
+
+.smoke-puff.p2 { animation-delay: 0.3s; background: #fff9f5; }
+.smoke-puff.p3 { animation-delay: 0.6s; }
+
+@keyframes convoyCross {
+  0% { left: -48px; }
+  100% { left: calc(100% + 14px); }
+}
+
+@keyframes truckDriveBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
+
+@keyframes exhaustPuff {
+  0% { transform: translate(0, 0) scale(0.8); opacity: 0.75; }
+  60% { transform: translate(-7px, -5px) scale(1.1); opacity: 0.45; }
+  100% { transform: translate(-13px, -9px) scale(0.7); opacity: 0; }
+}
+
+@keyframes roadStarTwinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.85; }
 }
 
 /* Badges de statut du header façon HUD */
@@ -986,7 +1122,11 @@ textarea:focus {
   .px-loader i,
   .live-pulse-dot,
   .del-vehicle-km-box.visible,
-  .vehicle-modal-card {
+  .vehicle-modal-card,
+  .delivery-convoy,
+  .truck-bounce,
+  .smoke-puff,
+  .road-star {
     animation: none !important;
   }
   .log-item.kind-prest,
@@ -1004,6 +1144,9 @@ textarea:focus {
   .stat-card.alltime-card .stat-value,
   .bottom-nav a.is-active {
     text-shadow: none !important;
+  }
+  .delivery-convoy {
+    left: 16px;
   }
 }
 
