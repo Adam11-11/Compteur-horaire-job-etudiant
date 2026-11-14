@@ -11,8 +11,6 @@ function bootMainApp() {
   if (typeof initAiAssistant === 'function') initAiAssistant();
 
   document.getElementById('shift-date').value = toYMD(new Date());
-  initLegacyYearSelect();
-  renderPresetPills();
   initActivePeriodFromDate(new Date());
   calculateCurrentForm();
   updateFormPhotoUI();

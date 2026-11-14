@@ -177,7 +177,7 @@
             </div>
           </div>
 
-          <span id="app-version-badge" class="app-version-badge" title="Version de l'application">v1.55</span>
+          <span id="app-version-badge" class="app-version-badge" title="Version de l'application">v1.56</span>
         </div>
       </div>
     </header>
@@ -337,11 +337,6 @@
             <span class="dot"></span>
             <span id="form-section-title">AJOUTER UNE JOURNÉE</span>
           </div>
-          <button type="button" class="pixel-btn btn-secondary" id="legacy-toggle-btn" onclick="toggleLegacyForm()"
-            aria-label="Ajouter un mois antérieur">
-            <span class="hide-mobile">+ AJOUTER UN MOIS ANTÉRIEUR</span>
-            <span class="show-mobile">+ MOIS PASSÉ</span>
-          </button>
         </h2>
 
         <div class="mobile-quick-mode-bar" role="group" aria-label="Type d'ajout rapide">
@@ -351,114 +346,8 @@
           <button type="button" class="mobile-quick-mode-btn" data-quick-mode="pourboires" aria-pressed="false" onclick="setCounterQuickFormMode('pourboires', true)">POURBOIRE</button>
         </div>
 
-        <!-- POINTAGE EN DIRECT 1-CLIC ("DÉMARRER / TERMINER MON SERVICE") -->
-        <div class="live-clock-box" id="live-clock-box">
-          <div class="live-clock-idle">
-            <div class="live-clock-title" style="margin-bottom:0;"><svg class="px-ico" width="16" height="16" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true"><rect x="9" y="1" width="6" height="3" fill="#0d0c10"/><rect x="10" y="2" width="4" height="2" fill="#e5b567"/><rect x="11" y="4" width="2" height="2" fill="#b5823b"/><rect x="5" y="5" width="14" height="16" fill="#0d0c10"/><rect x="6" y="6" width="12" height="14" fill="#c7c1d4"/><rect x="6" y="6" width="12" height="2" fill="#f2ece4"/><rect x="7" y="8" width="10" height="10" fill="#18171c"/><rect x="11" y="9" width="2" height="5" fill="#5ab57a"/><rect x="11" y="12" width="4" height="2" fill="#82d99d"/><rect x="17" y="4" width="3" height="3" fill="#e5b567"/></svg> POINTAGE EN DIRECT</div>
-            <button type="button" class="pixel-btn btn-start-shift" onclick="startLiveShift()">
-              ▶ DÉMARRER MA PRESTATION
-            </button>
-          </div>
-
-          <div class="live-clock-active">
-            <div class="live-clock-header">
-              <div class="live-clock-badge">
-                <span class="live-pulse-dot" aria-hidden="true"></span>
-                <span id="live-clock-status-text">EN SERVICE...</span>
-              </div>
-            </div>
-
-            <div class="live-overtime-warning" id="live-overtime-warning" role="alert"></div>
-
-            <div class="live-clock-metrics">
-              <div class="live-metric">
-                <span class="live-metric-label">TEMPS PRESTATION</span>
-                <span class="live-metric-val" id="live-clock-elapsed">00:00:00</span>
-              </div>
-              <div class="live-metric">
-                <span class="live-metric-label">GAIN ESTIMÉ</span>
-                <span class="live-metric-val gold" id="live-clock-pay">60.00 €</span>
-              </div>
-              <div class="live-metric">
-                <span class="live-metric-label">PAUSE CUMULÉE</span>
-                <span class="live-metric-val" id="live-clock-pause">0 min</span>
-              </div>
-            </div>
-
-            <div class="live-clock-actions">
-              <button type="button" class="pixel-btn btn-secondary" id="live-pause-btn"
-                onclick="toggleLiveShiftPause()">
-                <svg class="px-ico" width="14" height="14" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="4" width="6" height="16" fill="#0d0c10"/><rect x="14" y="4" width="6" height="16" fill="#0d0c10"/><rect x="5" y="5" width="4" height="14" fill="#e5b567"/><rect x="15" y="5" width="4" height="14" fill="#e5b567"/><rect x="5" y="5" width="4" height="3" fill="#fff2a6"/><rect x="15" y="5" width="4" height="3" fill="#fff2a6"/></svg> PAUSE
-              </button>
-              <button type="button" class="pixel-btn btn-gold" onclick="finishLiveShift(false)">
-                <svg class="px-ico" width="14" height="14" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="4" width="16" height="16" fill="#0d0c10"/><rect x="5" y="5" width="14" height="14" fill="#d94b57"/><rect x="6" y="6" width="12" height="3" fill="#eb7c85"/><rect x="6" y="16" width="12" height="3" fill="#8c2a34"/></svg> FIN DE SERVICE (REMPLIR)
-              </button>
-              <button type="button" class="pixel-btn" onclick="finishLiveShift(true)">
-                <svg class="px-ico" width="14" height="14" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true"><rect x="11" y="2" width="7" height="7" fill="#0d0c10"/><rect x="6" y="9" width="12" height="6" fill="#0d0c10"/><rect x="6" y="15" width="7" height="7" fill="#0d0c10"/><rect x="12" y="3" width="5" height="6" fill="#ffe875"/><rect x="7" y="10" width="10" height="4" fill="#ffe875"/><rect x="12" y="3" width="4" height="3" fill="#ffffff"/><rect x="7" y="14" width="5" height="7" fill="#e5b567"/></svg> FIN &amp; SAUVEGARDER
-              </button>
-              <button type="button" class="pixel-btn btn-danger" id="live-cancel-btn" onclick="cancelLiveShift()">
-                ✕ ANNULER
-              </button>
-            </div>
-          </div>
-        </div>
-
         <!-- Bandeau de résultat IA (affiché automatiquement après un scan photo ou une dictée) -->
         <div id="ai-scan-result-banner" class="ai-result-banner" style="display: none; margin-bottom: 14px;" aria-live="polite"></div>
-
-        <!-- BOÎTE MASQUÉE POUR MOIS ANTÉRIEUR (GAIN GLOBAL SIMPLIFIÉ) -->
-        <div id="legacy-container" class="pixel-box"
-          style="border-color: var(--gold-soft); background: var(--bg-input); margin-bottom: 18px;">
-          <h3 class="pixel-font" id="legacy-form-title"
-            style="font-size: 11px; color: var(--gold-soft); margin-bottom: 12px;">IMPORT MOIS PASSÉ (DEPUIS AVRIL 2025)
-          </h3>
-          <p style="color: var(--text-muted); font-size: 18px; margin-bottom: 14px;">
-            Indique simplement le montant total perçu pour ce mois.
-          </p>
-          <form id="legacy-form" onsubmit="saveLegacyMonth(event)">
-            <div class="form-grid">
-              <div class="input-group">
-                <label for="legacy-month">Mois</label>
-                <select id="legacy-month" required>
-                  <option value="0">Janvier</option>
-                  <option value="1">Février</option>
-                  <option value="2">Mars</option>
-                  <option value="3" selected>Avril</option>
-                  <option value="4">Mai</option>
-                  <option value="5">Juin</option>
-                  <option value="6">Juillet</option>
-                  <option value="7">Août</option>
-                  <option value="8">Septembre</option>
-                  <option value="9">Octobre</option>
-                  <option value="10">Novembre</option>
-                  <option value="11">Décembre</option>
-                </select>
-              </div>
-              <div class="input-group">
-                <label for="legacy-year">Année</label>
-                <select id="legacy-year" required></select>
-              </div>
-            </div>
-
-            <div class="form-grid">
-              <div class="input-group">
-                <label for="legacy-total-pay">Gain Total du Mois (€)</label>
-                <input type="number" id="legacy-total-pay" step="0.01" min="0" inputmode="decimal"
-                  placeholder="Ex: 950.00" required />
-              </div>
-              <div class="input-group">
-                <label for="legacy-note">Note (optionnel)</label>
-                <input type="text" id="legacy-note" placeholder="Ex: Début activité..." />
-              </div>
-            </div>
-
-            <div class="submit-actions-row">
-              <button type="submit" class="pixel-btn btn-gold" id="legacy-submit-btn">VALIDER CE MOIS ANTÉRIEUR</button>
-              <button type="button" class="pixel-btn btn-secondary" id="legacy-cancel-btn" style="display: none;"
-                onclick="cancelEdit()">ANNULER</button>
-            </div>
-          </form>
-        </div>
 
         <form id="shift-form" onsubmit="saveShift(event)">
           <div class="form-grid">
@@ -480,12 +369,6 @@
                 <span class="badge badge-cream">12 € / H (MIN. 60 €)</span>
               </div>
 
-              <!-- Raccourcis horaires récents -->
-              <div class="quick-presets">
-                <span class="quick-presets-label">Horaires rapides :</span>
-                <div class="preset-pills" id="preset-pills-container"></div>
-              </div>
-
               <div class="time-row">
                 <div class="input-group">
                   <label for="std-start">Arrivée</label>
@@ -503,10 +386,6 @@
                       aria-label="Mettre l'heure actuelle pour le départ">MAINTENANT</button>
                   </div>
                 </div>
-              </div>
-              <div class="input-group" style="margin-top: 8px;">
-                <label for="std-break">Pause non payée (minutes)</label>
-                <input type="number" id="std-break" min="0" max="480" value="0" inputmode="numeric" />
               </div>
             </div>
 

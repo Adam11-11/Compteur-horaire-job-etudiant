@@ -139,7 +139,8 @@ async function finishLiveShift(autoSave = false) {
   document.getElementById('shift-date').value = session.startDate || toYMD(now);
   document.getElementById('std-start').value = session.startTime;
   document.getElementById('std-end').value = endHHMM;
-  document.getElementById('std-break').value = String(pauseMin);
+  const stdBreakEl = document.getElementById('std-break');
+  if (stdBreakEl) stdBreakEl.value = String(pauseMin);
 
   saveLiveSession(null);
   resetCancelLiveConfirm();

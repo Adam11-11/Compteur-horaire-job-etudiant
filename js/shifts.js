@@ -5,6 +5,7 @@
 // --- GÉNÉRATION DYNAMIQUE DES ANNÉES DU MOIS ANTÉRIEUR ---
 function initLegacyYearSelect() {
   const select = document.getElementById('legacy-year');
+  if (!select) return;
   const currentYear = new Date().getFullYear();
   const maxYear = Math.max(2026, currentYear + 1);
   select.innerHTML = '';
@@ -175,7 +176,8 @@ function clearTipAmount() {
 function calculateCurrentForm() {
   const stdStart = document.getElementById('std-start').value;
   const stdEnd = document.getElementById('std-end').value;
-  const stdBreak = Number(document.getElementById('std-break').value) || 0;
+  const stdBreakEl = document.getElementById('std-break');
+  const stdBreak = stdBreakEl ? (Number(stdBreakEl.value) || 0) : 0;
 
   let stdMinutes = getMinutesBetween(stdStart, stdEnd);
   if (stdMinutes > 0) {
@@ -317,13 +319,20 @@ function startEditShift(id) {
   if (!item) return;
 
   if (item.is_legacy) {
+    const legacyBox = document.getElementById('legacy-container');
+    if (!legacyBox) {
+      if (typeof showToast === 'function') {
+        showToast('La modification des mois antérieurs n\'est plus disponible ici.', { type: 'info' });
+      }
+      return;
+    }
     if (typeof window.setView === 'function' && document.body.getAttribute('data-view') !== 'prestations') {
       window.setView('prestations', true);
     }
     editingLegacyId = item.id;
     editingShiftId = null;
     const [y, m] = String(item.date).split('-').map(Number);
-    document.getElementById('legacy-container').classList.add('active');
+    legacyBox.classList.add('active');
     document.getElementById('legacy-month').value = String((m || 1) - 1);
     document.getElementById('legacy-year').value = String(y || 2025);
     document.getElementById('legacy-total-pay').value = Number(item.total_pay || item.std_pay || 0).toFixed(2);
@@ -371,7 +380,8 @@ function startEditShift(id) {
   document.getElementById('shift-note').value = item.note || '';
   document.getElementById('std-start').value = item.std_start || '';
   document.getElementById('std-end').value = item.std_end || '';
-  document.getElementById('std-break').value = String(item.std_break || 0);
+  const stdBreakInp = document.getElementById('std-break');
+  if (stdBreakInp) stdBreakInp.value = String(item.std_break || 0);
 
   setDeliveryState(Boolean(item.has_delivery || (item.del_pay && item.del_pay > 0)));
   if (hasDelivery) {
@@ -413,15 +423,19 @@ function cancelEdit() {
   document.getElementById('shift-submit-btn').textContent = 'ENREGISTRER';
   document.getElementById('shift-cancel-btn').style.display = 'none';
 
-  document.getElementById('legacy-form-title').textContent = 'IMPORT MOIS PASSÉ (DEPUIS AVRIL 2025)';
-  document.getElementById('legacy-submit-btn').textContent = 'VALIDER CE MOIS ANTÉRIEUR';
-  document.getElementById('legacy-cancel-btn').style.display = 'none';
+  const legacyTitle = document.getElementById('legacy-form-title');
+  if (legacyTitle) legacyTitle.textContent = 'IMPORT MOIS PASSÉ (DEPUIS AVRIL 2025)';
+  const legacySubmit = document.getElementById('legacy-submit-btn');
+  if (legacySubmit) legacySubmit.textContent = 'VALIDER CE MOIS ANTÉRIEUR';
+  const legacyCancel = document.getElementById('legacy-cancel-btn');
+  if (legacyCancel) legacyCancel.style.display = 'none';
 
   document.getElementById('shift-date').value = toYMD(new Date());
   document.getElementById('shift-note').value = '';
   document.getElementById('std-start').value = '';
   document.getElementById('std-end').value = '';
-  document.getElementById('std-break').value = '0';
+  const stdBreakEl = document.getElementById('std-break');
+  if (stdBreakEl) stdBreakEl.value = '0';
   const tipEl = document.getElementById('tip-amount');
   if (tipEl) tipEl.value = '';
   setDeliveryState(false);
@@ -477,7 +491,7 @@ async function saveShift(e) {
     note: document.getElementById('shift-note').value.trim(),
     std_start: stdStartVal,
     std_end: stdEndVal,
-    std_break: Number(document.getElementById('std-break').value) || 0,
+    std_break: Number(document.getElementById('std-break')?.value) || 0,
     std_minutes: calc.stdMinutes,
     std_pay: calc.stdPay,
     has_delivery: calc.hasDelivery,
