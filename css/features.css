@@ -673,11 +673,23 @@ header {
 }
 
 /* Point 4 : Bandeau résumé compact dans les onglets catégories (DA Pixel-Art) */
+.category-view-section,
+#prestations-view-content,
+#livraisons-view-content,
+#pourboires-view-content {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .cat-summary-strip {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   background: var(--bg-input);
   border: 3px solid var(--border-soft);
   box-shadow: 4px 4px 0 var(--border-shadow);
-  padding: 14px;
+  padding: 12px;
   margin-bottom: 16px;
 }
 .category-view-section .cat-summary-strip {
@@ -772,11 +784,24 @@ header {
 
 .cat-strip-metrics {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
+  width: 100%;
+  min-width: 0;
 }
 .cat-strip-metrics .stat-card {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.cat-strip-metrics .stat-title {
+  font-size: clamp(8px, 2.35vw, 10px);
+  overflow-wrap: anywhere;
+}
+.cat-strip-metrics .stat-sub {
+  font-size: clamp(16px, 4.3vw, 19px);
+  overflow-wrap: anywhere;
 }
 .cat-metric-chip {
   background: var(--bg-panel);
@@ -1760,6 +1785,10 @@ body.keyboard-open .ai-fab-wrapper {
 }
 
 .cat-fuel-month-box {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1776,6 +1805,8 @@ body.keyboard-open .ai-fab-wrapper {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+  flex: 1 1 180px;
 }
 
 .cat-fuel-month-title {
@@ -1785,7 +1816,9 @@ body.keyboard-open .ai-fab-wrapper {
   color: #80c2f7;
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
+  overflow-wrap: anywhere;
 }
 
 .cat-fuel-month-stats {
@@ -1819,6 +1852,11 @@ body.keyboard-open .ai-fab-wrapper {
 }
 
 .cat-ledger-box {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
   background: var(--bg-panel);
   border: 2px solid var(--border-soft);
   box-shadow: 4px 4px 0 var(--border-shadow);
@@ -1850,12 +1888,14 @@ body.keyboard-open .ai-fab-wrapper {
 
 .cat-ledger-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 4px 8px;
+  padding: 8px 10px;
   background: rgba(0, 0, 0, 0.24);
   border-bottom: 2px dashed var(--border-soft);
+  min-width: 0;
 }
 
 .cat-ledger-head-title {
@@ -1863,17 +1903,22 @@ body.keyboard-open .ai-fab-wrapper {
   font-size: 9px;
   line-height: 1.4;
   color: var(--gold-soft);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .cat-ledger-head-count {
-  font-size: 17px;
+  font-size: 16px;
   color: var(--text-muted);
   white-space: nowrap;
 }
 
 .cat-ledger-list {
+  width: 100%;
+  min-width: 0;
   max-height: 270px;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -1882,11 +1927,14 @@ body.keyboard-open .ai-fab-wrapper {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
+  gap: 10px;
+  padding: 8px 10px;
   border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
-  font-size: 20px;
+  font-size: 19px;
   line-height: 1.2;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .cat-ledger-row:nth-child(even) {
@@ -1905,9 +1953,10 @@ body.keyboard-open .ai-fab-wrapper {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 3px 10px;
+  gap: 2px 10px;
   min-width: 0;
-  flex: 1;
+  flex: 1 1 0%;
+  max-width: 100%;
 }
 
 .cat-ledger-date {
@@ -1919,14 +1968,15 @@ body.keyboard-open .ai-fab-wrapper {
 .cat-ledger-desc {
   font-size: 17px;
   color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.2;
+  min-width: 0;
 }
 
 .cat-ledger-amt {
-  font-size: 22px;
+  font-size: clamp(18px, 5vw, 22px);
   font-weight: bold;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -1939,11 +1989,12 @@ body.keyboard-open .ai-fab-wrapper {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 8px 12px;
+  padding: 8px 10px;
   background: rgba(0, 0, 0, 0.28);
   border-top: 2px solid var(--border-soft);
   font-size: 18px;
   color: var(--text-muted);
+  min-width: 0;
 }
 
 .cat-ledger-footer strong {
