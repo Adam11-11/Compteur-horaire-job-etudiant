@@ -764,17 +764,25 @@ function openPrintablePaySheet() {
   let totalTheoreticalPay = 0;
 
   const rowsHtml = reportLines.map(r => {
-    const entryMin = r.stdMin > 0 ? r.stdMin : r.delMin;
+    const entryMin = r.stdMin + r.delMin;
     totalHoursMin += entryMin;
     totalTheoreticalPay += r.employerRowTotal;
 
+    let typeText = 'Prestation';
+    if (r.stdMin > 0 && r.isDel) {
+      typeText = 'Prestation + Livraison';
+    } else if (r.isDel) {
+      typeText = 'Livraison';
+    }
+
     const startText = r.stdMin > 0 && r.item.std_start ? escapeHtml(r.item.std_start) : '—';
     const endText = r.stdMin > 0 && r.item.std_end ? escapeHtml(r.item.std_end) : '—';
-    const hoursText = entryMin > 0 ? formatHoursMin(entryMin) : 'Forfait';
+    const hoursText = entryMin > 0 ? formatHoursMin(entryMin) : '—';
 
     return `
       <tr>
         <td><strong>${escapeHtml(formatDateWithDayFR(r.item.date))}</strong></td>
+        <td>${typeText}</td>
         <td style="text-align:center">${startText}</td>
         <td style="text-align:center">${endText}</td>
         <td style="text-align:right">${hoursText}</td>
@@ -790,6 +798,7 @@ function openPrintablePaySheet() {
         <thead>
           <tr>
             <th>Date</th>
+            <th>Type</th>
             <th style="text-align:center">Heure d'entrée</th>
             <th style="text-align:center">Heure de sortie</th>
             <th style="text-align:right">Heures cumulées</th>
@@ -801,7 +810,7 @@ function openPrintablePaySheet() {
         </tbody>
         <tfoot>
           <tr class="pay-sheet-total-row">
-            <td colspan="3"><strong>TOTAL</strong></td>
+            <td colspan="4"><strong>TOTAL</strong></td>
             <td style="text-align:right"><strong>${formatHoursMin(totalHoursMin)}</strong></td>
             <td style="text-align:right"><strong>${totalTheoreticalPay.toFixed(2)} €</strong></td>
           </tr>
