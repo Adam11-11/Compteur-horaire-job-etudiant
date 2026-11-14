@@ -53,12 +53,11 @@ function initCalendarAndNavigation() {
     }
     if (it.proof_path) {
       h += '<button type="button" class="photo-badge" data-kind="badge" data-photo-act="view" data-photo-id="' + it.id + '" aria-label="Voir la photo jointe">' + CAM_SVG + '<span>✓ VOIR PHOTO</span></button>';
-    } else {
-      h += '<button type="button" class="photo-badge photo-missing-btn" data-kind="add-box" data-photo-act="add" data-photo-id="' + it.id + '" aria-label="Ajouter une photo">' + CAM_SVG + '<span>+ AJOUTER PHOTO</span></button>';
     }
-    const safeCalId = typeof it.id === 'number' ? it.id : "'" + escapeHtml(it.id) + "'";
-    h += '<div class="cal-entry-foot">' + (idx ? '<span class="cal-entry-total">+' + c.total.toFixed(2) + ' €</span>' : '<span></span>') +
-         '<button type="button" class="pixel-btn btn-edit" onclick="calEdit(' + safeCalId + ')">MODIFIER</button></div></div>';
+    if (idx) {
+      h += '<div class="cal-entry-foot"><span class="cal-entry-total">+' + c.total.toFixed(2) + ' €</span></div>';
+    }
+    h += '</div>';
     return h;
   }
 

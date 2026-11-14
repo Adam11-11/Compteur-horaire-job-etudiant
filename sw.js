@@ -1,7 +1,7 @@
 // ==========================================
 // SERVICE WORKER — CACHE APP SHELL (OFFLINE-FIRST)
 // ==========================================
-const CACHE_NAME = 'compteur-paella-v53';
+const CACHE_NAME = 'compteur-paella-v54';
 const APP_SHELL = [
   './',
   './index.html',

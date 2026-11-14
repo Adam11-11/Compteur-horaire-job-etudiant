@@ -1063,8 +1063,6 @@ function initSupabaseRealtime() {
 // ==========================================
 // 10. ONGLETS SPÉCIALISÉS : PRESTATIONS / LIVRAISONS / POURBOIRES
 // ==========================================
-let categoryScopeMode = 'period'; // 'period' | 'all'
-
 function setCounterQuickFormMode(mode, interactive = false) {
   const validModes = ['all', 'prestations', 'livraisons', 'pourboires'];
   const nextMode = validModes.includes(mode) ? mode : 'all';
@@ -1133,16 +1131,6 @@ function syncFormForCategoryView(viewName, keepQuickMode = false) {
   checkFormDuplicateDate();
 }
 
-function setCategoryScope(mode) {
-  categoryScopeMode = mode === 'all' ? 'all' : 'period';
-  if (typeof playClickSound === 'function') playClickSound();
-  renderCategoryViews();
-}
-
-function editFromCategory(id) {
-  startEditShift(id);
-}
-
 function buildCategoryHeaderAndNav(titleText, accentClass, summaryMetricsHtml, extraFooterHtml = '') {
   return `
     <div class="cat-summary-strip ${accentClass}">
@@ -1153,8 +1141,6 @@ function buildCategoryHeaderAndNav(titleText, accentClass, summaryMetricsHtml, e
           <button type="button" class="nav-btn compact-nav-btn" onclick="changePeriod(1)" aria-label="Mois suivant">▶</button>
         </div>
         <div class="cat-strip-scope">
-          <button type="button" class="tab-btn compact-scope-btn ${categoryScopeMode === 'period' ? 'active' : ''}" onclick="setCategoryScope('period')">MOIS</button>
-          <button type="button" class="tab-btn compact-scope-btn ${categoryScopeMode === 'all' ? 'active' : ''}" onclick="setCategoryScope('all')">TOUT</button>
           <button type="button" class="nav-btn compact-nav-btn compact-today-btn" onclick="resetToCurrentPeriod()" title="Revenir à aujourd'hui">AUJ.</button>
         </div>
       </div>
@@ -1166,44 +1152,15 @@ function buildCategoryHeaderAndNav(titleText, accentClass, summaryMetricsHtml, e
   `;
 }
 
-function buildCategoryCardHtml(item, badgeHtml, amountValue, idx = 0) {
-  const hasProof = itemHasProof(item);
-  const photoBtnHtml = hasProof
-    ? `<button type="button" class="compact-icon-btn has-photo" data-kind="compact-view" data-photo-act="view" data-photo-id="${item.id}" title="Voir la photo jointe">${CAM_SVG}<span>✓</span></button>`
-    : `<button type="button" class="compact-icon-btn missing-photo" data-kind="compact-add" data-photo-act="add" data-photo-id="${item.id}" title="Ajouter une photo">${CAM_SVG}<span>+</span></button>`;
-
-  const safeIdAttr = typeof item.id === 'number' ? item.id : `'${escapeHtml(item.id)}'`;
-  const noteSpan = item.note ? `<span class="compact-note">— ${escapeHtml(item.note)}</span>` : '';
-  return `
-    <div class="log-item compact-row in-current-period" data-shift-id="${escapeHtml(String(item.id))}" style="--item-index: ${Math.min(idx, 10)};">
-      <div class="compact-row-left">
-        <span class="compact-date">${formatDateWithDayFR(item.date)}</span>
-        ${noteSpan}
-        <span class="compact-pills">${badgeHtml}</span>
-      </div>
-      <div class="compact-row-right">
-        <span class="compact-row-pay">+${amountValue.toFixed(2)} €</span>
-        <div class="compact-row-btns">
-          ${photoBtnHtml}
-          <button type="button" class="compact-icon-btn edit-btn" onclick="editFromCategory(${safeIdAttr})" title="Modifier">✎</button>
-          <button type="button" class="compact-icon-btn del" onclick="deleteShift(${safeIdAttr})" title="Supprimer">✕</button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
 function renderCategoryViews() {
   const activeShifts = cachedShifts.filter(s => !pendingDeletes.has(s.id) && !s.is_legacy);
   const bounds = getPayPeriodBounds(activePayYear, activePayMonth);
 
-  // --- 1. ONGLET PRESTATIONS (HEURES DE TAF) ---
+  // --- 1. ONGLET PRESTATIONS (COMPTEUR DU MOIS UNIQUEMENT) ---
   const prestContainer = document.getElementById('prestations-view-content');
   if (prestContainer) {
     let monthCount = 0, monthMin = 0, monthPay = 0;
-    let allCount = 0, allMin = 0, allPay = 0;
     const monthPrestDates = new Set();
-    const rows = [];
 
     activeShifts.forEach(item => {
       const stdMin = item.std_minutes || 0;
@@ -1213,68 +1170,41 @@ function renderCategoryViews() {
       }
       if (stdMin <= 0 && stdP <= 0) return;
 
-      const inPeriod = item.date >= bounds.startYMD && item.date <= bounds.endYMD;
-
-      allCount++;
-      allMin += stdMin;
-      allPay += stdP;
-
-      if (inPeriod) {
+      if (item.date >= bounds.startYMD && item.date <= bounds.endYMD) {
         monthCount++;
         monthMin += stdMin;
         monthPay += stdP;
         if (item.date) monthPrestDates.add(item.date);
       }
-
-      if (categoryScopeMode === 'all' || inPeriod) {
-        rows.push({ item, stdMin, stdP });
-      }
     });
 
     const monthPrestDays = monthPrestDates.size;
     const avgMin = monthPrestDays > 0 ? Math.round(monthMin / monthPrestDays) : 0;
-    const cardsHtml = rows.length === 0
-      ? `<div class="empty-state">Aucune prestation sur cette sélection.</div>`
-      : `<div class="log-list">${rows.map(({ item, stdMin, stdP }, idx) => {
-          const pillHtml = `
-            <span class="shift-pill pill-standard">${escapeHtml(item.std_start)} - ${escapeHtml(item.std_end)} (${formatHoursMin(stdMin)})</span>
-            ${item.std_break > 0 ? `<span class="shift-pill pill-standard">Pause ${Number(item.std_break)}m</span>` : ''}
-          `;
-          return buildCategoryCardHtml(item, pillHtml, stdP, idx);
-        }).join('')}</div>`;
-
     const metricsHtml = `
       <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} j)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
       <div class="cat-metric-chip"><span class="cat-metric-label">HEURES (moy. ${formatHoursMin(avgMin)})</span><strong class="cat-metric-val">${formatHoursMin(monthMin)}</strong></div>
     `;
 
-    prestContainer.innerHTML = `${buildCategoryHeaderAndNav('PRESTATIONS', 'red-accent', metricsHtml)}${cardsHtml}`;
+    prestContainer.innerHTML = buildCategoryHeaderAndNav('PRESTATIONS', 'red-accent', metricsHtml);
   }
 
-  // --- 2. ONGLET LIVRAISONS ---
+  // --- 2. ONGLET LIVRAISONS (COMPTEUR DU MOIS UNIQUEMENT) ---
   const delContainer = document.getElementById('livraisons-view-content');
   if (delContainer) {
     const vehicle = typeof getPersonalVehicle === 'function' ? getPersonalVehicle() : null;
     let monthCount = 0, monthPay = 0, monthFlatCount = 0, monthLongCount = 0, monthKm = 0, monthFuelEst = 0;
-    let allCount = 0, allPay = 0;
-    const rows = [];
 
     activeShifts.forEach(item => {
       const delP = item.del_pay || 0;
       const isDel = Boolean(item.has_delivery || delP > 0);
       if (!isDel) return;
 
-      const delMin = item.del_minutes || 0;
-      const delKm = typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
-      const delFuelEst = delKm > 0 && vehicle && typeof estimateFuelCost === 'function'
-        ? estimateFuelCost(delKm, vehicle)
-        : 0;
-      const inPeriod = item.date >= bounds.startYMD && item.date <= bounds.endYMD;
-
-      allCount++;
-      allPay += delP;
-
-      if (inPeriod) {
+      if (item.date >= bounds.startYMD && item.date <= bounds.endYMD) {
+        const delMin = item.del_minutes || 0;
+        const delKm = typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
+        const delFuelEst = delKm > 0 && vehicle && typeof estimateFuelCost === 'function'
+          ? estimateFuelCost(delKm, vehicle)
+          : 0;
         monthCount++;
         monthPay += delP;
         monthKm += delKm;
@@ -1282,23 +1212,10 @@ function renderCategoryViews() {
         if (delMin > 150) monthLongCount++;
         else monthFlatCount++;
       }
-
-      if (categoryScopeMode === 'all' || inPeriod) {
-        rows.push({ item, delMin, delP, delKm, delFuelEst });
-      }
     });
 
     monthKm = Math.round(monthKm * 10) / 10;
     monthFuelEst = Math.round(monthFuelEst * 100) / 100;
-    const cardsHtml = rows.length === 0
-      ? `<div class="empty-state">Aucune livraison sur cette sélection.</div>`
-      : `<div class="log-list">${rows.map(({ item, delMin, delP, delKm, delFuelEst }, idx) => {
-          const durText = delMin > 150 ? `Longue ${formatHoursMin(delMin)}` : (delMin > 0 ? `${formatHoursMin(delMin)}` : 'Forfait 30€');
-          const fuelPart = delFuelEst > 0 ? ` • ~${delFuelEst.toFixed(2)}€ ess.` : '';
-          const kmPart = delKm > 0 ? ` • ${formatKm(delKm)}${fuelPart}` : '';
-          const pillHtml = `<span class="shift-pill pill-delivery">${PX_ICO.crate} ${durText}${kmPart}</span>`;
-          return buildCategoryCardHtml(item, pillHtml, delP, idx);
-        }).join('')}</div>`;
 
     const kmChipHtml = monthKm > 0
       ? `<div class="cat-metric-chip"><span class="cat-metric-label">KM A/R MOIS</span><strong class="cat-metric-val">${formatKm(monthKm)}</strong></div>`
@@ -1316,50 +1233,32 @@ function renderCategoryViews() {
       ${fuelChipHtml}
     `;
 
-    delContainer.innerHTML = `${buildCategoryHeaderAndNav('LIVRAISONS', 'blue-accent', metricsHtml, vehBarHtml)}${cardsHtml}`;
+    delContainer.innerHTML = buildCategoryHeaderAndNav('LIVRAISONS', 'blue-accent', metricsHtml, vehBarHtml);
   }
 
-  // --- 3. ONGLET POURBOIRES (TIPS) ---
+  // --- 3. ONGLET POURBOIRES (COMPTEUR DU MOIS UNIQUEMENT) ---
   const tipContainer = document.getElementById('pourboires-view-content');
   if (tipContainer) {
     let monthCount = 0, monthPay = 0, monthMaxTip = 0;
-    let allCount = 0, allPay = 0;
-    const rows = [];
 
     activeShifts.forEach(item => {
       const tipP = getItemTipPay(item);
       if (tipP <= 0) return;
 
-      const inPeriod = item.date >= bounds.startYMD && item.date <= bounds.endYMD;
-
-      allCount++;
-      allPay += tipP;
-
-      if (inPeriod) {
+      if (item.date >= bounds.startYMD && item.date <= bounds.endYMD) {
         monthCount++;
         monthPay += tipP;
         if (tipP > monthMaxTip) monthMaxTip = tipP;
       }
-
-      if (categoryScopeMode === 'all' || inPeriod) {
-        rows.push({ item, tipP });
-      }
     });
 
     const avgTip = monthCount > 0 ? (monthPay / monthCount) : 0;
-    const cardsHtml = rows.length === 0
-      ? `<div class="empty-state">Aucun pourboire sur cette sélection.</div>`
-      : `<div class="log-list">${rows.map(({ item, tipP }, idx) => {
-          const pillHtml = `<span class="shift-pill pill-tip">${PX_ICO.gem} Pourboire</span>`;
-          return buildCategoryCardHtml(item, pillHtml, tipP, idx);
-        }).join('')}</div>`;
-
     const metricsHtml = `
       <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} tips)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
       <div class="cat-metric-chip"><span class="cat-metric-label">MOY. / MAX</span><strong class="cat-metric-val">${avgTip.toFixed(1)}€ / +${monthMaxTip.toFixed(0)}€</strong></div>
     `;
 
-    tipContainer.innerHTML = `${buildCategoryHeaderAndNav('POURBOIRES', 'green-accent', metricsHtml)}${cardsHtml}`;
+    tipContainer.innerHTML = buildCategoryHeaderAndNav('POURBOIRES', 'green-accent', metricsHtml);
   }
 }
 

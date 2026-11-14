@@ -680,6 +680,9 @@ header {
   padding: 14px;
   margin-bottom: 16px;
 }
+.category-view-section .cat-summary-strip {
+  margin-bottom: 0;
+}
 .cat-summary-strip.gold-accent { border-color: var(--gold-soft); }
 .cat-summary-strip.red-accent { border-color: var(--red-soft); }
 .cat-summary-strip.blue-accent { border-color: var(--blue-soft); }
