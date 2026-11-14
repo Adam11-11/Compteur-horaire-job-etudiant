@@ -60,11 +60,13 @@ function setFormPhotoFile(file, skipAiAutoScan = false) {
   playToggleSound(true);
   updateFormPhotoUI();
 
-  // D'une pierre deux coups : si connecté et en ligne, lire automatiquement la feuille via l'Edge Function IA
+  // D'une pierre deux coups : si connecté, en ligne et aucun horaire déjà saisi, lire automatiquement la feuille
   if (!skipAiAutoScan && navigator.onLine && typeof analyzeSheetPhotoWithAI === 'function') {
     const startVal = document.getElementById('std-start')?.value;
     const endVal = document.getElementById('std-end')?.value;
-    if (!startVal && !endVal && typeof analyzeSheetPhotoWithAI === 'function') {
+    const delStartVal = document.getElementById('del-start')?.value;
+    const delEndVal = document.getElementById('del-end')?.value;
+    if (!startVal && !endVal && !delStartVal && !delEndVal) {
       analyzeSheetPhotoWithAI(file);
     }
   }
