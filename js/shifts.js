@@ -104,6 +104,9 @@ function handleSwitchKey(e, callback) {
 }
 
 function scrollToForm() {
+  if (typeof toggleFormSection === 'function') {
+    toggleFormSection(true);
+  }
   document.getElementById('section-form').scrollIntoView({
     behavior: prefersReducedMotion() ? 'auto' : 'smooth'
   });
@@ -335,6 +338,9 @@ function startEditShift(id) {
     if (typeof window.setView === 'function' && document.body.getAttribute('data-view') !== 'prestations') {
       window.setView('prestations', true);
     }
+    if (typeof toggleFormSection === 'function') {
+      toggleFormSection(true);
+    }
     editingLegacyId = item.id;
     editingShiftId = null;
     const [y, m] = String(item.date).split('-').map(Number);
@@ -441,6 +447,9 @@ function cancelEdit() {
   } else {
     document.getElementById('form-section-title').textContent = 'ENREGISTRER UNE PRESTATION';
     calculateCurrentForm();
+  }
+  if (typeof toggleFormSection === 'function') {
+    toggleFormSection(false);
   }
   if (typeof checkFormDuplicateDate === 'function') checkFormDuplicateDate();
 }

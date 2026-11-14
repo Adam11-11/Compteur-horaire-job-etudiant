@@ -186,8 +186,9 @@ function initCalendarAndNavigation() {
     if (v === 'counter' || v === 'prestations' || v === 'livraisons' || v === 'pourboires' || v === 'calendar') {
       if (!preserveEdit && (editingShiftId !== null || editingLegacyId !== null) && typeof cancelEdit === 'function') {
         cancelEdit();
-      } else if (!preserveEdit && editingShiftId === null && editingLegacyId === null && typeof syncFormForCategoryView === 'function') {
-        syncFormForCategoryView(v);
+      } else if (!preserveEdit && editingShiftId === null && editingLegacyId === null) {
+        if (typeof syncFormForCategoryView === 'function') syncFormForCategoryView(v);
+        if (changed && typeof toggleFormSection === 'function') toggleFormSection(false);
       }
       if (v !== 'counter' && v !== 'calendar' && typeof renderCategoryViews === 'function') renderCategoryViews();
     }

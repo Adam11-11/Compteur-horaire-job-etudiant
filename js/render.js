@@ -82,6 +82,22 @@ function goToMissingProof() {
 }
 window.goToMissingProof = goToMissingProof;
 
+function toggleFormSection(forceOpen) {
+  const body = document.getElementById('form-collapsible-body');
+  const btn = document.getElementById('form-collapse-btn');
+  const icon = document.getElementById('form-collapse-icon');
+  if (!body || !btn || !icon) return;
+  const isOpen = typeof forceOpen === 'boolean'
+    ? (body.classList.toggle('open', forceOpen), forceOpen)
+    : body.classList.toggle('open');
+  if (typeof forceOpen !== 'boolean' && typeof playClickSound === 'function') {
+    playClickSound();
+  }
+  btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  icon.textContent = isOpen ? '▲ REPLIER' : '▼ DÉPLIER';
+}
+window.toggleFormSection = toggleFormSection;
+
 function toggleHistorySection() {
   const body = document.getElementById('history-collapsible-body');
   const btn = document.getElementById('history-collapse-btn');
