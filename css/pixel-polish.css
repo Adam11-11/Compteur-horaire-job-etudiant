@@ -38,7 +38,6 @@ header,
 
 header {
   border-color: #f2ece4;
-  padding-bottom: 9px;
   background-color: #25222f;
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Crect x='0' y='0' width='8' height='2' fill='%23ffe875'/%3E%3Crect x='0' y='0' width='2' height='8' fill='%23ffe875'/%3E%3Crect x='3' y='3' width='2' height='2' fill='%23d94b57'/%3E%3C/svg%3E"),
@@ -51,26 +50,40 @@ header {
   background-size: 8px 8px, 8px 8px, 8px 8px, 8px 8px, auto;
 }
 
-/* Piste animée du camion de livraison tout le long du header */
+/* Piste animée du camion de livraison dans la continuité de la banderole */
 .header-road-strip {
   position: relative;
-  width: 100%;
-  height: 22px;
-  margin-top: 8px;
+  order: 3;
+  flex: 1 0 100%;
+  height: 26px;
+  margin-top: 2px;
   overflow: hidden;
   pointer-events: none;
-  border-radius: 0;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 768px) {
+  .header-top-row {
+    flex-wrap: nowrap;
+  }
+  header h1 {
+    margin-bottom: 0;
+  }
+  .header-brand-group,
+  .header-Status-bar {
+    flex-shrink: 0;
+  }
   .header-road-strip {
-    margin-top: 2px;
+    order: 0;
+    flex: 1 1 100px;
+    min-width: 80px;
+    height: 34px;
+    margin: 0 8px;
   }
 }
 
 .road-stars {
   position: absolute;
-  inset: 0 0 6px 0;
+  inset: 0 0 7px 0;
 }
 
 .road-star {
@@ -82,20 +95,20 @@ header {
   animation: roadStarTwinkle 2.6s steps(2) infinite;
 }
 
-.road-star.s1 { left: 12%; top: 3px; animation-delay: 0s; }
-.road-star.s2 { left: 31%; top: 6px; animation-delay: 0.7s; background: #80d8ff; }
-.road-star.s3 { left: 53%; top: 2px; animation-delay: 1.3s; }
-.road-star.s4 { left: 74%; top: 5px; animation-delay: 0.4s; background: #fff9f5; }
-.road-star.s5 { left: 90%; top: 3px; animation-delay: 1.8s; background: #80d8ff; }
+.road-star.s1 { left: 12%; top: 4px; animation-delay: 0s; }
+.road-star.s2 { left: 31%; top: 7px; animation-delay: 0.7s; background: #80d8ff; }
+.road-star.s3 { left: 53%; top: 3px; animation-delay: 1.3s; }
+.road-star.s4 { left: 74%; top: 6px; animation-delay: 0.4s; background: #fff9f5; }
+.road-star.s5 { left: 90%; top: 4px; animation-delay: 1.8s; background: #80d8ff; }
 
 .road-asphalt {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 5px;
-  background: #13111a;
-  border-top: 1px solid #484257;
+  height: 6px;
+  background: #14111b;
+  border-top: 1px solid #58516b;
   box-shadow: inset 0 -1px 0 #09080c;
 }
 
@@ -107,18 +120,18 @@ header {
   height: 1px;
   background: repeating-linear-gradient(
     90deg,
-    rgba(229, 181, 103, 0.55) 0 10px,
+    rgba(255, 216, 77, 0.68) 0 10px,
     transparent 10px 22px
   );
 }
 
 .delivery-convoy {
   position: absolute;
-  left: -48px;
-  bottom: 2px;
+  left: -52px;
+  bottom: 3px;
   display: flex;
   align-items: flex-end;
-  animation: convoyCross 12s linear infinite;
+  animation: convoyCross 9.5s linear infinite;
   will-change: left;
 }
 
@@ -131,15 +144,15 @@ header {
 
 .truck-svg {
   display: block;
-  filter: drop-shadow(0 0 4px rgba(56, 182, 255, 0.45));
+  filter: drop-shadow(0 0 5px rgba(56, 182, 255, 0.52));
 }
 
 .truck-headlight {
-  width: 24px;
-  height: 7px;
+  width: 26px;
+  height: 8px;
   margin-left: -2px;
-  margin-top: 5px;
-  background: linear-gradient(90deg, rgba(255, 232, 77, 0.58) 0%, rgba(255, 232, 77, 0.14) 55%, transparent 100%);
+  margin-top: 6px;
+  background: linear-gradient(90deg, rgba(255, 232, 77, 0.65) 0%, rgba(255, 232, 77, 0.16) 55%, transparent 100%);
   clip-path: polygon(0 30%, 100% 0, 100% 100%, 0 70%);
 }
 
@@ -148,7 +161,7 @@ header {
   width: 14px;
   height: 14px;
   margin-right: -2px;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
 
 .smoke-puff {
@@ -166,7 +179,7 @@ header {
 .smoke-puff.p3 { animation-delay: 0.6s; }
 
 @keyframes convoyCross {
-  0% { left: -48px; }
+  0% { left: -52px; }
   100% { left: calc(100% + 14px); }
 }
 
