@@ -348,7 +348,8 @@ function renderApp() {
           `;
         }
 
-        const safeIdAttr = typeof item.id === 'number' ? item.id : `'${escapeHtml(item.id)}'`;
+        const cleanIdStr = String(item.id).replace(/[^a-zA-Z0-9_-]/g, '');
+        const safeIdAttr = typeof item.id === 'number' ? item.id : `'${cleanIdStr}'`;
         card.innerHTML = `
           <div class="compact-row-left">${mainLineHtml}</div>
           <div class="compact-row-right">

@@ -1103,6 +1103,67 @@ body[data-auth="authenticated"] #auth-gate {
   border-color: var(--red-light);
 }
 
+.auth-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.auth-mode-tab {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  line-height: 1.4;
+  padding: 10px 8px;
+  background: var(--bg-input);
+  color: var(--text-muted);
+  border: 3px solid var(--border-soft);
+  box-shadow: 3px 3px 0 var(--border-shadow);
+  cursor: pointer;
+  transition: transform 0.08s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.auth-mode-tab:hover {
+  color: var(--white-cream);
+  border-color: var(--gold-soft);
+}
+
+.auth-mode-tab.is-active {
+  background: #23202d;
+  color: var(--gold-soft);
+  border-color: var(--gold-soft);
+  box-shadow: inset 2px 2px 0 rgba(229, 181, 103, 0.25), 3px 3px 0 var(--border-shadow);
+}
+
+.settings-user-card {
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  background: var(--bg-input);
+  border: 2px solid var(--border-soft);
+}
+
+.settings-user-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: var(--green-soft);
+  margin-bottom: 4px;
+}
+
+.settings-user-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--gold-soft);
+  margin-bottom: 2px;
+  word-break: break-word;
+}
+
+.settings-user-email {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
 /* ==========================================
    10. BOUTON CIRCULAIRE IA EN BAS À DROITE & MENU DÉROULANT
    ========================================== */

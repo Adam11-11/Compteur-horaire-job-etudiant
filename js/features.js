@@ -14,9 +14,15 @@ let liveClockInterval = null;
 let cancelLiveConfirm = false;
 let cancelLiveTimer = null;
 
+function getLiveSessionStorageKey() {
+  return typeof getUserScopedKey === 'function'
+    ? getUserScopedKey(LIVE_SESSION_KEY)
+    : LIVE_SESSION_KEY;
+}
+
 function getLiveSession() {
   try {
-    const raw = window.localStorage.getItem(LIVE_SESSION_KEY);
+    const raw = window.localStorage.getItem(getLiveSessionStorageKey());
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (parsed && parsed.startedAtMs) return parsed;
@@ -26,10 +32,11 @@ function getLiveSession() {
 
 function saveLiveSession(session) {
   try {
+    const key = getLiveSessionStorageKey();
     if (!session) {
-      window.localStorage.removeItem(LIVE_SESSION_KEY);
+      window.localStorage.removeItem(key);
     } else {
-      window.localStorage.setItem(LIVE_SESSION_KEY, JSON.stringify(session));
+      window.localStorage.setItem(key, JSON.stringify(session));
     }
   } catch (e) {}
 }
@@ -254,37 +261,57 @@ const LOCAL_SHIFTS_CACHE_KEY = 'pixelpay_cached_shifts_v1';
 const OFFLINE_QUEUE_KEY = 'pixelpay_offline_queue_v1';
 let isSyncingOfflineQueue = false;
 
+function getShiftsCacheStorageKey() {
+  return typeof getUserScopedKey === 'function'
+    ? getUserScopedKey(LOCAL_SHIFTS_CACHE_KEY)
+    : LOCAL_SHIFTS_CACHE_KEY;
+}
+
+function getOfflineQueueStorageKey() {
+  return typeof getUserScopedKey === 'function'
+    ? getUserScopedKey(OFFLINE_QUEUE_KEY)
+    : OFFLINE_QUEUE_KEY;
+}
+
 function saveShiftsToLocalCache(shifts) {
+  const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+  if (!uid) return;
   try {
-    window.localStorage.setItem(LOCAL_SHIFTS_CACHE_KEY, JSON.stringify(shifts || []));
+    window.localStorage.setItem(getShiftsCacheStorageKey(), JSON.stringify(shifts || []));
   } catch (e) {}
 }
 
 function loadShiftsFromLocalCache() {
+  const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+  if (!uid) return [];
   try {
-    const raw = window.localStorage.getItem(LOCAL_SHIFTS_CACHE_KEY);
+    const raw = window.localStorage.getItem(getShiftsCacheStorageKey());
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed)) return parsed.filter(s => !s.user_id || s.user_id === uid);
     }
   } catch (e) {}
   return [];
 }
 
 function getOfflineQueue() {
+  const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+  if (!uid) return [];
   try {
-    const raw = window.localStorage.getItem(OFFLINE_QUEUE_KEY);
+    const raw = window.localStorage.getItem(getOfflineQueueStorageKey());
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed)) return parsed.filter(item => !item.userId || item.userId === uid);
     }
   } catch (e) {}
   return [];
 }
 
 function saveOfflineQueue(queue) {
+  const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+  if (!uid) return;
   try {
-    window.localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue || []));
+    window.localStorage.setItem(getOfflineQueueStorageKey(), JSON.stringify(queue || []));
   } catch (e) {}
   updateNetworkStatusUI();
 }
@@ -296,9 +323,12 @@ function isNetworkOrOfflineError(err) {
 }
 
 function enqueueOfflineAction(action) {
+  const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+  if (!uid) return;
   const queue = getOfflineQueue();
   queue.push({
     ...action,
+    userId: uid,
     queueId: 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
     queuedAt: new Date().toISOString()
   });
@@ -362,18 +392,24 @@ async function syncOfflineQueue(manualClick = false) {
   const remaining = [];
   let syncedCount = 0;
 
+  const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+  if (!uid) return;
+
   for (const item of queue) {
+    if (item.userId && item.userId !== uid) continue;
     try {
       if (item.type === 'insert') {
-        const { error } = await supabaseClient.from('shifts').insert([item.payload]);
+        const cleanPayload = { ...item.payload, user_id: uid };
+        const { error } = await supabaseClient.from('shifts').insert([cleanPayload]);
         if (error) throw error;
         syncedCount++;
       } else if (item.type === 'update') {
-        const { error } = await supabaseClient.from('shifts').update(item.payload).eq('id', item.targetId);
+        const cleanPayload = { ...item.payload, user_id: uid };
+        const { error } = await supabaseClient.from('shifts').update(cleanPayload).eq('id', item.targetId).eq('user_id', uid);
         if (error) throw error;
         syncedCount++;
       } else if (item.type === 'delete') {
-        const { error } = await supabaseClient.from('shifts').delete().eq('id', item.targetId);
+        const { error } = await supabaseClient.from('shifts').delete().eq('id', item.targetId).eq('user_id', uid);
         if (error) throw error;
         syncedCount++;
       }
@@ -477,9 +513,18 @@ async function handleImportJSONFile(file) {
       return;
     }
 
+    const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+    if (!uid) {
+      showToast('Session expirée : reconnecte-toi.', { type: 'error' });
+      return;
+    }
+
     if (Array.isArray(parsed.presets) && parsed.presets.length > 0) {
       try {
-        window.localStorage.setItem('pixelpay_recent_presets', JSON.stringify(parsed.presets.slice(0, 3)));
+        const presetKey = typeof getRecentPresetsStorageKey === 'function'
+          ? getRecentPresetsStorageKey()
+          : 'pixelpay_recent_presets';
+        window.localStorage.setItem(presetKey, JSON.stringify(parsed.presets.slice(0, 3)));
         renderPresetPills();
       } catch (e) {}
     }
@@ -493,7 +538,17 @@ async function handleImportJSONFile(file) {
       if (existingSignatures.has(sig)) return;
       existingSignatures.add(sig);
 
+      const safeOwnProof = item.proof_path && String(item.proof_path).startsWith(`${uid}/`)
+        ? String(item.proof_path)
+        : null;
+      const tipVal = typeof getItemTipPay === 'function' ? getItemTipPay(item) : 0;
+      const kmVal = typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
+      const cleanProofUrl = typeof encodeExtraMetaInProofUrl === 'function'
+        ? encodeExtraMetaInProofUrl(tipVal, kmVal, Boolean(safeOwnProof))
+        : (safeOwnProof ? 'true' : null);
+
       toInsert.push({
+        user_id: uid,
         date: item.date,
         note: String(item.note || ''),
         std_start: String(item.std_start || ''),
@@ -505,9 +560,9 @@ async function handleImportJSONFile(file) {
         del_minutes: Number(item.del_minutes) || 0,
         del_pay: Number(item.del_pay) || 0,
         total_pay: Number(item.total_pay) || 0,
-        proof_path: item.proof_path || null,
-        has_proof: Boolean(item.has_proof || item.proof_path),
-        proof_url: item.proof_url || (item.proof_path ? 'true' : null),
+        proof_path: safeOwnProof,
+        has_proof: Boolean(safeOwnProof),
+        proof_url: cleanProofUrl,
         is_legacy: Boolean(item.is_legacy)
       });
     });
@@ -702,7 +757,8 @@ function openPrintablePaySheet() {
 
   const rawMonth = MONTH_NAMES[activePayMonth] || '';
   const monthTitle = rawMonth.charAt(0).toUpperCase() + rawMonth.slice(1).toLowerCase();
-  const sheetTitle = `Horaire Adam ${monthTitle}`;
+  const workerName = typeof getWorkerDisplayName === 'function' ? getWorkerDisplayName() : '';
+  const sheetTitle = workerName ? `Horaire ${workerName} ${monthTitle}` : `Horaire ${monthTitle}`;
 
   let totalHoursMin = 0;
   let totalTheoreticalPay = 0;
@@ -1033,16 +1089,33 @@ function runPayCheckComparison() {
 // ==========================================
 let realtimeDebounceTimer = null;
 let isLocalSaveInFlight = false;
+let activeShiftsRealtimeChannel = null;
+
+function teardownSupabaseRealtime() {
+  if (!supabaseClient) return;
+  try {
+    if (activeShiftsRealtimeChannel && typeof supabaseClient.removeChannel === 'function') {
+      supabaseClient.removeChannel(activeShiftsRealtimeChannel);
+    } else if (typeof supabaseClient.removeAllChannels === 'function') {
+      supabaseClient.removeAllChannels();
+    }
+  } catch (e) {}
+  activeShiftsRealtimeChannel = null;
+}
 
 function initSupabaseRealtime() {
   if (!supabaseClient || typeof supabaseClient.channel !== 'function') return;
+  const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+  if (!uid) return;
+
+  teardownSupabaseRealtime();
 
   try {
-    supabaseClient
-      .channel('shifts-live-channel')
+    activeShiftsRealtimeChannel = supabaseClient
+      .channel(`shifts-live-${uid}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'shifts' },
+        { event: '*', schema: 'public', table: 'shifts', filter: `user_id=eq.${uid}` },
         (payload) => {
           if (isLocalSaveInFlight) return;
           clearTimeout(realtimeDebounceTimer);

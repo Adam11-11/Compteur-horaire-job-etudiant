@@ -4,8 +4,17 @@
 // ==========================================
 
 const GEMINI_KEY_STORAGE = 'compteur_paella_gemini_key_v1';
-const GEMINI_KEY_COOKIE = 'cp_gemini_key_v1';
-const TARGET_WORKER_NAME = 'ADAM';
+
+function getGeminiKeyStorageKey() {
+  return typeof getUserScopedKey === 'function'
+    ? getUserScopedKey(GEMINI_KEY_STORAGE)
+    : GEMINI_KEY_STORAGE;
+}
+
+function getTargetWorkerName() {
+  const name = typeof getWorkerDisplayName === 'function' ? getWorkerDisplayName() : '';
+  return (name || 'ADAM').toUpperCase();
+}
 
 let isVoiceRecording = false;
 let isAiMenuOpen = false;
@@ -80,19 +89,11 @@ function showAiLiveBubble(html, stateClass = 'loading', autoHideMs = 0) {
   }
 }
 
-// --- GESTION DE LA CLÉ API GEMINI (SYNCHRONISÉE AVEC SUPABASE AUTH) ---
+// --- GESTION DE LA CLÉ API GEMINI (CLOISONNÉE PAR COMPTE & SYNCHRONISÉE AVEC SUPABASE AUTH) ---
 function getGeminiApiKey() {
   try {
-    const local = window.localStorage.getItem(GEMINI_KEY_STORAGE);
+    const local = window.localStorage.getItem(getGeminiKeyStorageKey());
     if (local && local.trim()) return local.trim();
-  } catch (e) {}
-
-  try {
-    const match = document.cookie.match(new RegExp('(?:^|; )' + GEMINI_KEY_COOKIE + '=([^;]*)'));
-    if (match && match[1]) {
-      const decoded = decodeURIComponent(match[1]).trim();
-      if (decoded) return decoded;
-    }
   } catch (e) {}
 
   if (typeof currentAuthUser !== 'undefined' && currentAuthUser && currentAuthUser.user_metadata && currentAuthUser.user_metadata.gemini_api_key) {
@@ -108,16 +109,12 @@ function getGeminiApiKey() {
 function saveGeminiApiKeyLocally(key) {
   const clean = (key || '').trim();
   try {
+    const storageKey = getGeminiKeyStorageKey();
     if (clean) {
-      window.localStorage.setItem(GEMINI_KEY_STORAGE, clean);
+      window.localStorage.setItem(storageKey, clean);
     } else {
-      window.localStorage.removeItem(GEMINI_KEY_STORAGE);
+      window.localStorage.removeItem(storageKey);
     }
-  } catch (e) {}
-  try {
-    const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
-    const maxAge = clean ? 31536000 : 0;
-    document.cookie = `${GEMINI_KEY_COOKIE}=${encodeURIComponent(clean)}; max-age=${maxAge}; path=/; SameSite=Lax${secureFlag}`;
   } catch (e) {}
 }
 
@@ -422,15 +419,18 @@ async function analyzeSheetPhotoWithAI(file) {
   const fabIcon = document.getElementById('ai-fab-icon');
   const statusBanner = document.getElementById('ai-scan-result-banner');
 
+  const workerName = getTargetWorkerName();
+  const safeWorkerName = escapeHtml(workerName);
+
   if (fabBtn) fabBtn.classList.add('busy');
   if (fabIcon) fabIcon.innerHTML = PX_ICO.hourglass;
 
-  showAiLiveBubble('🤖 Lecture de la feuille (recherche de <strong>ADAM</strong>)...', 'loading');
+  showAiLiveBubble(`🤖 Lecture de la feuille (recherche de <strong>${safeWorkerName}</strong>)...`, 'loading');
 
   if (statusBanner) {
     statusBanner.className = 'ai-result-banner loading';
     statusBanner.style.display = 'block';
-    statusBanner.innerHTML = '🤖 Analyse de la feuille en cours (recherche de la ligne <strong>ADAM</strong>)...';
+    statusBanner.innerHTML = `🤖 Analyse de la feuille en cours (recherche de la ligne <strong>${safeWorkerName}</strong>)...`;
   }
 
   try {
@@ -440,9 +440,9 @@ async function analyzeSheetPhotoWithAI(file) {
 
     const systemPrompt = `Tu es un assistant expert en lecture de feuilles de planning/pointage de traiteur Paella.
 Sur la photo du tableau :
-1. Il y a plusieurs lignes pour différents employés (WALID, KAMAL, SAID, WISSAM, ADAM, etc.). Ignore tous les autres employés et cherche UNIQUEMENT la ou les lignes où la colonne "PERSONNELS" contient "${TARGET_WORKER_NAME}" (insensible à la casse).
+1. Il y a plusieurs lignes pour différents employés (WALID, KAMAL, SAID, WISSAM, ADAM, etc.). Ignore tous les autres employés et cherche UNIQUEMENT la ou les lignes où la colonne "PERSONNELS" contient "${workerName}" (insensible à la casse).
 2. En haut à gauche du tableau figure la date du jour au format "SAM. 07.11" ou "DIM. 15/11" (Jour.Mois). Convertis-la au format "YYYY-MM-DD" en utilisant l'année de référence ${refYear} (ou aujourd'hui ${todayYMD} si illisible).
-3. Pour CHAQUE ligne où "PERSONNELS" est "${TARGET_WORKER_NAME}" :
+3. Pour CHAQUE ligne où "PERSONNELS" est "${workerName}" :
    - La colonne "RDV" contient l'heure de début imprimée (ex: "19H15" -> "19:15").
    - La colonne juste à droite de "RDV" contient l'heure de fin écrite à la main au stylo (ex: "23h40" -> "23:40").
    - La colonne de gauche tout au début indique le véhicule (ex: "P. TRAFIC", "K. LONG", "TB 1").
@@ -470,12 +470,12 @@ Sur la photo du tableau :
       "note": "Ville + nombre de parts + véhicule (ex: Villiers-en-Bière 60P - P. Trafic)"
     }
   ],
-  "summary": "Résumé court de ce qui a été lu pour ${TARGET_WORKER_NAME}"
+  "summary": "Résumé court de ce qui a été lu pour ${workerName}"
 }`;
 
     const result = await callGeminiStructured(
       [
-        { text: `Lis cette feuille de planning, ignore les autres prénoms et trouve uniquement la ou les lignes de ${TARGET_WORKER_NAME} ainsi que la date en haut à gauche.` },
+        { text: `Lis cette feuille de planning, ignore les autres prénoms et trouve uniquement la ou les lignes de ${workerName} ainsi que la date en haut à gauche.` },
         { inline_data: { mime_type: preparedImg.mimeType, data: preparedImg.base64 } }
       ],
       systemPrompt
@@ -869,7 +869,11 @@ async function saveAllAiDetectedEntries() {
       // Les pourboires ne sont pas comptés dans total_pay (paie du mois)
       const totalPay = stdPay + delPay;
 
+      const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+      if (!uid) continue;
+
       await supabaseClient.from('shifts').insert([{
+        user_id: uid,
         date: extra.date,
         note: extra.note || '',
         std_start: extra.std_start || '',
@@ -886,7 +890,7 @@ async function saveAllAiDetectedEntries() {
       }]);
     }
     await fetchShifts();
-    showToast(`${extras.length + 1} lignes ADAM enregistrées avec succès !`, { type: 'success' });
+    showToast(`${extras.length + 1} lignes ${getTargetWorkerName()} enregistrées avec succès !`, { type: 'success' });
   }
 }
 
@@ -944,7 +948,7 @@ function openAiConfirmModal(data, calc, sourceType) {
 
   if (badgeEl) {
     badgeEl.textContent = sourceType === 'photo'
-      ? '📸 SCAN FEUILLE (LIGNE ADAM)'
+      ? `📸 SCAN FEUILLE (LIGNE ${getTargetWorkerName()})`
       : '🎙️ DICTÉE VOCALE IA';
   }
 
@@ -1038,7 +1042,7 @@ function openAiConfirmModal(data, calc, sourceType) {
 
   const extraCount = pendingExtraAiEntries.length;
   const extraHtml = extraCount > 0
-    ? `<div class="ai-confirm-extra-note">+ ${extraCount} autre(s) ligne(s) ADAM détectée(s) sur cette même feuille !</div>`
+    ? `<div class="ai-confirm-extra-note">+ ${extraCount} autre(s) ligne(s) ${escapeHtml(getTargetWorkerName())} détectée(s) sur cette même feuille !</div>`
     : '';
 
   bodyEl.innerHTML = `

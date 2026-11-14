@@ -169,9 +169,15 @@ function sanitizeVehicleData(raw) {
   return { name, fuelType, consumption, fuelPrice };
 }
 
+function getVehicleStorageKey() {
+  return typeof getUserScopedKey === 'function'
+    ? getUserScopedKey(VEHICLE_STORAGE_KEY)
+    : VEHICLE_STORAGE_KEY;
+}
+
 function getPersonalVehicle() {
   try {
-    const raw = window.localStorage.getItem(VEHICLE_STORAGE_KEY);
+    const raw = window.localStorage.getItem(getVehicleStorageKey());
     if (!raw) return null;
     return sanitizeVehicleData(JSON.parse(raw));
   } catch (e) {
@@ -192,10 +198,11 @@ function estimateFuelCost(kmVal, vehicle = getPersonalVehicle()) {
 
 function persistPersonalVehicleLocal(vehicle) {
   try {
+    const key = getVehicleStorageKey();
     if (vehicle) {
-      window.localStorage.setItem(VEHICLE_STORAGE_KEY, JSON.stringify(vehicle));
+      window.localStorage.setItem(key, JSON.stringify(vehicle));
     } else {
-      window.localStorage.removeItem(VEHICLE_STORAGE_KEY);
+      window.localStorage.removeItem(key);
     }
   } catch (e) {}
 }
@@ -215,9 +222,18 @@ async function syncVehicleToSupabase(vehicle) {
 function hydrateVehicleFromAuthUser(user) {
   if (!user || !user.user_metadata) return false;
   const remoteVeh = sanitizeVehicleData(user.user_metadata.personal_vehicle);
-  const localVeh = getPersonalVehicle();
+  const key = typeof getUserScopedKey === 'function'
+    ? getUserScopedKey(VEHICLE_STORAGE_KEY, user.id)
+    : VEHICLE_STORAGE_KEY;
+  let localVeh = null;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (raw) localVeh = sanitizeVehicleData(JSON.parse(raw));
+  } catch (e) {}
   if (remoteVeh && !localVeh) {
-    persistPersonalVehicleLocal(remoteVeh);
+    try {
+      window.localStorage.setItem(key, JSON.stringify(remoteVeh));
+    } catch (e) {}
     return true;
   }
   return false;

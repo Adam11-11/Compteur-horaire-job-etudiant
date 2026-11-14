@@ -173,8 +173,10 @@ async function compressPhotoBlob(file) {
 }
 
 async function uploadPhotoToSupabase(file) {
+  const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+  if (!uid) throw new Error('Utilisateur non authentifié');
   const blob = await compressPhotoBlob(file);
-  const newPath = generatePhotoUid() + (blob.type === 'image/webp' ? '.webp' : '.jpg');
+  const newPath = `${uid}/${generatePhotoUid()}${blob.type === 'image/webp' ? '.webp' : '.jpg'}`;
   const { error } = await supabaseClient.storage
     .from(PHOTO_BUCKET)
     .upload(newPath, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false });
@@ -251,10 +253,12 @@ function initPhotoViewer() {
     setBusy(key, true);
     let ok = false;
     try {
+      const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+      if (!uid) throw new Error('Session expirée : reconnecte-toi');
       const upRes = await uploadPhotoToSupabase(file);
       const newPath = upRes.path;
       const oldPath = item.proof_path || null;
-      const r = await supabaseClient.from('shifts').update({ proof_path: newPath, has_proof: true }).eq('id', item.id);
+      const r = await supabaseClient.from('shifts').update({ proof_path: newPath, has_proof: true }).eq('id', item.id).eq('user_id', uid);
       if (r.error) {
         storage().remove([newPath]);
         throw r.error;
@@ -292,8 +296,10 @@ function initPhotoViewer() {
     uploading.add(key);
     setBusy(key, true);
     try {
+      const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+      if (!uid) throw new Error('Session expirée : reconnecte-toi');
       const path = it.proof_path;
-      const r = await supabaseClient.from('shifts').update({ proof_path: null, has_proof: false }).eq('id', it.id);
+      const r = await supabaseClient.from('shifts').update({ proof_path: null, has_proof: false }).eq('id', it.id).eq('user_id', uid);
       if (r.error) throw r.error;
       storage().remove([path]);
       it.proof_path = null;

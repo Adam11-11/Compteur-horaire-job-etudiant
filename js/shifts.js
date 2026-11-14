@@ -18,10 +18,16 @@ function initLegacyYearSelect() {
   }
 }
 
-// --- SAISIE RAPIDE & LOCALSTORAGE ---
+// --- SAISIE RAPIDE & LOCALSTORAGE (CLOISONNÉ PAR UTILISATEUR) ---
+function getRecentPresetsStorageKey() {
+  return typeof getUserScopedKey === 'function'
+    ? getUserScopedKey('pixelpay_recent_presets')
+    : 'pixelpay_recent_presets';
+}
+
 function getRecentPresets() {
   try {
-    const raw = window.localStorage.getItem('pixelpay_recent_presets');
+    const raw = window.localStorage.getItem(getRecentPresetsStorageKey());
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed.slice(0, 3);
@@ -36,7 +42,7 @@ function saveRecentPreset(startStr, endStr) {
   try {
     const current = getRecentPresets().filter(p => p !== pair);
     current.unshift(pair);
-    window.localStorage.setItem('pixelpay_recent_presets', JSON.stringify(current.slice(0, 3)));
+    window.localStorage.setItem(getRecentPresetsStorageKey(), JSON.stringify(current.slice(0, 3)));
   } catch (e) {}
   renderPresetPills();
 }
@@ -470,9 +476,16 @@ async function saveShift(e) {
     ? existingFormProofPath
     : null;
 
+  const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+  if (!uid) {
+    showToast('Session expirée : reconnecte-toi pour enregistrer.', { type: 'error' });
+    return;
+  }
+
   const encodeTipOrProofUrl = (hasPhoto) => encodeExtraMetaInProofUrl(calc.tipPay, calc.delKm, hasPhoto);
 
   const payload = {
+    user_id: uid,
     date: savedDateStr,
     note: document.getElementById('shift-note').value.trim(),
     std_start: stdStartVal,
@@ -511,7 +524,7 @@ async function saveShift(e) {
 
     let queryError = null;
     if (editingShiftId && !String(editingShiftId).startsWith('offline_')) {
-      const { error } = await supabaseClient.from('shifts').update(payload).eq('id', editingShiftId);
+      const { error } = await supabaseClient.from('shifts').update(payload).eq('id', editingShiftId).eq('user_id', uid);
       queryError = error;
     } else {
       const { error } = await supabaseClient.from('shifts').insert([payload]);
@@ -625,6 +638,12 @@ async function saveLegacyMonth(e) {
   const totalPay = Number(document.getElementById('legacy-total-pay').value) || 0;
   const note = document.getElementById('legacy-note').value.trim();
 
+  const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+  if (!uid) {
+    showToast('Session expirée : reconnecte-toi.', { type: 'error' });
+    return;
+  }
+
   const submitBtn = document.getElementById('legacy-submit-btn');
   const originalText = editingLegacyId ? 'METTRE À JOUR CE MOIS' : 'VALIDER CE MOIS ANTÉRIEUR';
   submitBtn.disabled = true;
@@ -632,6 +651,7 @@ async function saveLegacyMonth(e) {
 
   const pseudoDate = `${year}-${String(mIndex + 1).padStart(2, '0')}-15`;
   const payload = {
+    user_id: uid,
     date: pseudoDate,
     note: note ? `Mois antérieur — ${note}` : `Mois antérieur (${MONTH_NAMES[mIndex]} ${year})`,
     std_start: '',
@@ -656,7 +676,7 @@ async function saveLegacyMonth(e) {
     }
     let queryError = null;
     if (editingLegacyId && !String(editingLegacyId).startsWith('offline_')) {
-      const { error } = await supabaseClient.from('shifts').update(payload).eq('id', editingLegacyId);
+      const { error } = await supabaseClient.from('shifts').update(payload).eq('id', editingLegacyId).eq('user_id', uid);
       queryError = error;
     } else {
       const { error } = await supabaseClient.from('shifts').insert([payload]);
@@ -705,6 +725,8 @@ async function saveLegacyMonth(e) {
 
 // --- RÉCUPÉRATION AVEC TRI DATE DESC PUIS CREATED_AT DESC + CACHE HORS-LIGNE ---
 async function fetchShifts() {
+  const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+  if (!uid) return;
   isLoadingShifts = true;
   const listEl = document.getElementById('log-list');
   if (cachedShifts.length === 0) {
@@ -728,6 +750,7 @@ async function fetchShifts() {
     const { data, error } = await supabaseClient
       .from('shifts')
       .select('*')
+      .eq('user_id', uid)
       .order('date', { ascending: false })
       .order('created_at', { ascending: false });
 
@@ -785,7 +808,9 @@ function deleteShift(id) {
       return;
     }
 
-    const { error } = await supabaseClient.from('shifts').delete().eq('id', id);
+    const uid = typeof getCurrentAuthUserId === 'function' ? getCurrentAuthUserId() : '';
+    if (!uid) return;
+    const { error } = await supabaseClient.from('shifts').delete().eq('id', id).eq('user_id', uid);
     if (error) {
       if (typeof isNetworkOrOfflineError === 'function' && isNetworkOrOfflineError(error)) {
         enqueueOfflineAction({ type: 'delete', targetId: id });
