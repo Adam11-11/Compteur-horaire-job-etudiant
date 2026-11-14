@@ -397,11 +397,7 @@ function renderApp() {
   monthDelKm = Math.round(monthDelKm * 10) / 10;
   monthFuelEst = Math.round(monthFuelEst * 100) / 100;
   document.getElementById('month-std-hours').textContent = `${formatHoursMin(monthStdMin)} • Moy. ${formatHoursMin(avgStdMin)}/j`;
-  let delCountLabel = `${monthDelCount} livraison${monthDelCount > 1 ? 's' : ''}`;
-  if (monthDelKm > 0) {
-    delCountLabel += ` • ${formatKm(monthDelKm)}${monthFuelEst > 0 ? ` (~${monthFuelEst.toFixed(2)}€ ess.)` : ''}`;
-  }
-  document.getElementById('month-del-count').textContent = delCountLabel;
+  document.getElementById('month-del-count').textContent = `${monthDelCount} livraison${monthDelCount > 1 ? 's' : ''}`;
   const tipCountEl = document.getElementById('month-tip-count');
   if (tipCountEl) tipCountEl.textContent = `${monthTipCount} pourboire${monthTipCount > 1 ? 's' : ''}`;
 

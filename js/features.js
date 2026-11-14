@@ -1330,7 +1330,8 @@ function renderCategoryViews() {
   const delContainer = document.getElementById('livraisons-view-content');
   if (delContainer) {
     const vehicle = typeof getPersonalVehicle === 'function' ? getPersonalVehicle() : null;
-    let monthCount = 0, monthPay = 0, monthFlatCount = 0, monthLongCount = 0, monthKm = 0, monthFuelEst = 0;
+    let monthCount = 0, monthPay = 0, monthFlatCount = 0, monthLongCount = 0;
+    let monthPersonalDelCount = 0, monthKm = 0, monthFuelEst = 0;
 
     activeShifts.forEach(item => {
       const delP = item.del_pay || 0;
@@ -1340,11 +1341,14 @@ function renderCategoryViews() {
       if (item.date >= bounds.startYMD && item.date <= bounds.endYMD) {
         const delMin = item.del_minutes || 0;
         const delKm = typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
+        const baseDelPay = Math.max(DELIVERY_DEFAULT_PAY, (delMin / 60) * HOURLY_RATE);
+        const isPersonalVeh = delKm > 0 || delP >= baseDelPay + DELIVERY_VEHICLE_BONUS - 0.01;
         const delFuelEst = delKm > 0 && vehicle && typeof estimateFuelCost === 'function'
           ? estimateFuelCost(delKm, vehicle)
           : 0;
         monthCount++;
         monthPay += delP;
+        if (isPersonalVeh) monthPersonalDelCount++;
         monthKm += delKm;
         monthFuelEst += delFuelEst;
         if (delMin > 150) monthLongCount++;
@@ -1355,21 +1359,43 @@ function renderCategoryViews() {
     monthKm = Math.round(monthKm * 10) / 10;
     monthFuelEst = Math.round(monthFuelEst * 100) / 100;
 
-    const kmSubText = monthKm > 0
-      ? (vehicle ? ` • ${formatKm(monthKm)} (~${monthFuelEst.toFixed(2)}€ ess.)` : ` • ${formatKm(monthKm)}`)
-      : '';
-    const vehBarHtml = vehicle
-      ? `<div class="cat-veh-bar"><span>${PX_ICO.fuel} ${escapeHtml(vehicle.name)} (${vehicle.consumption.toFixed(1)} L/100 × ${vehicle.fuelPrice.toFixed(2)} €/L = ~${getVehicleCostPerKm(vehicle).toFixed(3)} €/km)</span><button type="button" class="cat-veh-config-btn" onclick="openVehicleSettingsModal()">${PX_ICO.gear} Modifier véhicule</button></div>`
-      : `<div class="cat-veh-bar"><span>${PX_ICO.fuel} Estime le remboursement essence de tes livraisons :</span><button type="button" class="cat-veh-config-btn" onclick="openVehicleSettingsModal()">${PX_ICO.gear} Ajouter mon véhicule</button></div>`;
+    let fuelMonthBoxHtml = '';
+    if (monthPersonalDelCount > 0) {
+      if (vehicle) {
+        const kmStr = monthKm > 0 ? formatKm(monthKm) : '0 km saisi';
+        const essStr = monthKm > 0 ? `<strong>~${monthFuelEst.toFixed(2)} €</strong> essence` : '0.00 € essence';
+        fuelMonthBoxHtml = `
+          <div class="cat-fuel-month-box">
+            <div class="cat-fuel-month-info">
+              <span class="cat-fuel-month-title">${PX_ICO.fuel} CONSO PERSO DU MOIS (${escapeHtml(vehicle.name)})</span>
+              <span class="cat-fuel-month-stats">${monthPersonalDelCount} déplacement${monthPersonalDelCount > 1 ? 's' : ''} • <strong>${kmStr}</strong> • ${essStr}</span>
+            </div>
+            <button type="button" class="cat-veh-config-btn" onclick="openVehicleSettingsModal()">${PX_ICO.gear} Véhicule</button>
+          </div>
+        `;
+      } else {
+        const kmStr = monthKm > 0 ? ` • <strong>${formatKm(monthKm)}</strong>` : '';
+        fuelMonthBoxHtml = `
+          <div class="cat-fuel-month-box">
+            <div class="cat-fuel-month-info">
+              <span class="cat-fuel-month-title">${PX_ICO.fuel} CONSO PERSO DU MOIS</span>
+              <span class="cat-fuel-month-stats">${monthPersonalDelCount} déplacement${monthPersonalDelCount > 1 ? 's' : ''}${kmStr} — configure ton véhicule pour estimer l'essence</span>
+            </div>
+            <button type="button" class="cat-veh-config-btn" onclick="openVehicleSettingsModal()">${PX_ICO.gear} Ajouter véhicule</button>
+          </div>
+        `;
+      }
+    }
+
     const metricsHtml = `
       <div class="stat-card delivery-card">
         <span class="stat-title">LIVRAISONS DU MOIS</span>
         <div class="stat-value">${monthPay.toFixed(2)} €</div>
-        <div class="stat-sub">${monthCount} livraison${monthCount > 1 ? 's' : ''} • ${monthFlatCount} forf. / ${monthLongCount} &gt;2h30${kmSubText}</div>
+        <div class="stat-sub">${monthCount} livraison${monthCount > 1 ? 's' : ''} • ${monthFlatCount} forf. / ${monthLongCount} &gt;2h30</div>
       </div>
     `;
 
-    delContainer.innerHTML = buildCategoryHeaderAndNav('LIVRAISONS', 'blue-accent', metricsHtml, vehBarHtml);
+    delContainer.innerHTML = buildCategoryHeaderAndNav('LIVRAISONS', 'blue-accent', metricsHtml, fuelMonthBoxHtml);
   }
 
   // --- 3. ONGLET POURBOIRES (COMPTEUR DU MOIS UNIQUEMENT) ---

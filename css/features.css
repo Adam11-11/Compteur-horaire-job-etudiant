@@ -1759,6 +1759,45 @@ body.keyboard-open .ai-fab-wrapper {
   color: var(--text-muted);
 }
 
+.cat-fuel-month-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--bg-input);
+  border: 2px solid #2b68a3;
+  box-shadow: inset 2px 2px 0 rgba(79, 164, 232, 0.14), 3px 3px 0 var(--border-shadow);
+}
+
+.cat-fuel-month-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cat-fuel-month-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  line-height: 1.4;
+  color: #80c2f7;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cat-fuel-month-stats {
+  font-size: 19px;
+  line-height: 1.25;
+  color: var(--white-cream);
+}
+
+.cat-fuel-month-stats strong {
+  color: var(--gold-soft);
+}
+
 /* ==========================================
    13. APERÇU & IMPRESSION FICHE DE PAIE PDF (IN-APP)
    ========================================== */
