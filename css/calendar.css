@@ -43,10 +43,12 @@ body[data-view="pourboires"] #section-form #live-clock-box,
 body[data-view="pourboires"] #section-form #legacy-toggle-btn,
 body[data-view="pourboires"] #section-form #legacy-container,
 body[data-view="pourboires"] #section-form #form-roles-grid,
+body[data-view="pourboires"] #section-form #form-photo-dropzone,
 body[data-view="counter"] #section-form[data-form-mode="pourboires"] #live-clock-box,
 body[data-view="counter"] #section-form[data-form-mode="pourboires"] #legacy-toggle-btn,
 body[data-view="counter"] #section-form[data-form-mode="pourboires"] #legacy-container,
-body[data-view="counter"] #section-form[data-form-mode="pourboires"] #form-roles-grid {
+body[data-view="counter"] #section-form[data-form-mode="pourboires"] #form-roles-grid,
+body[data-view="counter"] #section-form[data-form-mode="pourboires"] #form-photo-dropzone {
   display: none !important;
 }
 

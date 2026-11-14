@@ -114,7 +114,9 @@ function initFormPhotoEvents() {
     });
   }
   window.addEventListener('paste', (e) => {
-    if (document.body.getAttribute('data-view') === 'calendar') return;
+    const curView = document.body.getAttribute('data-view');
+    if (curView === 'calendar' || curView === 'pourboires') return;
+    if (curView === 'counter' && !document.body.classList.contains('is-editing-shift')) return;
     const items = e.clipboardData && e.clipboardData.items;
     if (!items) return;
     for (let i = 0; i < items.length; i++) {

@@ -116,7 +116,7 @@ function initCalendarAndNavigation() {
           if (c.std > 0) hasStd = true;
           if (c.del) { hasDel = true; dels++; }
           if (c.tp > 0) hasTip = true;
-          if (!itemHasProof(it)) miss = true;
+          if ((c.std > 0 || c.del) && !itemHasProof(it)) miss = true;
           if (it.proof_path) hasPhoto = true;
         });
         nDays++;

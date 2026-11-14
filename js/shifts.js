@@ -463,9 +463,10 @@ async function saveShift(e) {
   const oldPeriodStats = getPeriodStatsSnapshot(targetPeriod.year, targetPeriod.month);
   const previousShiftIds = new Set(cachedShifts.map(s => s.id));
 
+  const isTipOnlyEntry = calc.stdMinutes === 0 && !calc.hasDelivery;
   let finalProofPath = existingFormProofPath || null;
   let newlyUploadedPath = null;
-  const oldPathToCleanup = (existingFormProofPath && (formSelectedPhotoFile || removeExistingFormPhoto))
+  const oldPathToCleanup = (existingFormProofPath && ((!isTipOnlyEntry && formSelectedPhotoFile) || removeExistingFormPhoto))
     ? existingFormProofPath
     : null;
 
@@ -495,7 +496,7 @@ async function saveShift(e) {
       throw new Error('Failed to fetch (offline)');
     }
 
-    if (formSelectedPhotoFile) {
+    if (!isTipOnlyEntry && formSelectedPhotoFile) {
       const upRes = await uploadPhotoToSupabase(formSelectedPhotoFile);
       newlyUploadedPath = upRes.path;
       finalProofPath = newlyUploadedPath;

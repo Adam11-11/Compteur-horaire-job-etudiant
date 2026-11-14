@@ -1118,6 +1118,7 @@ function syncFormForCategoryView(viewName, keepQuickMode = false) {
     if (startInp) startInp.value = '';
     if (endInp) endInp.value = '';
     if (breakInp) breakInp.value = '0';
+    if (typeof clearFormPhoto === 'function') clearFormPhoto(true);
     setDeliveryState(false);
   } else {
     if (titleEl) {
