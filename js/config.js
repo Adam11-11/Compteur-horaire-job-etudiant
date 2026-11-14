@@ -3,7 +3,7 @@
 // ==========================================
 const SUPABASE_URL = 'https://pvfdcgphreklscoexyip.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_sXfoxxLGM44ypipf2oyJWQ_hPc1cp_t';
-const APP_VERSION = 'v1.49';
+const APP_VERSION = 'v1.50';
 
 // Stockage persistant renforcé (localStorage + Cookie longue durée 365j pour mobile)
 const AUTH_STORAGE_KEY = 'compteur_paella_auth';

@@ -554,8 +554,12 @@ textarea:focus {
 
 /* Bouton ENREGISTRER lumineux quand il est prêt */
 @keyframes submitBtnGlow {
-  0%, 100% { box-shadow: inset -4px -4px 0 var(--red-dark), inset 4px 4px 0 var(--red-light), 0 4px 0 var(--border-shadow); }
-  50% { box-shadow: inset -4px -4px 0 var(--red-dark), inset 4px 4px 0 var(--red-light), 0 4px 0 var(--border-shadow), 0 0 18px rgba(229, 181, 103, 0.55); }
+  0%, 100% {
+    box-shadow: inset -4px -4px 0 var(--submit-bevel-dark, var(--red-dark)), inset 4px 4px 0 var(--submit-bevel-light, var(--red-light)), 0 4px 0 var(--border-shadow);
+  }
+  50% {
+    box-shadow: inset -4px -4px 0 var(--submit-bevel-dark, var(--red-dark)), inset 4px 4px 0 var(--submit-bevel-light, var(--red-light)), 0 4px 0 var(--border-shadow), 0 0 18px var(--submit-glow, rgba(229, 181, 103, 0.55));
+  }
 }
 
 #shift-submit-btn:not(:disabled) {

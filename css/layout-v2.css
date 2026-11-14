@@ -206,19 +206,31 @@ input:focus, select:focus { border-color: var(--gold-soft); box-shadow: inset 3p
   opacity: 0.72;
 }
 body[data-view="prestations"] #shift-submit-btn:not(:disabled) {
+  --submit-bevel-dark: var(--red-dark);
+  --submit-bevel-light: var(--red-light);
+  --submit-glow: rgba(217, 75, 87, 0.55);
   background: var(--red-soft);
   border-color: var(--white-cream);
   color: var(--white-cream);
+  box-shadow: inset -4px -4px 0 var(--red-dark), inset 4px 4px 0 var(--red-light), 0 4px 0 var(--border-shadow);
 }
 body[data-view="livraisons"] #shift-submit-btn:not(:disabled) {
+  --submit-bevel-dark: var(--blue-dark);
+  --submit-bevel-light: var(--blue-light);
+  --submit-glow: rgba(79, 164, 232, 0.6);
   background: var(--blue-soft);
   border-color: var(--white-cream);
   color: #18171c;
+  box-shadow: inset -4px -4px 0 var(--blue-dark), inset 4px 4px 0 var(--blue-light), 0 4px 0 var(--border-shadow);
 }
 body[data-view="pourboires"] #shift-submit-btn:not(:disabled) {
+  --submit-bevel-dark: #2e6b43;
+  --submit-bevel-light: #8be0a9;
+  --submit-glow: rgba(90, 181, 122, 0.6);
   background: var(--green-soft);
   border-color: var(--white-cream);
   color: #18171c;
+  box-shadow: inset -4px -4px 0 #2e6b43, inset 4px 4px 0 #8be0a9, 0 4px 0 var(--border-shadow);
 }
 
 /* Boutons : retour visuel net, cibles ≥ 48px */
