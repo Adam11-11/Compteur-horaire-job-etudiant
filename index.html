@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="css/calendar.css" />
   <link rel="stylesheet" href="css/photos.css" />
   <link rel="stylesheet" href="css/features.css" />
-  <link rel="stylesheet" href="css/pixel-polish.css" />
+  <link rel="stylesheet" href="css/pixel-polish.css?v=170" />
 
   <!-- Supabase Client SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -155,19 +155,19 @@
           </div>
 
           <!-- Fond sombre des bouches de tunnels (derrière le camion) -->
-          <svg class="tunnel-layer tunnel-back tunnel-left" width="20" height="34" viewBox="0 0 20 34" shape-rendering="crispEdges" aria-hidden="true">
-            <rect x="4" y="5" width="13" height="29" fill="#07060a"/>
-            <rect x="16" y="7" width="2" height="27" fill="#09080c" opacity="0.85"/>
-            <rect x="17" y="9" width="1" height="25" fill="#09080c" opacity="0.5"/>
-            <rect x="10" y="7" width="3" height="1" fill="#ffb84d"/>
-            <rect x="10" y="8" width="3" height="2" fill="#ffe875" opacity="0.32"/>
+          <svg class="tunnel-layer tunnel-back tunnel-left" width="32" height="34" viewBox="0 0 32 34" shape-rendering="crispEdges" aria-hidden="true">
+            <rect x="6" y="6" width="21" height="28" fill="#060608"/>
+            <rect x="26" y="8" width="3" height="26" fill="#09080c" opacity="0.82"/>
+            <rect x="28" y="10" width="2" height="24" fill="#09080c" opacity="0.48"/>
+            <rect x="17" y="8" width="4" height="1" fill="#ffb84d"/>
+            <rect x="17" y="9" width="4" height="2" fill="#ffe875" opacity="0.34"/>
           </svg>
-          <svg class="tunnel-layer tunnel-back tunnel-right" width="20" height="34" viewBox="0 0 20 34" shape-rendering="crispEdges" aria-hidden="true">
-            <rect x="4" y="5" width="13" height="29" fill="#07060a"/>
-            <rect x="16" y="7" width="2" height="27" fill="#09080c" opacity="0.85"/>
-            <rect x="17" y="9" width="1" height="25" fill="#09080c" opacity="0.5"/>
-            <rect x="10" y="7" width="3" height="1" fill="#ffb84d"/>
-            <rect x="10" y="8" width="3" height="2" fill="#ffe875" opacity="0.32"/>
+          <svg class="tunnel-layer tunnel-back tunnel-right" width="32" height="34" viewBox="0 0 32 34" shape-rendering="crispEdges" aria-hidden="true">
+            <rect x="6" y="6" width="21" height="28" fill="#060608"/>
+            <rect x="26" y="8" width="3" height="26" fill="#09080c" opacity="0.82"/>
+            <rect x="28" y="10" width="2" height="24" fill="#09080c" opacity="0.48"/>
+            <rect x="17" y="8" width="4" height="1" fill="#ffb84d"/>
+            <rect x="17" y="9" width="4" height="2" fill="#ffe875" opacity="0.34"/>
           </svg>
 
           <div class="delivery-convoy">
@@ -204,48 +204,64 @@
             </div>
           </div>
 
-          <!-- Façades pierre & arches des tunnels (devant le camion) -->
-          <svg class="tunnel-layer tunnel-front tunnel-left" width="20" height="34" viewBox="0 0 20 34" shape-rendering="crispEdges" aria-hidden="true">
-            <rect x="0" y="2" width="7" height="32" fill="#2b2636"/>
-            <rect x="0" y="3" width="6" height="4" fill="#4f4861"/>
-            <rect x="0" y="3" width="6" height="1" fill="#847b9e"/>
-            <rect x="0" y="9" width="4" height="4" fill="#3e384d"/>
-            <rect x="5" y="9" width="2" height="4" fill="#4f4861"/>
-            <rect x="0" y="15" width="6" height="4" fill="#4f4861"/>
-            <rect x="0" y="21" width="3" height="4" fill="#3e384d"/>
-            <rect x="4" y="21" width="3" height="4" fill="#4f4861"/>
-            <rect x="0" y="27" width="7" height="7" fill="#3a3448"/>
-            <rect x="7" y="5" width="1" height="29" fill="#0d0c10"/>
-            <rect x="0" y="0" width="18" height="2" fill="#0d0c10"/>
-            <rect x="0" y="1" width="17" height="2" fill="#928aa6"/>
-            <rect x="0" y="3" width="18" height="3" fill="#544c66"/>
-            <rect x="7" y="6" width="10" height="2" fill="#383246"/>
-            <rect x="16" y="4" width="2" height="5" fill="#6f6685"/>
-            <rect x="17" y="6" width="2" height="4" fill="#4f4861"/>
-            <rect x="18" y="3" width="1" height="6" fill="#0d0c10"/>
-            <rect x="12" y="3" width="2" height="2" fill="#ffe875"/>
-            <rect x="11" y="3" width="1" height="1" fill="#fff9d6"/>
+          <!-- Façades pierre grise épaisses & arches des tunnels (devant le camion) -->
+          <svg class="tunnel-layer tunnel-front tunnel-left" width="32" height="34" viewBox="0 0 32 34" shape-rendering="crispEdges" aria-hidden="true">
+            <rect x="0" y="2" width="14" height="32" fill="#464a54"/>
+            <rect x="14" y="5" width="1" height="29" fill="#0d0c10"/>
+            <rect x="0" y="3" width="7" height="4" fill="#7c828f"/>
+            <rect x="0" y="3" width="7" height="1" fill="#a8aeb8"/>
+            <rect x="8" y="3" width="5" height="4" fill="#636873"/>
+            <rect x="0" y="9" width="4" height="4" fill="#636873"/>
+            <rect x="5" y="9" width="8" height="4" fill="#7c828f"/>
+            <rect x="5" y="9" width="8" height="1" fill="#9da3ad"/>
+            <rect x="0" y="15" width="8" height="4" fill="#7c828f"/>
+            <rect x="0" y="15" width="8" height="1" fill="#9da3ad"/>
+            <rect x="9" y="15" width="4" height="4" fill="#595e68"/>
+            <rect x="0" y="21" width="5" height="4" fill="#636873"/>
+            <rect x="6" y="21" width="7" height="4" fill="#7c828f"/>
+            <rect x="0" y="27" width="14" height="7" fill="#595e68"/>
+            <rect x="0" y="27" width="14" height="1" fill="#8d939e"/>
+            <rect x="0" y="0" width="29" height="2" fill="#0d0c10"/>
+            <rect x="0" y="1" width="28" height="2" fill="#b4bac4"/>
+            <rect x="0" y="3" width="29" height="4" fill="#737985"/>
+            <rect x="6" y="3" width="5" height="3" fill="#8b919e"/>
+            <rect x="13" y="3" width="6" height="3" fill="#636873"/>
+            <rect x="14" y="7" width="13" height="2" fill="#3b3e47"/>
+            <rect x="26" y="4" width="3" height="6" fill="#828894"/>
+            <rect x="27" y="4" width="1" height="5" fill="#a8aeb8"/>
+            <rect x="28" y="6" width="3" height="5" fill="#595e68"/>
+            <rect x="29" y="3" width="2" height="8" fill="#0d0c10"/>
+            <rect x="21" y="4" width="3" height="2" fill="#ffe875"/>
+            <rect x="20" y="4" width="1" height="1" fill="#fff9d6"/>
           </svg>
-          <svg class="tunnel-layer tunnel-front tunnel-right" width="20" height="34" viewBox="0 0 20 34" shape-rendering="crispEdges" aria-hidden="true">
-            <rect x="0" y="2" width="7" height="32" fill="#2b2636"/>
-            <rect x="0" y="3" width="6" height="4" fill="#4f4861"/>
-            <rect x="0" y="3" width="6" height="1" fill="#847b9e"/>
-            <rect x="0" y="9" width="4" height="4" fill="#3e384d"/>
-            <rect x="5" y="9" width="2" height="4" fill="#4f4861"/>
-            <rect x="0" y="15" width="6" height="4" fill="#4f4861"/>
-            <rect x="0" y="21" width="3" height="4" fill="#3e384d"/>
-            <rect x="4" y="21" width="3" height="4" fill="#4f4861"/>
-            <rect x="0" y="27" width="7" height="7" fill="#3a3448"/>
-            <rect x="7" y="5" width="1" height="29" fill="#0d0c10"/>
-            <rect x="0" y="0" width="18" height="2" fill="#0d0c10"/>
-            <rect x="0" y="1" width="17" height="2" fill="#928aa6"/>
-            <rect x="0" y="3" width="18" height="3" fill="#544c66"/>
-            <rect x="7" y="6" width="10" height="2" fill="#383246"/>
-            <rect x="16" y="4" width="2" height="5" fill="#6f6685"/>
-            <rect x="17" y="6" width="2" height="4" fill="#4f4861"/>
-            <rect x="18" y="3" width="1" height="6" fill="#0d0c10"/>
-            <rect x="12" y="3" width="2" height="2" fill="#ffe875"/>
-            <rect x="11" y="3" width="1" height="1" fill="#fff9d6"/>
+          <svg class="tunnel-layer tunnel-front tunnel-right" width="32" height="34" viewBox="0 0 32 34" shape-rendering="crispEdges" aria-hidden="true">
+            <rect x="0" y="2" width="14" height="32" fill="#464a54"/>
+            <rect x="14" y="5" width="1" height="29" fill="#0d0c10"/>
+            <rect x="0" y="3" width="7" height="4" fill="#7c828f"/>
+            <rect x="0" y="3" width="7" height="1" fill="#a8aeb8"/>
+            <rect x="8" y="3" width="5" height="4" fill="#636873"/>
+            <rect x="0" y="9" width="4" height="4" fill="#636873"/>
+            <rect x="5" y="9" width="8" height="4" fill="#7c828f"/>
+            <rect x="5" y="9" width="8" height="1" fill="#9da3ad"/>
+            <rect x="0" y="15" width="8" height="4" fill="#7c828f"/>
+            <rect x="0" y="15" width="8" height="1" fill="#9da3ad"/>
+            <rect x="9" y="15" width="4" height="4" fill="#595e68"/>
+            <rect x="0" y="21" width="5" height="4" fill="#636873"/>
+            <rect x="6" y="21" width="7" height="4" fill="#7c828f"/>
+            <rect x="0" y="27" width="14" height="7" fill="#595e68"/>
+            <rect x="0" y="27" width="14" height="1" fill="#8d939e"/>
+            <rect x="0" y="0" width="29" height="2" fill="#0d0c10"/>
+            <rect x="0" y="1" width="28" height="2" fill="#b4bac4"/>
+            <rect x="0" y="3" width="29" height="4" fill="#737985"/>
+            <rect x="6" y="3" width="5" height="3" fill="#8b919e"/>
+            <rect x="13" y="3" width="6" height="3" fill="#636873"/>
+            <rect x="14" y="7" width="13" height="2" fill="#3b3e47"/>
+            <rect x="26" y="4" width="3" height="6" fill="#828894"/>
+            <rect x="27" y="4" width="1" height="5" fill="#a8aeb8"/>
+            <rect x="28" y="6" width="3" height="5" fill="#595e68"/>
+            <rect x="29" y="3" width="2" height="8" fill="#0d0c10"/>
+            <rect x="21" y="4" width="3" height="2" fill="#ffe875"/>
+            <rect x="20" y="4" width="1" height="1" fill="#fff9d6"/>
           </svg>
         </div>
 
@@ -285,7 +301,7 @@
             </div>
           </div>
 
-          <span id="app-version-badge" class="app-version-badge" title="Version de l'application">v1.69</span>
+          <span id="app-version-badge" class="app-version-badge" title="Version de l'application">v1.70</span>
         </div>
       </div>
     </header>

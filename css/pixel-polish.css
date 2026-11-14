@@ -83,7 +83,7 @@ header {
 
 .road-stars {
   position: absolute;
-  inset: 0 20px 7px 20px;
+  inset: 0 32px 7px 32px;
 }
 
 .road-star {
@@ -103,8 +103,8 @@ header {
 
 .road-asphalt {
   position: absolute;
-  left: 6px;
-  right: 6px;
+  left: 12px;
+  right: 12px;
   bottom: 0;
   height: 6px;
   background: #14111b;
@@ -128,10 +128,17 @@ header {
 .tunnel-layer {
   position: absolute;
   bottom: 0;
-  width: auto;
-  height: 100%;
+  width: 25px;
+  height: 26px;
   display: block;
   pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .tunnel-layer {
+    width: 32px;
+    height: 34px;
+  }
 }
 
 .tunnel-left { left: 0; }
@@ -1183,7 +1190,7 @@ textarea:focus {
     text-shadow: none !important;
   }
   .delivery-convoy {
-    left: 26px;
+    left: 36px;
   }
 }
 
