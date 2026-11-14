@@ -60,8 +60,8 @@ function setFormPhotoFile(file, skipAiAutoScan = false) {
   playToggleSound(true);
   updateFormPhotoUI();
 
-  // D'une pierre deux coups : si une clé IA est configurée et que les heures sont vides, lire automatiquement la feuille
-  if (!skipAiAutoScan && typeof getGeminiApiKey === 'function' && getGeminiApiKey()) {
+  // D'une pierre deux coups : si connecté et en ligne, lire automatiquement la feuille via l'Edge Function IA
+  if (!skipAiAutoScan && navigator.onLine && typeof analyzeSheetPhotoWithAI === 'function') {
     const startVal = document.getElementById('std-start')?.value;
     const endVal = document.getElementById('std-end')?.value;
     if (!startVal && !endVal && typeof analyzeSheetPhotoWithAI === 'function') {

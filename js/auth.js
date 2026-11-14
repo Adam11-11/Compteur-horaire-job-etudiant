@@ -139,12 +139,7 @@ function resetAppStateOnUserChange(previousUid) {
     liveClockInterval = null;
   }
   if (typeof pendingExtraAiEntries !== 'undefined') pendingExtraAiEntries = [];
-  if (typeof cachedGeminiModels !== 'undefined') cachedGeminiModels = null;
-  if (typeof cachedGeminiModelsKey !== 'undefined') cachedGeminiModelsKey = '';
-  const apiInp = document.getElementById('ai-api-key-input');
-  if (apiInp) apiInp.value = '';
   if (typeof toggleAiFabMenu === 'function') toggleAiFabMenu(false);
-  if (typeof updateAiKeyStatusUI === 'function') updateAiKeyStatusUI();
 
   if (typeof teardownSupabaseRealtime === 'function') {
     teardownSupabaseRealtime();
@@ -576,12 +571,6 @@ function onAuthenticatedSession(session) {
   }
   if (typeof updateVehicleUI === 'function') {
     updateVehicleUI();
-  }
-  if (typeof syncGeminiKeyFromSupabaseUser === 'function') {
-    syncGeminiKeyFromSupabaseUser();
-  }
-  if (typeof updateAiKeyStatusUI === 'function') {
-    updateAiKeyStatusUI();
   }
   if (typeof updateLiveClockUI === 'function') {
     updateLiveClockUI();

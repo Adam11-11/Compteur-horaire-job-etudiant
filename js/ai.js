@@ -1,19 +1,20 @@
 // ==========================================
-// ASSISTANT IA GÉNÉRALISÉ (BOUTON CIRCULAIRE FLOTTANT : DICTÉE VOCALE & SCAN PHOTO "ADAM")
-// Propulsé par Google Gemini 2.5 Flash (Gratuit via Google AI Studio)
+// ASSISTANT IA GÉNÉRALISÉ (BOUTON CIRCULAIRE FLOTTANT : DICTÉE VOCALE & SCAN PHOTO)
+// Propulsé via l'Edge Function Supabase sécurisée (`gemini-proxy`)
 // ==========================================
-
-const GEMINI_KEY_STORAGE = 'compteur_paella_gemini_key_v1';
-
-function getGeminiKeyStorageKey() {
-  return typeof getUserScopedKey === 'function'
-    ? getUserScopedKey(GEMINI_KEY_STORAGE)
-    : GEMINI_KEY_STORAGE;
-}
 
 function getTargetWorkerName() {
   const name = typeof getWorkerDisplayName === 'function' ? getWorkerDisplayName() : '';
   return (name || 'ADAM').toUpperCase();
+}
+
+function isAiCloudAvailable() {
+  return Boolean(
+    navigator.onLine &&
+    typeof supabaseClient !== 'undefined' &&
+    typeof currentAuthUser !== 'undefined' &&
+    currentAuthUser
+  );
 }
 
 let isVoiceRecording = false;
@@ -23,7 +24,7 @@ let activeMediaRecorder = null;
 let recordedAudioChunks = [];
 let pendingExtraAiEntries = [];
 
-// --- GESTION DU MENU FLOTTANT CIRCULAIRE (BAS GAUCHE) ---
+// --- GESTION DU MENU FLOTTANT CIRCULAIRE (BAS DROIT) ---
 function toggleAiFabMenu(forceState) {
   const menu = document.getElementById('ai-fab-menu');
   const btn = document.getElementById('ai-fab-btn');
@@ -32,10 +33,6 @@ function toggleAiFabMenu(forceState) {
   isAiMenuOpen = typeof forceState === 'boolean' ? forceState : !isAiMenuOpen;
   menu.classList.toggle('open', isAiMenuOpen);
   btn.setAttribute('aria-expanded', isAiMenuOpen ? 'true' : 'false');
-  if (!isAiMenuOpen) {
-    const cfg = document.getElementById('ai-config-panel');
-    if (cfg) cfg.style.display = 'none';
-  }
 }
 
 function handleAiFabMainClick() {
@@ -59,12 +56,6 @@ function handleAiMenuVoiceClick() {
 }
 
 function handleAiMenuPhotoClick() {
-  if (!getGeminiApiKey()) {
-    toggleAiFabMenu(true);
-    toggleAiConfigPanel(true);
-    showToast('Colle d\'abord ta clé API Gemini gratuite pour scanner tes feuilles !', { type: 'info', duration: 4000 });
-    return;
-  }
   toggleAiFabMenu(false);
   triggerAiSheetPhotoScan();
 }
@@ -89,163 +80,8 @@ function showAiLiveBubble(html, stateClass = 'loading', autoHideMs = 0) {
   }
 }
 
-// --- GESTION DE LA CLÉ API GEMINI (CLOISONNÉE PAR COMPTE & SYNCHRONISÉE AVEC SUPABASE AUTH) ---
-function getGeminiApiKey() {
-  try {
-    const local = window.localStorage.getItem(getGeminiKeyStorageKey());
-    if (local && local.trim()) return local.trim();
-  } catch (e) {}
-
-  if (typeof currentAuthUser !== 'undefined' && currentAuthUser && currentAuthUser.user_metadata && currentAuthUser.user_metadata.gemini_api_key) {
-    const metaKey = String(currentAuthUser.user_metadata.gemini_api_key).trim();
-    if (metaKey) {
-      saveGeminiApiKeyLocally(metaKey);
-      return metaKey;
-    }
-  }
-  return '';
-}
-
-function saveGeminiApiKeyLocally(key) {
-  const clean = (key || '').trim();
-  try {
-    const storageKey = getGeminiKeyStorageKey();
-    if (clean) {
-      window.localStorage.setItem(storageKey, clean);
-    } else {
-      window.localStorage.removeItem(storageKey);
-    }
-  } catch (e) {}
-}
-
-async function saveGeminiKeyFromUI() {
-  const inp = document.getElementById('ai-api-key-input');
-  if (!inp) return;
-  const key = inp.value.trim();
-  if (!key) {
-    showToast('Colle ta clé API Gemini (commence par AIza...).', { type: 'warn' });
-    return;
-  }
-
-  saveGeminiApiKeyLocally(key);
-
-  try {
-    if (supabaseClient && supabaseClient.auth) {
-      const { data } = await supabaseClient.auth.updateUser({
-        data: { gemini_api_key: key }
-      });
-      if (data && data.user) {
-        currentAuthUser = data.user;
-      }
-    }
-  } catch (e) {}
-
-  updateAiKeyStatusUI();
-  toggleAiConfigPanel(false);
-  if (typeof playSaveSuccessSound === 'function') playSaveSuccessSound();
-  showToast('Clé IA Gemini enregistrée et synchronisée sur ton compte ! 🤖', { type: 'success', duration: 3500 });
-}
-
-async function syncGeminiKeyFromSupabaseUser() {
-  try {
-    if (!supabaseClient || !supabaseClient.auth) return;
-    const { data } = await supabaseClient.auth.getUser();
-    if (data && data.user && data.user.user_metadata && data.user.user_metadata.gemini_api_key) {
-      const remoteKey = String(data.user.user_metadata.gemini_api_key).trim();
-      if (remoteKey) {
-        saveGeminiApiKeyLocally(remoteKey);
-        updateAiKeyStatusUI();
-      }
-    }
-  } catch (e) {}
-}
-
-function toggleAiConfigPanel(forceState) {
-  const panel = document.getElementById('ai-config-panel');
-  if (!panel) return;
-  const shouldOpen = typeof forceState === 'boolean' ? forceState : (panel.style.display === 'none' || !panel.style.display);
-  panel.style.display = shouldOpen ? 'block' : 'none';
-  if (shouldOpen) {
-    const inp = document.getElementById('ai-api-key-input');
-    if (inp) {
-      inp.value = getGeminiApiKey();
-      inp.focus();
-    }
-  }
-}
-
-function updateAiKeyStatusUI() {
-  const key = getGeminiApiKey();
-  const cfgBtn = document.getElementById('ai-key-toggle-btn');
-  const labelEl = document.getElementById('ai-key-status-label');
-  if (cfgBtn) {
-    if (key) {
-      if (labelEl) labelEl.textContent = 'CLÉ IA PRÊTE ✓';
-      cfgBtn.classList.add('ai-ready');
-    } else {
-      if (labelEl) labelEl.textContent = 'CONFIGURER CLÉ IA';
-      cfgBtn.classList.remove('ai-ready');
-    }
-  }
-}
-
-// --- APPEL API GEMINI (AVEC DÉTECTION AUTOMATIQUE DES MODÈLES DISPONIBLES) ---
-let cachedGeminiModels = null;
-let cachedGeminiModelsKey = '';
-
-async function discoverAvailableGeminiModels(apiKey) {
-  if (cachedGeminiModels && cachedGeminiModelsKey === apiKey && cachedGeminiModels.length > 0) {
-    return cachedGeminiModels;
-  }
-
-  const preferredOrder = [
-    'gemini-2.5-flash',
-    'gemini-2.5-flash-lite',
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-lite',
-    'gemini-flash-latest',
-    'gemini-2.5-pro',
-    'gemini-pro-latest'
-  ];
-
-  try {
-    const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
-    const res = await fetch(listUrl);
-    if (res.ok) {
-      const data = await res.json();
-      const rawModels = Array.isArray(data.models) ? data.models : [];
-      const supported = rawModels
-        .filter(m => {
-          const methods = m.supportedGenerationMethods || [];
-          const name = String(m.name || '').replace(/^models\//, '');
-          if (!methods.includes('generateContent')) return false;
-          if (/embedding|imagen|veo|tts|aqa|bisheng|learnlm/i.test(name)) return false;
-          return /^gemini-/i.test(name);
-        })
-        .map(m => String(m.name).replace(/^models\//, ''));
-
-      if (supported.length > 0) {
-        supported.sort((a, b) => {
-          const idxA = preferredOrder.indexOf(a);
-          const idxB = preferredOrder.indexOf(b);
-          if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-          if (idxA !== -1) return -1;
-          if (idxB !== -1) return 1;
-          const isFlashA = a.includes('flash') ? 0 : 1;
-          const isFlashB = b.includes('flash') ? 0 : 1;
-          return isFlashA - isFlashB;
-        });
-        cachedGeminiModels = supported;
-        cachedGeminiModelsKey = apiKey;
-        return supported;
-      }
-    }
-  } catch (e) {
-    // Fallback silencieux sur la liste par défaut si ListModels échoue
-  }
-
-  return ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-flash-latest'];
-}
+// --- APPEL IA VIA EDGE FUNCTION SUPABASE (`gemini-proxy`) ---
+// La clé API Gemini est conservée uniquement côté serveur (Supabase Secrets).
 
 function parseJsonFromGeminiText(rawText) {
   if (!rawText) throw new Error('Réponse vide de l\'IA.');
@@ -266,67 +102,50 @@ function parseJsonFromGeminiText(rawText) {
 }
 
 async function callGeminiStructured(parts, systemInstruction) {
-  const apiKey = getGeminiApiKey();
-  if (!apiKey) {
-    toggleAiFabMenu(true);
-    toggleAiConfigPanel(true);
-    throw new Error('Configure d\'abord ta clé API Gemini gratuite dans le menu 🤖.');
+  if (!navigator.onLine) {
+    throw new Error('Connexion internet requise pour l\'assistant IA.');
+  }
+  if (!supabaseClient || !supabaseClient.functions) {
+    throw new Error('Service Supabase indisponible.');
   }
 
-  const models = await discoverAvailableGeminiModels(apiKey);
-  let primaryError = null;
+  const { data: sessionData } = await supabaseClient.auth.getSession();
+  if (!sessionData || !sessionData.session) {
+    throw new Error('Reconnecte-toi pour utiliser l\'assistant IA.');
+  }
 
-  // Fusionne la consigne système directement dans les parts utilisateur pour une compatibilité maximale v1beta
-  const combinedParts = [
-    { text: `${systemInstruction}\n\nIMPORTANT : Réponds uniquement avec l'objet JSON brut, sans texte autour.` },
-    ...parts
-  ];
+  const { data, error } = await supabaseClient.functions.invoke('gemini-proxy', {
+    body: { parts, systemInstruction }
+  });
 
-  for (const model of models) {
+  if (error) {
+    let detailedMsg = error.message || 'Erreur appel assistant IA.';
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: combinedParts }],
-          generationConfig: {
-            temperature: 0.1,
-            responseMimeType: 'application/json'
-          }
-        })
-      });
-
-      if (!response.ok) {
-        const errBody = await response.json().catch(() => ({}));
-        const msg = (errBody && errBody.error && errBody.error.message) || `Erreur HTTP ${response.status}`;
-        if (response.status === 400 && /API_KEY_INVALID|key not valid/i.test(msg)) {
-          throw new Error('Clé API Gemini invalide. Vérifie ta clé dans le menu 🤖.');
+      if (error.context && typeof error.context.json === 'function') {
+        const errPayload = await error.context.json();
+        if (errPayload && errPayload.error) {
+          detailedMsg = errPayload.error;
         }
-        // Si le modèle est introuvable (404), on passe au suivant sans écraser une vraie erreur précédente
-        if (response.status === 404 || /not found|not supported/i.test(msg)) {
-          if (!primaryError) primaryError = new Error(msg);
-          continue;
-        }
-        if (!primaryError) primaryError = new Error(msg);
-        continue;
       }
-
-      const data = await response.json();
-      const rawText = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('\n').trim();
-      if (!rawText) {
-        if (!primaryError) primaryError = new Error('Réponse vide de l\'IA.');
-        continue;
-      }
-
-      return parseJsonFromGeminiText(rawText);
-    } catch (err) {
-      if (/Clé API Gemini invalide/i.test(err.message)) throw err;
-      if (!primaryError) primaryError = err;
+    } catch (e) {}
+    if (/404|not found|failed to send a request/i.test(detailedMsg)) {
+      throw new Error('Service IA serveur non déployé (fonction gemini-proxy sur Supabase).');
     }
+    throw new Error(detailedMsg);
   }
 
-  throw primaryError || new Error('Impossible de joindre Gemini.');
+  if (data && data.error) {
+    throw new Error(data.error);
+  }
+
+  const rawResult = data && data.result !== undefined ? data.result : data;
+  if (typeof rawResult === 'string') {
+    return parseJsonFromGeminiText(rawResult);
+  }
+  if (rawResult && typeof rawResult === 'object') {
+    return rawResult;
+  }
+  throw new Error('Réponse IA vide.');
 }
 
 function blobToBase64(blob) {
@@ -390,12 +209,10 @@ function prepareImageForGemini(file) {
   });
 }
 
-// --- 1. SCANNER PHOTO DE LA FEUILLE DE ROUTE (LIGNE "ADAM") ---
+// --- 1. SCANNER PHOTO DE LA FEUILLE DE ROUTE ---
 function triggerAiSheetPhotoScan() {
-  if (!getGeminiApiKey()) {
-    toggleAiFabMenu(true);
-    toggleAiConfigPanel(true);
-    showToast('Colle d\'abord ta clé API Gemini gratuite pour scanner tes feuilles !', { type: 'info', duration: 4000 });
+  if (!isAiCloudAvailable()) {
+    showToast('Connexion internet requise pour scanner une feuille avec l\'IA.', { type: 'warn', duration: 3500 });
     return;
   }
   const inp = document.getElementById('ai-sheet-photo-input');
@@ -413,7 +230,7 @@ async function analyzeSheetPhotoWithAI(file) {
     setFormPhotoFile(file, true);
   }
 
-  if (!getGeminiApiKey()) return;
+  if (!isAiCloudAvailable()) return;
 
   const fabBtn = document.getElementById('ai-fab-btn');
   const fabIcon = document.getElementById('ai-fab-icon');
@@ -513,8 +330,8 @@ async function startAiVoiceDictation() {
 
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  // Priorité 1 : Enregistrement audio envoyé à Gemini (ultra fiable sur mobile iOS/Android) si clé présente
-  if (getGeminiApiKey() && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder) {
+  // Priorité 1 : Enregistrement audio envoyé à l'Edge Function Gemini (ultra fiable sur mobile iOS/Android) si en ligne
+  if (isAiCloudAvailable() && navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       recordedAudioChunks = [];
@@ -636,7 +453,7 @@ async function processVoiceTranscript(transcript) {
   showAiLiveBubble(`🎙️ <em>"${escapeHtml(transcript)}"</em>...`, 'loading');
   const todayYMD = typeof toYMD === 'function' ? toYMD(new Date()) : new Date().toISOString().slice(0, 10);
 
-  if (getGeminiApiKey()) {
+  if (isAiCloudAvailable()) {
     try {
       const result = await callGeminiStructured(
         [{ text: `Aujourd'hui nous sommes le ${todayYMD}. Phrase dictée : "${transcript}"` }],
@@ -1165,9 +982,6 @@ function applyAiExtractedShift(rawData, sourceType) {
 }
 
 function initAiAssistant() {
-  updateAiKeyStatusUI();
-  syncGeminiKeyFromSupabaseUser();
-
   const sheetInp = document.getElementById('ai-sheet-photo-input');
   if (sheetInp) {
     sheetInp.addEventListener('change', () => {
