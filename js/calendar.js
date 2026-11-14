@@ -108,7 +108,7 @@ function initCalendarAndNavigation() {
       const list = d.map[ymd] || [];
       let cls = 'cal-cell', amt = '', dots = '', tot = 0;
       if (list.length) {
-        let hasStd = false, hasDel = false, hasTip = false, miss = false, hasPhoto = false;
+        let hasStd = false, hasDel = false, hasTip = false, hasPhoto = false;
         list.forEach(it => {
           const c = calc(it);
           tot += c.total;
@@ -116,11 +116,10 @@ function initCalendarAndNavigation() {
           if (c.std > 0) hasStd = true;
           if (c.del) { hasDel = true; dels++; }
           if (c.tp > 0) hasTip = true;
-          if ((c.std > 0 || c.del) && !itemHasProof(it)) miss = true;
           if (it.proof_path) hasPhoto = true;
         });
         nDays++;
-        cls += ' worked' + (miss ? ' noproof' : '');
+        cls += ' worked';
         dots = (hasStd ? '<i class="d"></i>' : '') + (hasDel ? '<i class="d l"></i>' : '') + (hasTip ? '<i class="d t"></i>' : '') + (hasPhoto ? '<i class="d p"></i>' : '');
         amt = '<span class="cal-amt">' + Math.round(tot) + '€</span>';
       }

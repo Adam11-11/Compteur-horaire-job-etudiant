@@ -307,7 +307,7 @@ function initPhotoViewer() {
       it.proof_path = null;
       it.has_proof = false;
       playDeleteSound();
-      showToast('Photo supprimée — journée repassée « sans photo »', { type: 'warn', duration: 3500 });
+      showToast('Photo supprimée.', { type: 'info', duration: 2500 });
       if (dlg.open) dlg.close();
     } catch (err) {
       playErrorSound();

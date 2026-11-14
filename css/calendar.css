@@ -190,10 +190,6 @@ div.cal-cell.out {
   border-color: var(--gold-soft);
 }
 
-.cal-cell.noproof {
-  border-bottom-style: dashed;
-}
-
 .cal-cell.today {
   border-color: var(--white-cream);
 }

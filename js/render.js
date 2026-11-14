@@ -251,11 +251,7 @@ function renderApp() {
   };
 
   const proofAlertBtn = document.getElementById('period-missing-proof-badge');
-  if (monthMissingProofs > 0) {
-    proofAlertBtn.innerHTML = `${PX_ICO.warn} ${monthMissingProofs} sans photo`;
-    proofAlertBtn.classList.remove('all-ok');
-    proofAlertBtn.style.display = 'inline-flex';
-  } else {
+  if (proofAlertBtn) {
     proofAlertBtn.style.display = 'none';
   }
 
@@ -327,7 +323,7 @@ function renderApp() {
         if (!isLegacy && (hasProof || hasWorkEntry)) {
           photoBtnHtml = hasProof
             ? `<button type="button" class="compact-icon-btn photo-ok" data-kind="compact-view" data-photo-act="view" data-photo-id="${item.id}" title="Photo jointe — cliquer pour voir ou remplacer" aria-label="Voir la photo jointe">${CAM_SVG}<span>✓</span></button>`
-            : `<button type="button" class="compact-icon-btn photo-miss missing-photo" data-kind="compact-add" data-photo-act="add" data-photo-id="${item.id}" title="Ajouter une photo de preuve" aria-label="Ajouter une photo de preuve">${CAM_SVG}<span>+</span></button>`;
+            : `<button type="button" class="compact-icon-btn photo-miss" data-kind="compact-add" data-photo-act="add" data-photo-id="${item.id}" title="Joindre une photo (optionnel)" aria-label="Joindre une photo (optionnel)">${CAM_SVG}<span>+</span></button>`;
         }
 
         const offlineBadge = item._offlinePending || String(item.id).startsWith('offline_')
