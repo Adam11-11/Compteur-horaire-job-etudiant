@@ -583,7 +583,19 @@ textarea:focus {
 /* Interaction sur les cartes stats, barres mensuelles et lignes */
 .stat-card-clickable:hover {
   transform: translateY(-4px) scale(1.015);
-  box-shadow: 6px 6px 0 var(--border-shadow), 0 0 22px rgba(229, 181, 103, 0.35);
+  box-shadow: 6px 6px 0 var(--border-shadow), 0 0 22px rgba(229, 181, 103, 0.42);
+}
+.stat-card.std-card.stat-card-clickable:hover {
+  border-color: var(--red-light);
+  box-shadow: 6px 6px 0 var(--border-shadow), 0 0 22px rgba(235, 124, 133, 0.55);
+}
+.stat-card.delivery-card.stat-card-clickable:hover {
+  border-color: var(--blue-light);
+  box-shadow: 6px 6px 0 var(--border-shadow), 0 0 22px rgba(128, 194, 247, 0.55);
+}
+.stat-card.tip-card.stat-card-clickable:hover {
+  border-color: #82d99d;
+  box-shadow: 6px 6px 0 var(--border-shadow), 0 0 22px rgba(90, 181, 122, 0.55);
 }
 
 .month-bar-fill {

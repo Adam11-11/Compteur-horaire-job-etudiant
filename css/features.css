@@ -930,6 +930,15 @@ header {
   transform: translateY(-2px);
   border-color: var(--gold-soft);
 }
+.stat-card.std-card.stat-card-clickable:hover {
+  border-color: var(--red-light);
+}
+.stat-card.delivery-card.stat-card-clickable:hover {
+  border-color: var(--blue-light);
+}
+.stat-card.tip-card.stat-card-clickable:hover {
+  border-color: #82d99d;
+}
 .stat-card-clickable:active {
   transform: translateY(2px);
 }
