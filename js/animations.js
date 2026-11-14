@@ -34,34 +34,6 @@ function spawnMicroPop(targetEl, text, variant = 'gold') {
   }, 680);
 }
 
-function spawnSparksAtPoint(x, y, count = 5, palette = null) {
-  if (prefersReducedMotion()) return;
-  const colors = palette || ['', 'spark-cream', 'spark-red'];
-
-  for (let i = 0; i < count; i++) {
-    const angle = (Math.PI * 2 * i) / count + (Math.random() * 0.45 - 0.22);
-    const dist = 20 + Math.random() * 20;
-    const tx = `${Math.round(Math.cos(angle) * dist)}px`;
-    const ty = `${Math.round(Math.sin(angle) * dist)}px`;
-    const spark = document.createElement('span');
-    spark.className = `pixel-spark pixel-spark-fixed ${colors[i % colors.length]}`.trim();
-    spark.style.left = `${x}px`;
-    spark.style.top = `${y}px`;
-    spark.style.setProperty('--tx', tx);
-    spark.style.setProperty('--ty', ty);
-    document.body.appendChild(spark);
-    setTimeout(() => {
-      if (spark.parentNode) spark.remove();
-    }, 680);
-  }
-}
-
-function spawnMiniSparksAt(el, count = 6) {
-  if (!el || prefersReducedMotion()) return;
-  const rect = el.getBoundingClientRect();
-  spawnSparksAtPoint(rect.left + rect.width / 2, rect.top + rect.height / 2, count);
-}
-
 function initAmbientEffects() {
   if (prefersReducedMotion()) return;
 
@@ -94,21 +66,6 @@ function initAmbientEffects() {
     document.body.prepend(bg);
   }
 
-  if (!window.__paellaClickSparksBound) {
-    window.__paellaClickSparksBound = true;
-    document.addEventListener('pointerdown', (e) => {
-      if (prefersReducedMotion()) return;
-      const target = e.target.closest('.pixel-btn, .nav-btn, .view-tab, .bottom-nav a, .preset-pill, .tip-pill-btn, .stat-card-clickable, .cal-cell.worked, .month-bar-item');
-      if (!target || target.disabled) return;
-      const x = e.clientX || (target.getBoundingClientRect().left + target.getBoundingClientRect().width / 2);
-      const y = e.clientY || (target.getBoundingClientRect().top + target.getBoundingClientRect().height / 2);
-      let palette = null;
-      if (target.closest('.tip-pill-btn, .tip-card')) palette = ['spark-green', 'spark-cream', ''];
-      else if (target.closest('.delivery-card, .delivery-toggle')) palette = ['spark-blue', 'spark-cream', ''];
-      spawnSparksAtPoint(x, y, 5, palette);
-    }, { passive: true });
-  }
-
   document.querySelectorAll('.paella-logo').forEach(logo => {
     if (logo.dataset.ambientBound) return;
     logo.dataset.ambientBound = '1';
@@ -116,7 +73,6 @@ function initAmbientEffects() {
     logo.addEventListener('click', (e) => {
       e.stopPropagation();
       animateElementClass(logo, 'paella-sizzle-pop', 460);
-      spawnMiniSparksAt(logo, 9);
       if (typeof playCoinTickSound === 'function') playCoinTickSound(0.65);
     });
   });
