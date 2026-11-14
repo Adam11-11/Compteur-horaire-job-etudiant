@@ -143,8 +143,16 @@ header {
 
 .tunnel-left { left: 0; }
 .tunnel-right { right: 0; transform: scaleX(-1); }
-.tunnel-back { z-index: 1; }
-.tunnel-front { z-index: 3; }
+.tunnel-back {
+  z-index: 1;
+  filter: drop-shadow(0 0 8px rgba(255, 224, 110, 0.35));
+}
+.tunnel-front {
+  z-index: 3;
+  filter:
+    drop-shadow(0 0 6px rgba(255, 224, 110, 0.36))
+    drop-shadow(0 0 3px rgba(210, 218, 232, 0.25));
+}
 
 .delivery-convoy {
   position: absolute;
