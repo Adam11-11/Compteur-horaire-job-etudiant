@@ -1266,6 +1266,64 @@ function syncFormForCategoryView(viewName, keepQuickMode = false) {
   checkFormDuplicateDate();
 }
 
+const categoryLedgerState = {
+  prestations: false,
+  livraisons: false,
+  pourboires: false
+};
+
+function formatDateSlashFR(dateStr) {
+  const parts = String(dateStr || '').split('-');
+  if (parts.length !== 3) return String(dateStr || '');
+  return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+}
+
+function toggleCategoryLedger(categoryKey) {
+  if (!(categoryKey in categoryLedgerState)) return;
+  categoryLedgerState[categoryKey] = !categoryLedgerState[categoryKey];
+  if (typeof playClickSound === 'function') playClickSound();
+  renderCategoryViews();
+}
+window.toggleCategoryLedger = toggleCategoryLedger;
+
+function buildCategoryLedgerHtml(catKey, accentClass, entries, totalPay) {
+  if (!categoryLedgerState[catKey]) return '';
+  const sorted = [...entries].sort(
+    (a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (Number(b.id || 0) - Number(a.id || 0))
+  );
+  const countLabel = `${sorted.length} opération${sorted.length > 1 ? 's' : ''}`;
+  const rowsHtml = sorted.length > 0
+    ? sorted.map(entry => `
+        <div class="cat-ledger-row">
+          <div class="cat-ledger-left">
+            <span class="cat-ledger-date">${escapeHtml(formatDateSlashFR(entry.date))}</span>
+            ${entry.label ? `<span class="cat-ledger-desc">${escapeHtml(entry.label)}</span>` : ''}
+          </div>
+          <span class="cat-ledger-amt">+${Number(entry.amount || 0).toFixed(2)} €</span>
+        </div>
+      `).join('')
+    : '<div class="cat-ledger-empty">Aucune opération sur ce mois.</div>';
+  const footerHtml = sorted.length > 0
+    ? `
+      <div class="cat-ledger-footer">
+        <span>SOLDE DU MOIS</span>
+        <strong>+${Number(totalPay || 0).toFixed(2)} €</strong>
+      </div>
+    `
+    : '';
+
+  return `
+    <div class="cat-ledger-box ${accentClass}" aria-label="Relevé détaillé du mois">
+      <div class="cat-ledger-head">
+        <span class="cat-ledger-head-title">RELEVÉ • ${MONTH_NAMES[activePayMonth]} ${activePayYear}</span>
+        <span class="cat-ledger-head-count">${countLabel}</span>
+      </div>
+      <div class="cat-ledger-list">${rowsHtml}</div>
+      ${footerHtml}
+    </div>
+  `;
+}
+
 function buildCategoryHeaderAndNav(titleText, accentClass, summaryMetricsHtml, extraFooterHtml = '') {
   return `
     <div class="cat-summary-strip ${accentClass}">
@@ -1291,11 +1349,12 @@ function renderCategoryViews() {
   const activeShifts = cachedShifts.filter(s => !pendingDeletes.has(s.id) && !s.is_legacy);
   const bounds = getPayPeriodBounds(activePayYear, activePayMonth);
 
-  // --- 1. ONGLET PRESTATIONS (COMPTEUR DU MOIS UNIQUEMENT) ---
+  // --- 1. ONGLET PRESTATIONS (COMPTEUR DU MOIS + RELEVÉ DÉROULANT) ---
   const prestContainer = document.getElementById('prestations-view-content');
   if (prestContainer) {
     let monthCount = 0, monthMin = 0, monthPay = 0;
     const monthPrestDates = new Set();
+    const prestEntries = [];
 
     activeShifts.forEach(item => {
       const stdMin = item.std_minutes || 0;
@@ -1310,28 +1369,37 @@ function renderCategoryViews() {
         monthMin += stdMin;
         monthPay += stdP;
         if (item.date) monthPrestDates.add(item.date);
+        let label = item.std_start && item.std_end
+          ? `${item.std_start}-${item.std_end} (${formatHoursMin(stdMin)})`
+          : (stdMin > 0 ? formatHoursMin(stdMin) : 'Prestation');
+        if (item.note) label += ` • ${item.note}`;
+        prestEntries.push({ id: item.id, date: item.date, label, amount: stdP });
       }
     });
 
     const monthPrestDays = monthPrestDates.size;
     const avgMin = monthPrestDays > 0 ? Math.round(monthMin / monthPrestDays) : 0;
+    const isPrestOpen = Boolean(categoryLedgerState.prestations);
     const metricsHtml = `
-      <div class="stat-card std-card">
+      <div class="stat-card std-card stat-card-clickable cat-ledger-trigger${isPrestOpen ? ' is-open' : ''}" role="button" tabindex="0" aria-expanded="${isPrestOpen ? 'true' : 'false'}" onclick="toggleCategoryLedger('prestations')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategoryLedger('prestations');}">
         <span class="stat-title">PRESTATIONS DU MOIS (12€/H, MIN. 60€)</span>
         <div class="stat-value">${monthPay.toFixed(2)} €</div>
         <div class="stat-sub">${monthCount} j • ${formatHoursMin(monthMin)} • Moy. ${formatHoursMin(avgMin)}/j</div>
+        <div class="cat-ledger-toggle-hint">${isPrestOpen ? '▲ MASQUER LE RELEVÉ' : '▼ VOIR LE RELEVÉ'}</div>
       </div>
+      ${buildCategoryLedgerHtml('prestations', 'red-accent', prestEntries, monthPay)}
     `;
 
     prestContainer.innerHTML = buildCategoryHeaderAndNav('PRESTATIONS', 'red-accent', metricsHtml);
   }
 
-  // --- 2. ONGLET LIVRAISONS (COMPTEUR DU MOIS UNIQUEMENT) ---
+  // --- 2. ONGLET LIVRAISONS (COMPTEUR DU MOIS + RELEVÉ DÉROULANT) ---
   const delContainer = document.getElementById('livraisons-view-content');
   if (delContainer) {
     const vehicle = typeof getPersonalVehicle === 'function' ? getPersonalVehicle() : null;
     let monthCount = 0, monthPay = 0, monthFlatCount = 0, monthLongCount = 0;
     let monthPersonalDelCount = 0, monthKm = 0, monthFuelEst = 0;
+    const delEntries = [];
 
     activeShifts.forEach(item => {
       const delP = item.del_pay || 0;
@@ -1353,6 +1421,11 @@ function renderCategoryViews() {
         monthFuelEst += delFuelEst;
         if (delMin > 150) monthLongCount++;
         else monthFlatCount++;
+
+        let label = delMin > 150 ? `Livraison ${formatHoursMin(delMin)}` : 'Livraison forfait';
+        if (isPersonalVeh) label += ' • Véh. perso';
+        if (item.note) label += ` • ${item.note}`;
+        delEntries.push({ id: item.id, date: item.date, label, amount: delP });
       }
     });
 
@@ -1387,21 +1460,25 @@ function renderCategoryViews() {
       }
     }
 
+    const isDelOpen = Boolean(categoryLedgerState.livraisons);
     const metricsHtml = `
-      <div class="stat-card delivery-card">
+      <div class="stat-card delivery-card stat-card-clickable cat-ledger-trigger${isDelOpen ? ' is-open' : ''}" role="button" tabindex="0" aria-expanded="${isDelOpen ? 'true' : 'false'}" onclick="toggleCategoryLedger('livraisons')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategoryLedger('livraisons');}">
         <span class="stat-title">LIVRAISONS DU MOIS</span>
         <div class="stat-value">${monthPay.toFixed(2)} €</div>
         <div class="stat-sub">${monthCount} livraison${monthCount > 1 ? 's' : ''} • ${monthFlatCount} forf. / ${monthLongCount} &gt;2h30</div>
+        <div class="cat-ledger-toggle-hint">${isDelOpen ? '▲ MASQUER LE RELEVÉ' : '▼ VOIR LE RELEVÉ'}</div>
       </div>
+      ${buildCategoryLedgerHtml('livraisons', 'blue-accent', delEntries, monthPay)}
     `;
 
     delContainer.innerHTML = buildCategoryHeaderAndNav('LIVRAISONS', 'blue-accent', metricsHtml, fuelMonthBoxHtml);
   }
 
-  // --- 3. ONGLET POURBOIRES (COMPTEUR DU MOIS UNIQUEMENT) ---
+  // --- 3. ONGLET POURBOIRES (COMPTEUR DU MOIS + RELEVÉ DÉROULANT) ---
   const tipContainer = document.getElementById('pourboires-view-content');
   if (tipContainer) {
     let monthCount = 0, monthPay = 0, monthMaxTip = 0;
+    const tipEntries = [];
 
     activeShifts.forEach(item => {
       const tipP = getItemTipPay(item);
@@ -1411,16 +1488,21 @@ function renderCategoryViews() {
         monthCount++;
         monthPay += tipP;
         if (tipP > monthMaxTip) monthMaxTip = tipP;
+        const label = item.note ? item.note : 'Pourboire';
+        tipEntries.push({ id: item.id, date: item.date, label, amount: tipP });
       }
     });
 
     const avgTip = monthCount > 0 ? (monthPay / monthCount) : 0;
+    const isTipOpen = Boolean(categoryLedgerState.pourboires);
     const metricsHtml = `
-      <div class="stat-card tip-card">
+      <div class="stat-card tip-card stat-card-clickable cat-ledger-trigger${isTipOpen ? ' is-open' : ''}" role="button" tabindex="0" aria-expanded="${isTipOpen ? 'true' : 'false'}" onclick="toggleCategoryLedger('pourboires')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategoryLedger('pourboires');}">
         <span class="stat-title">POURBOIRES DU MOIS</span>
         <div class="stat-value">${monthPay.toFixed(2)} €</div>
         <div class="stat-sub">${monthCount} pourboire${monthCount > 1 ? 's' : ''} • Moy. ${avgTip.toFixed(1)}€ / Max +${monthMaxTip.toFixed(0)}€</div>
+        <div class="cat-ledger-toggle-hint">${isTipOpen ? '▲ MASQUER LE RELEVÉ' : '▼ VOIR LE RELEVÉ'}</div>
       </div>
+      ${buildCategoryLedgerHtml('pourboires', 'green-accent', tipEntries, monthPay)}
     `;
 
     tipContainer.innerHTML = buildCategoryHeaderAndNav('POURBOIRES', 'green-accent', metricsHtml);
