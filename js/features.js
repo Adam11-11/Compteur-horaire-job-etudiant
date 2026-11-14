@@ -715,7 +715,7 @@ function openPrintablePaySheet() {
   if (recap.totalDelFuelEst > 0) delSummaryExtras.push(`ess. ~${recap.totalDelFuelEst.toFixed(2)} €`);
   const delSummarySuffix = delSummaryExtras.length > 0 ? ` • ${delSummaryExtras.join(' • ')}` : '';
   const fuelFootnoteHtml = recap.vehicle && recap.totalDelKm > 0
-    ? `<div class="sub" style="margin-top:12px;">⛽ <strong>Estimation essence stricte</strong> (${escapeHtml(recap.vehicle.name)}, ${recap.vehicle.consumption.toFixed(1)} L/100km à ${recap.vehicle.fuelPrice.toFixed(2)} €/L) : <strong>~${recap.totalDelFuelEst.toFixed(2)} €</strong> pour ${formatKm(recap.totalDelKm)} aller-retour.</div>`
+    ? `<div class="sub" style="margin-top:12px;">${PX_ICO.fuel} <strong>Estimation essence stricte</strong> (${escapeHtml(recap.vehicle.name)}, ${recap.vehicle.consumption.toFixed(1)} L/100km à ${recap.vehicle.fuelPrice.toFixed(2)} €/L) : <strong>~${recap.totalDelFuelEst.toFixed(2)} €</strong> pour ${formatKm(recap.totalDelKm)} aller-retour.</div>`
     : '';
 
   const sheetInnerHtml = `
@@ -1271,8 +1271,8 @@ function renderCategoryViews() {
       ? `<div class="cat-metric-chip"><span class="cat-metric-label">ESSENCE ESTIMÉE</span><strong class="cat-metric-val">~${monthFuelEst.toFixed(2)} €</strong></div>`
       : '';
     const vehBarHtml = vehicle
-      ? `<div class="cat-veh-bar"><span>⛽ ${escapeHtml(vehicle.name)} (${vehicle.consumption.toFixed(1)} L/100 × ${vehicle.fuelPrice.toFixed(2)} €/L = ~${getVehicleCostPerKm(vehicle).toFixed(3)} €/km)</span><button type="button" class="cat-veh-config-btn" onclick="openVehicleSettingsModal()">⚙ Modifier véhicule</button></div>`
-      : `<div class="cat-veh-bar"><span>Estime le remboursement essence de tes livraisons :</span><button type="button" class="cat-veh-config-btn" onclick="openVehicleSettingsModal()">⚙ Ajouter mon véhicule</button></div>`;
+      ? `<div class="cat-veh-bar"><span>${PX_ICO.fuel} ${escapeHtml(vehicle.name)} (${vehicle.consumption.toFixed(1)} L/100 × ${vehicle.fuelPrice.toFixed(2)} €/L = ~${getVehicleCostPerKm(vehicle).toFixed(3)} €/km)</span><button type="button" class="cat-veh-config-btn" onclick="openVehicleSettingsModal()">${PX_ICO.gear} Modifier véhicule</button></div>`
+      : `<div class="cat-veh-bar"><span>${PX_ICO.fuel} Estime le remboursement essence de tes livraisons :</span><button type="button" class="cat-veh-config-btn" onclick="openVehicleSettingsModal()">${PX_ICO.gear} Ajouter mon véhicule</button></div>`;
     const metricsHtml = `
       <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} livr.)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
       <div class="cat-metric-chip"><span class="cat-metric-label">DÉTAIL</span><strong class="cat-metric-val">${monthFlatCount} forf. / ${monthLongCount} &gt;2h30</strong></div>

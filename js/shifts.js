@@ -222,14 +222,14 @@ function calculateCurrentForm() {
       if (vehicle && delKm > 0) {
         const est = estimateFuelCost(delKm, vehicle);
         fuelHintEl.classList.remove('is-negative');
-        fuelHintEl.innerHTML = `⛽ Compensation essence estimée (${escapeHtml(vehicle.name)}) : <strong>~${est.toFixed(2)} €</strong> <span style="color:var(--text-muted)">(en plus des +10 € véhicule)</span>`;
+        fuelHintEl.innerHTML = `${PX_ICO.fuel} Compensation essence estimée (${escapeHtml(vehicle.name)}) : <strong>~${est.toFixed(2)} €</strong> <span style="color:var(--text-muted)">(en plus des +10 € véhicule)</span>`;
       } else if (!vehicle) {
         fuelHintEl.classList.remove('is-negative');
-        fuelHintEl.innerHTML = `<button type="button" class="del-vehicle-fuel-setup-link" onclick="openVehicleSettingsModal()">⚙ Configurer mon véhicule pour estimer l'essence</button>`;
+        fuelHintEl.innerHTML = `<button type="button" class="del-vehicle-fuel-setup-link" onclick="openVehicleSettingsModal()">${PX_ICO.gear} Configurer mon véhicule pour estimer l'essence</button>`;
       } else {
         fuelHintEl.classList.remove('is-negative');
         const ratePerKm = getVehicleCostPerKm(vehicle);
-        fuelHintEl.textContent = `Véhicule : ${vehicle.name} (~${ratePerKm.toFixed(3)} €/km). Entre les km pour estimer l'essence.`;
+        fuelHintEl.innerHTML = `${PX_ICO.fuel} Véhicule : ${escapeHtml(vehicle.name)} (~${ratePerKm.toFixed(3)} €/km). Entre les km pour estimer l'essence.`;
       }
     } else {
       fuelHintEl.classList.remove('is-negative');
