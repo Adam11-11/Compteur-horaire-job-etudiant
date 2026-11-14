@@ -83,7 +83,7 @@ header {
 
 .road-stars {
   position: absolute;
-  inset: 0 0 7px 0;
+  inset: 0 20px 7px 20px;
 }
 
 .road-star {
@@ -103,8 +103,8 @@ header {
 
 .road-asphalt {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 6px;
+  right: 6px;
   bottom: 0;
   height: 6px;
   background: #14111b;
@@ -125,10 +125,25 @@ header {
   );
 }
 
+.tunnel-layer {
+  position: absolute;
+  bottom: 0;
+  width: auto;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+.tunnel-left { left: 0; }
+.tunnel-right { right: 0; transform: scaleX(-1); }
+.tunnel-back { z-index: 1; }
+.tunnel-front { z-index: 3; }
+
 .delivery-convoy {
   position: absolute;
-  left: -52px;
+  left: -58px;
   bottom: 3px;
+  z-index: 2;
   display: flex;
   align-items: flex-end;
   animation: convoyCross 9.5s linear infinite;
@@ -144,7 +159,16 @@ header {
 
 .truck-svg {
   display: block;
+  width: 24px;
+  height: 17px;
   filter: drop-shadow(0 0 5px rgba(56, 182, 255, 0.52));
+}
+
+@media (min-width: 768px) {
+  .truck-svg {
+    width: 32px;
+    height: 22px;
+  }
 }
 
 .truck-headlight {
@@ -179,8 +203,8 @@ header {
 .smoke-puff.p3 { animation-delay: 0.6s; }
 
 @keyframes convoyCross {
-  0% { left: -52px; }
-  100% { left: calc(100% + 14px); }
+  0% { left: -58px; }
+  100% { left: calc(100% + 4px); }
 }
 
 @keyframes truckDriveBounce {
@@ -1159,7 +1183,7 @@ textarea:focus {
     text-shadow: none !important;
   }
   .delivery-convoy {
-    left: 16px;
+    left: 26px;
   }
 }
 
