@@ -144,5 +144,5 @@ CREATE POLICY "proofs_delete_own"
 --   SELECT id, email FROM auth.users;
 -- Étape B : Décommente et exécute la ligne suivante en remplaçant par TON email pour rattacher tes anciennes journées :
 --   UPDATE public.shifts
---   SET user_id = (SELECT id FROM auth.users WHERE email = 'TON_EMAIL_ICI' LIMIT 1)
+--   SET user_id = (SELECT id FROM auth.users WHERE LOWER(email) = LOWER('TON_EMAIL_ICI') LIMIT 1)
 --   WHERE user_id IS NULL;
