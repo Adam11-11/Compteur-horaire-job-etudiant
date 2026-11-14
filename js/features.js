@@ -1357,12 +1357,10 @@ function updateVehicleModalPreview() {
   const perKm = (conso / 100) * price;
   const ex30 = Math.round(30 * perKm * 100) / 100;
   const ex60 = Math.round(60 * perKm * 100) / 100;
-  const breakEvenKm = perKm > 0 ? Math.round(DELIVERY_VEHICLE_BONUS / perKm) : 0;
 
   previewEl.innerHTML = `
     <div>Coût essence strict : <strong>${perKm.toFixed(3)} €/km</strong></div>
     <div>Exemple 30 km A/R : <strong>~${ex30.toFixed(2)} €</strong> • 60 km A/R : <strong>~${ex60.toFixed(2)} €</strong></div>
-    <div>Le bonus <strong>+10 € véhicule</strong> couvre l'essence jusqu'à <strong>~${breakEvenKm} km A/R</strong></div>
   `;
 }
 

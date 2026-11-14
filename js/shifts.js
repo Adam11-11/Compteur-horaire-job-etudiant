@@ -221,9 +221,8 @@ function calculateCurrentForm() {
       const vehicle = typeof getPersonalVehicle === 'function' ? getPersonalVehicle() : null;
       if (vehicle && delKm > 0) {
         const est = estimateFuelCost(delKm, vehicle);
-        const netVeh = DELIVERY_VEHICLE_BONUS - est;
-        fuelHintEl.classList.toggle('is-negative', netVeh < 0);
-        fuelHintEl.innerHTML = `⛽ Essence (${escapeHtml(vehicle.name)}) : <strong>~${est.toFixed(2)} €</strong> • Net sur +10 € : <strong>${netVeh >= 0 ? '+' : ''}${netVeh.toFixed(2)} €</strong>`;
+        fuelHintEl.classList.remove('is-negative');
+        fuelHintEl.innerHTML = `⛽ Compensation essence estimée (${escapeHtml(vehicle.name)}) : <strong>~${est.toFixed(2)} €</strong> <span style="color:var(--text-muted)">(en plus des +10 € véhicule)</span>`;
       } else if (!vehicle) {
         fuelHintEl.classList.remove('is-negative');
         fuelHintEl.innerHTML = `<button type="button" class="del-vehicle-fuel-setup-link" onclick="openVehicleSettingsModal()">⚙ Configurer mon véhicule pour estimer l'essence</button>`;
