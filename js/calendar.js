@@ -42,7 +42,9 @@ function initCalendarAndNavigation() {
     if (it.std_break > 0) h += pill('pill-standard', 'Pause non payée : ' + Number(it.std_break) + ' min');
     if (c.del) {
       const dm = it.del_minutes || 0;
-      h += pill('pill-delivery', 'Livraison' + (dm > 150 ? ' (' + formatHoursMin(dm) + ' > 2h30)' : dm > 0 ? ' (' + formatHoursMin(dm) + ')' : ' (Forfait)') + ' = ' + c.dp.toFixed(2) + '€');
+      const dKm = typeof getItemDelKm === 'function' ? getItemDelKm(it) : 0;
+      const kmSuffix = dKm > 0 ? ' • ' + formatKm(dKm) : '';
+      h += pill('pill-delivery', 'Livraison' + (dm > 150 ? ' (' + formatHoursMin(dm) + ' > 2h30)' : dm > 0 ? ' (' + formatHoursMin(dm) + ')' : ' (Forfait)') + kmSuffix + ' = ' + c.dp.toFixed(2) + '€');
     }
     if (c.tp > 0) {
       h += pill('pill-tip', '💰 Pourboire = +' + c.tp.toFixed(2) + '€');

@@ -829,7 +829,8 @@ textarea:focus {
   .auth-card,
   #photo-dialog[open],
   .px-loader i,
-  .live-pulse-dot {
+  .live-pulse-dot,
+  .del-vehicle-km-box.visible {
     animation: none !important;
   }
   .log-item.kind-prest,

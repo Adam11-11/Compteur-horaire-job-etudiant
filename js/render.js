@@ -324,7 +324,9 @@ function renderApp() {
           if (item.has_delivery || delP > 0) {
             const delMin = item.del_minutes || 0;
             const detailDur = delMin > 150 ? ` ${formatHoursMin(delMin)}` : '';
-            delText = `<span class="shift-pill pill-delivery">${PX_ICO.crate} Livr.${detailDur} (${delP.toFixed(0)}€)</span>`;
+            const delKm = typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
+            const kmInfo = delKm > 0 ? ` • ${formatKm(delKm)}` : '';
+            delText = `<span class="shift-pill pill-delivery">${PX_ICO.crate} Livr.${detailDur}${kmInfo} (${delP.toFixed(0)}€)</span>`;
           }
           const tipText = tipP > 0 ? `<span class="shift-pill pill-tip">${PX_ICO.gem} +${tipP.toFixed(2)}€</span>` : '';
           const noteSpan = item.note ? `<span class="compact-note">— ${escapeHtml(item.note)}</span>` : '';

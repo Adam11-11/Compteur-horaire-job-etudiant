@@ -631,7 +631,7 @@ function getCurrentPeriodShiftsDetailed() {
     .filter(s => s.date >= bounds.startYMD && s.date <= bounds.endYMD && !s.is_legacy)
     .sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
-  let totalStdMin = 0, totalStdPay = 0, totalDelCount = 0, totalDelPay = 0, totalTipPay = 0;
+  let totalStdMin = 0, totalStdPay = 0, totalDelCount = 0, totalDelPay = 0, totalDelKm = 0, totalTipPay = 0;
   const lines = inPeriod.map(item => {
     const stdMin = item.std_minutes || 0;
     let stdP = item.std_pay || 0;
@@ -640,12 +640,14 @@ function getCurrentPeriodShiftsDetailed() {
     }
     const delP = item.del_pay || 0;
     const isDel = Boolean(item.has_delivery || delP > 0);
+    const delKm = isDel && typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
     const tipP = getItemTipPay(item);
 
     totalStdMin += stdMin;
     totalStdPay += stdP;
     if (isDel) totalDelCount++;
     totalDelPay += delP;
+    totalDelKm += delKm;
     totalTipPay += tipP;
 
     return {
@@ -655,6 +657,7 @@ function getCurrentPeriodShiftsDetailed() {
       isDel,
       delMin: item.del_minutes || 0,
       delP,
+      delKm,
       tipP,
       employerRowTotal: stdP + delP,
       fullRowTotal: stdP + delP + tipP
@@ -662,6 +665,7 @@ function getCurrentPeriodShiftsDetailed() {
   });
 
   const employerTotal = totalStdPay + totalDelPay;
+  totalDelKm = Math.round(totalDelKm * 10) / 10;
 
   return {
     bounds,
@@ -671,6 +675,7 @@ function getCurrentPeriodShiftsDetailed() {
     totalStdPay,
     totalDelCount,
     totalDelPay,
+    totalDelKm,
     totalTipPay,
     employerTotal,
     advance: 0,
@@ -691,7 +696,7 @@ function openPrintablePaySheet() {
       <td>${escapeHtml(r.item.note || '—')}</td>
       <td>${r.stdMin > 0 ? `${escapeHtml(r.item.std_start)} - ${escapeHtml(r.item.std_end)} (${formatHoursMin(r.stdMin)})` : '—'}</td>
       <td style="text-align:right">${r.stdP.toFixed(2)} €</td>
-      <td style="text-align:right">${r.isDel ? `${r.delP.toFixed(2)} €` : '—'}</td>
+      <td style="text-align:right">${r.isDel ? `${r.delP.toFixed(2)} €${r.delKm > 0 ? ` <small style="color:#666">(${formatKm(r.delKm)})</small>` : ''}` : '—'}</td>
       <td style="text-align:right"><strong>${r.employerRowTotal.toFixed(2)} €</strong></td>
       <td style="text-align:center">${itemHasProof(r.item) ? '✓ Oui' : '—'}</td>
     </tr>
@@ -728,7 +733,7 @@ function openPrintablePaySheet() {
 
   <div class="summary-grid">
     <div class="box"><span>Heures Prestations (${formatHoursMin(recap.totalStdMin)})</span><strong>${recap.totalStdPay.toFixed(2)} €</strong></div>
-    <div class="box"><span>Livraisons (${recap.totalDelCount})</span><strong>${recap.totalDelPay.toFixed(2)} €</strong></div>
+    <div class="box"><span>Livraisons (${recap.totalDelCount}${recap.totalDelKm > 0 ? ` • ${formatKm(recap.totalDelKm)}` : ''})</span><strong>${recap.totalDelPay.toFixed(2)} €</strong></div>
     <div class="box"><span>Total Paie Période</span><strong>${recap.employerTotal.toFixed(2)} €</strong></div>
     <div class="box"><span>${recap.advance > 0 ? `Reste à payer (Acompte -${recap.advance.toFixed(0)}€)` : 'Net à percevoir'}</span><strong>${recap.remainingEmployer.toFixed(2)} €</strong></div>
   </div>
@@ -1190,7 +1195,7 @@ function renderCategoryViews() {
   // --- 2. ONGLET LIVRAISONS ---
   const delContainer = document.getElementById('livraisons-view-content');
   if (delContainer) {
-    let monthCount = 0, monthPay = 0, monthFlatCount = 0, monthLongCount = 0;
+    let monthCount = 0, monthPay = 0, monthFlatCount = 0, monthLongCount = 0, monthKm = 0;
     let allCount = 0, allPay = 0;
     const rows = [];
 
@@ -1200,6 +1205,7 @@ function renderCategoryViews() {
       if (!isDel) return;
 
       const delMin = item.del_minutes || 0;
+      const delKm = typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
       const inPeriod = item.date >= bounds.startYMD && item.date <= bounds.endYMD;
 
       allCount++;
@@ -1208,26 +1214,33 @@ function renderCategoryViews() {
       if (inPeriod) {
         monthCount++;
         monthPay += delP;
+        monthKm += delKm;
         if (delMin > 150) monthLongCount++;
         else monthFlatCount++;
       }
 
       if (categoryScopeMode === 'all' || inPeriod) {
-        rows.push({ item, delMin, delP });
+        rows.push({ item, delMin, delP, delKm });
       }
     });
 
+    monthKm = Math.round(monthKm * 10) / 10;
     const cardsHtml = rows.length === 0
       ? `<div class="empty-state">Aucune livraison sur cette sélection.</div>`
-      : `<div class="log-list">${rows.map(({ item, delMin, delP }, idx) => {
+      : `<div class="log-list">${rows.map(({ item, delMin, delP, delKm }, idx) => {
           const durText = delMin > 150 ? `Longue ${formatHoursMin(delMin)}` : (delMin > 0 ? `${formatHoursMin(delMin)}` : 'Forfait 30€');
-          const pillHtml = `<span class="shift-pill pill-delivery">${PX_ICO.crate} ${durText}</span>`;
+          const kmPart = delKm > 0 ? ` • ${formatKm(delKm)}` : '';
+          const pillHtml = `<span class="shift-pill pill-delivery">${PX_ICO.crate} ${durText}${kmPart}</span>`;
           return buildCategoryCardHtml(item, pillHtml, delP, idx);
         }).join('')}</div>`;
 
+    const kmChipHtml = monthKm > 0
+      ? `<div class="cat-metric-chip"><span class="cat-metric-label">KM A/R MOIS</span><strong class="cat-metric-val">${formatKm(monthKm)}</strong></div>`
+      : '';
     const metricsHtml = `
       <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} livr.)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
       <div class="cat-metric-chip"><span class="cat-metric-label">DÉTAIL</span><strong class="cat-metric-val">${monthFlatCount} forf. / ${monthLongCount} &gt;2h30</strong></div>
+      ${kmChipHtml}
     `;
 
     delContainer.innerHTML = `${buildCategoryHeaderAndNav('LIVRAISONS', 'blue-accent', metricsHtml)}${cardsHtml}`;

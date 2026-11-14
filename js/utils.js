@@ -96,7 +96,7 @@ function getWeekInfo(dateStr) {
   };
 }
 
-// --- PREUVE PHOTO & POURBOIRE ---
+// --- PREUVE PHOTO, POURBOIRE & KM VÉHICULE PERSO ---
 function itemHasProof(item) {
   return Boolean(item && item.proof_path);
 }
@@ -107,11 +107,46 @@ function getItemTipPay(item) {
     return item.tip_pay;
   }
   const raw = String(item.proof_url || '');
-  if (raw.startsWith('tip:')) {
-    const val = parseFloat(raw.slice(4));
+  const match = raw.match(/(?:^|\|)tip:([0-9]+(?:\.[0-9]+)?)/);
+  if (match) {
+    const val = parseFloat(match[1]);
     return !isNaN(val) && val > 0 ? val : 0;
   }
   return 0;
+}
+
+function getItemDelKm(item) {
+  if (!item || item.is_legacy) return 0;
+  if (typeof item.del_km === 'number' && !isNaN(item.del_km) && item.del_km > 0) {
+    return item.del_km;
+  }
+  const raw = String(item.proof_url || '');
+  const match = raw.match(/(?:^|\|)km:([0-9]+(?:\.[0-9]+)?)/);
+  if (match) {
+    const val = parseFloat(match[1]);
+    return !isNaN(val) && val > 0 ? val : 0;
+  }
+  return 0;
+}
+
+function formatKm(kmVal) {
+  const num = Number(kmVal) || 0;
+  if (num <= 0) return '';
+  const rounded = Math.round(num * 10) / 10;
+  return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)} km`;
+}
+
+function encodeExtraMetaInProofUrl(tipPay, delKm, hasPhoto) {
+  const parts = [];
+  if (Number(tipPay) > 0) {
+    parts.push(`tip:${Number(tipPay).toFixed(2)}`);
+  }
+  if (Number(delKm) > 0) {
+    const cleanKm = Math.round(Number(delKm) * 10) / 10;
+    parts.push(`km:${Number.isInteger(cleanKm) ? cleanKm : cleanKm.toFixed(1)}`);
+  }
+  if (parts.length > 0) return parts.join('|');
+  return hasPhoto ? 'true' : null;
 }
 
 // --- TOASTS PIXEL ART ---
@@ -171,7 +206,7 @@ function exportCSV() {
   const headers = [
     'Date', 'Jour', 'Note', 'Arrivee Prestation', 'Depart Prestation', 'Pause (min)',
     'Minutes Prestation', 'Gain Prestation (EUR)', 'Livraison', 'Minutes Livraison',
-    'Gain Livraison (EUR)', 'Pourboire (EUR)', 'Gain Total Paie (EUR)', 'Photo sur le site', 'Mois Anterieur'
+    'Km Aller-Retour', 'Gain Livraison (EUR)', 'Pourboire (EUR)', 'Gain Total Paie (EUR)', 'Photo sur le site', 'Mois Anterieur'
   ];
 
   const rows = activeShifts.map(item => {
@@ -182,6 +217,7 @@ function exportCSV() {
       stdP = Math.max(STD_MIN_PAY, (stdMin / 60) * HOURLY_RATE);
     }
     const delP = item.del_pay || 0;
+    const delKm = getItemDelKm(item);
     const tipP = getItemTipPay(item);
     const totalP = isLegacy ? (item.total_pay || stdP) : (stdP + delP);
     const dt = parseYMD(item.date);
@@ -198,6 +234,7 @@ function exportCSV() {
       stdP.toFixed(2),
       (item.has_delivery || delP > 0) ? 'Oui' : 'Non',
       item.del_minutes || 0,
+      delKm > 0 ? delKm : 0,
       delP.toFixed(2),
       tipP.toFixed(2),
       totalP.toFixed(2),

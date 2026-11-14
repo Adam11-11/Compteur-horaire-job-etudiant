@@ -127,8 +127,20 @@ function setDeliveryState(state) {
     document.getElementById('del-duration-min').value = '';
     const vCheck = document.getElementById('del-vehicle-check');
     if (vCheck) vCheck.checked = false;
+    const kmInput = document.getElementById('del-vehicle-km');
+    if (kmInput) kmInput.value = '';
   }
+  syncDeliveryVehicleUI();
   calculateCurrentForm();
+}
+
+function syncDeliveryVehicleUI() {
+  const vCheck = document.getElementById('del-vehicle-check');
+  const kmBox = document.getElementById('del-vehicle-km-box');
+  const kmInput = document.getElementById('del-vehicle-km');
+  const isChecked = Boolean(vCheck && vCheck.checked);
+  if (kmBox) kmBox.classList.toggle('visible', isChecked);
+  if (!isChecked && kmInput) kmInput.value = '';
 }
 
 function toggleDelivery() {
@@ -173,7 +185,7 @@ function calculateCurrentForm() {
   const rawStdPay = (stdMinutes / 60) * HOURLY_RATE;
   const stdPay = stdMinutes > 0 ? Math.max(STD_MIN_PAY, rawStdPay) : 0;
 
-  let delMinutes = 0, delPay = 0, delLabel = 'Pas de livraison';
+  let delMinutes = 0, delPay = 0, delKm = 0, delLabel = 'Pas de livraison';
   if (hasDelivery) {
     const delStart = document.getElementById('del-start').value;
     const delEnd = document.getElementById('del-end').value;
@@ -183,9 +195,16 @@ function calculateCurrentForm() {
 
     const hasPersonalVehicle = Boolean(document.getElementById('del-vehicle-check')?.checked);
     const vehicleBonus = hasPersonalVehicle ? DELIVERY_VEHICLE_BONUS : 0;
+    if (hasPersonalVehicle) {
+      const rawKm = Number(document.getElementById('del-vehicle-km')?.value);
+      if (Number.isFinite(rawKm) && rawKm > 0) {
+        delKm = Math.round(rawKm * 10) / 10;
+      }
+    }
     const hourlyEquivalent = (delMinutes / 60) * HOURLY_RATE;
     delPay = Math.max(DELIVERY_DEFAULT_PAY, hourlyEquivalent) + vehicleBonus;
-    const vehLabel = hasPersonalVehicle ? ' + 10€ véhicule' : '';
+    const kmLabel = delKm > 0 ? ` (${formatKm(delKm)})` : '';
+    const vehLabel = hasPersonalVehicle ? ` + 10€ véhicule${kmLabel}` : '';
 
     if (delMinutes > 150) delLabel = `Livraison longue (${formatHoursMin(delMinutes)} x 12€${vehLabel} = ${delPay.toFixed(2)}€)`;
     else if (delMinutes > 0) delLabel = `Livraison (${formatHoursMin(delMinutes)} -> forfait ${delPay.toFixed(2)}€${vehLabel})`;
@@ -219,15 +238,23 @@ function calculateCurrentForm() {
       animateElementClass(submitBtn, 'btn-ready-pop', 360);
     }
   }
-  return { stdMinutes, stdPay, hasDelivery, delMinutes, delPay, tipPay, totalPay, previewTotal };
+  return { stdMinutes, stdPay, hasDelivery, delMinutes, delPay, delKm, tipPay, totalPay, previewTotal };
 }
 
 function initFormCalculationListeners() {
-  ['std-start', 'std-end', 'std-break', 'del-start', 'del-end', 'del-duration-min', 'del-vehicle-check', 'tip-amount'].forEach(id => {
+  ['std-start', 'std-end', 'std-break', 'del-start', 'del-end', 'del-duration-min', 'del-vehicle-check', 'del-vehicle-km', 'tip-amount'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
-      el.addEventListener('input', calculateCurrentForm);
-      el.addEventListener('change', calculateCurrentForm);
+      if (id === 'del-vehicle-check') {
+        el.addEventListener('change', () => {
+          syncDeliveryVehicleUI();
+          if (typeof playPixelSound === 'function') playPixelSound('toggle');
+          calculateCurrentForm();
+        });
+      } else {
+        el.addEventListener('input', calculateCurrentForm);
+        el.addEventListener('change', calculateCurrentForm);
+      }
     }
   });
 }
@@ -322,7 +349,12 @@ function startEditShift(id) {
     document.getElementById('del-duration-min').value = item.del_minutes ? String(item.del_minutes) : '';
     const baseDelPay = Math.max(DELIVERY_DEFAULT_PAY, ((item.del_minutes || 0) / 60) * HOURLY_RATE);
     const vCheck = document.getElementById('del-vehicle-check');
-    if (vCheck) vCheck.checked = Number(item.del_pay || 0) >= baseDelPay + DELIVERY_VEHICLE_BONUS - 0.01;
+    const existingKm = typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
+    const usedPersonalVehicle = Number(item.del_pay || 0) >= baseDelPay + DELIVERY_VEHICLE_BONUS - 0.01 || existingKm > 0;
+    if (vCheck) vCheck.checked = usedPersonalVehicle;
+    const kmInput = document.getElementById('del-vehicle-km');
+    if (kmInput) kmInput.value = existingKm > 0 ? String(existingKm) : '';
+    syncDeliveryVehicleUI();
   }
 
   const tipEl = document.getElementById('tip-amount');
@@ -409,10 +441,7 @@ async function saveShift(e) {
     ? existingFormProofPath
     : null;
 
-  const encodeTipOrProofUrl = (hasPhoto) => {
-    if (calc.tipPay > 0) return `tip:${calc.tipPay.toFixed(2)}`;
-    return hasPhoto ? 'true' : null;
-  };
+  const encodeTipOrProofUrl = (hasPhoto) => encodeExtraMetaInProofUrl(calc.tipPay, calc.delKm, hasPhoto);
 
   const payload = {
     date: savedDateStr,

@@ -497,3 +497,15 @@ body[data-view="pourboires"] #shift-submit-btn:not(:disabled) {
   cursor: pointer;
   flex-shrink: 0;
 }
+
+.del-vehicle-km-box {
+  display: none;
+  margin-top: 8px;
+  padding-left: 10px;
+  border-left: 3px solid var(--blue-soft);
+}
+
+.del-vehicle-km-box.visible {
+  display: block;
+  animation: fadeSlideDown 0.2s ease-out;
+}
