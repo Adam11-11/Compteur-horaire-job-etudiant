@@ -274,11 +274,11 @@ textarea:focus {
   height: var(--nav-h);
   padding: 4px 2px;
   border-right: 2px solid #09080c;
-  gap: 2px;
-  font-family: 'VT323', monospace;
-  font-size: clamp(11px, 3.2vw, 15px) !important;
-  letter-spacing: 0.2px;
-  line-height: 1;
+  gap: 4px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(8px, 2.35vw, 10px) !important;
+  letter-spacing: 0;
+  line-height: 1.1;
   white-space: nowrap;
   text-align: center;
   color: #d6d0e0;
@@ -343,7 +343,7 @@ textarea:focus {
   margin-top: -8px;
   position: relative;
   z-index: 2;
-  font-size: clamp(13px, 3.7vw, 17px) !important;
+  font-size: clamp(9px, 2.65vw, 11px) !important;
   color: #ffe875;
   background: linear-gradient(180deg, #3c314f 0%, #241e30 100%);
   border-top: 4px solid #ffe875;
