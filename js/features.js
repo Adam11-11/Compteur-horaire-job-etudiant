@@ -698,7 +698,10 @@ function getCurrentPeriodShiftsDetailed() {
     }
     const delP = item.del_pay || 0;
     const isDel = Boolean(item.has_delivery || delP > 0);
+    const delMin = item.del_minutes || 0;
     const delKm = isDel && typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
+    const baseDelPay = isDel ? Math.max(DELIVERY_DEFAULT_PAY, (delMin / 60) * HOURLY_RATE) : 0;
+    const hasPersonalVehicle = isDel && (delKm > 0 || delP >= baseDelPay + DELIVERY_VEHICLE_BONUS - 0.01);
     const delFuelEst = delKm > 0 && vehicle && typeof estimateFuelCost === 'function' ? estimateFuelCost(delKm, vehicle) : 0;
     const tipP = getItemTipPay(item);
 
@@ -715,8 +718,9 @@ function getCurrentPeriodShiftsDetailed() {
       stdMin,
       stdP,
       isDel,
-      delMin: item.del_minutes || 0,
+      delMin,
       delP,
+      hasPersonalVehicle,
       delKm,
       delFuelEst,
       tipP,
@@ -761,35 +765,67 @@ function openPrintablePaySheet() {
   const sheetTitle = workerName ? `Horaire ${workerName} ${monthTitle}` : `Horaire ${monthTitle}`;
 
   let totalHoursMin = 0;
+  let totalFuelPay = 0;
   let totalTheoreticalPay = 0;
+
+  const hasVehicleSection = reportLines.some(r => r.hasPersonalVehicle || r.delKm > 0 || r.delFuelEst > 0);
 
   const rowsHtml = reportLines.map(r => {
     const entryMin = r.stdMin + r.delMin;
+    const rowFuel = r.delFuelEst || 0;
+    const rowPayWithFuel = r.employerRowTotal + rowFuel;
     totalHoursMin += entryMin;
-    totalTheoreticalPay += r.employerRowTotal;
+    totalFuelPay += rowFuel;
+    totalTheoreticalPay += rowPayWithFuel;
 
+    const vehSuffix = r.hasPersonalVehicle
+      ? ` (véh. perso${r.delKm > 0 ? ` • ${formatKm(r.delKm)}` : ''})`
+      : '';
     let typeText = 'Prestation';
     if (r.stdMin > 0 && r.isDel) {
-      typeText = 'Prestation + Livraison';
+      typeText = `Prestation + Livraison${vehSuffix}`;
     } else if (r.isDel) {
-      typeText = 'Livraison';
+      typeText = `Livraison${vehSuffix}`;
     }
 
     const startText = r.stdMin > 0 && r.item.std_start ? escapeHtml(r.item.std_start) : '—';
     const endText = r.stdMin > 0 && r.item.std_end ? escapeHtml(r.item.std_end) : '—';
     const hoursText = entryMin > 0 ? formatHoursMin(entryMin) : '—';
+    const fuelCellHtml = hasVehicleSection
+      ? `<td style="text-align:right">${rowFuel > 0 ? `${rowFuel.toFixed(2)} €` : '—'}</td>`
+      : '';
 
     return `
       <tr>
         <td><strong>${escapeHtml(formatDateWithDayFR(r.item.date))}</strong></td>
-        <td>${typeText}</td>
+        <td>${escapeHtml(typeText)}</td>
         <td style="text-align:center">${startText}</td>
         <td style="text-align:center">${endText}</td>
         <td style="text-align:right">${hoursText}</td>
-        <td style="text-align:right"><strong>${r.employerRowTotal.toFixed(2)} €</strong></td>
+        ${fuelCellHtml}
+        <td style="text-align:right"><strong>${rowPayWithFuel.toFixed(2)} €</strong></td>
       </tr>
     `;
   }).join('');
+
+  const fuelHeaderHtml = hasVehicleSection
+    ? `<th style="text-align:right">Essence</th>`
+    : '';
+  const fuelTotalCellHtml = hasVehicleSection
+    ? `<td style="text-align:right"><strong>${totalFuelPay > 0 ? `${totalFuelPay.toFixed(2)} €` : '—'}</strong></td>`
+    : '';
+
+  let vehicleFooterNote = '';
+  if (hasVehicleSection) {
+    if (recap.vehicle && totalFuelPay > 0) {
+      const rateKm = typeof getVehicleCostPerKm === 'function' ? getVehicleCostPerKm(recap.vehicle) : 0;
+      vehicleFooterNote = `<p class="pay-sheet-note">Véhicule personnel (${escapeHtml(recap.vehicle.name)}, ${recap.vehicle.consumption.toFixed(1)} L/100 à ${recap.vehicle.fuelPrice.toFixed(2)} €/L ≈ ${rateKm.toFixed(3)} €/km) : +10,00 €/livraison et ${totalFuelPay.toFixed(2)} € d'essence (${formatKm(recap.totalDelKm)}) inclus dans le montant estimé.</p>`;
+    } else if (recap.totalDelKm > 0 && !recap.vehicle) {
+      vehicleFooterNote = `<p class="pay-sheet-note">Livraisons véhicule personnel (${formatKm(recap.totalDelKm)}, +10,00 €/livraison inclus) — configure ton véhicule dans Paramètres pour inclure l'estimation essence.</p>`;
+    } else {
+      vehicleFooterNote = `<p class="pay-sheet-note">Inclut le forfait +10,00 € par livraison effectuée avec véhicule personnel.</p>`;
+    }
+  }
 
   const sheetInnerHtml = `
     <h1>${escapeHtml(sheetTitle)}</h1>
@@ -802,6 +838,7 @@ function openPrintablePaySheet() {
             <th style="text-align:center">Heure d'entrée</th>
             <th style="text-align:center">Heure de sortie</th>
             <th style="text-align:right">Heures cumulées</th>
+            ${fuelHeaderHtml}
             <th style="text-align:right">Montant estimé</th>
           </tr>
         </thead>
@@ -812,11 +849,13 @@ function openPrintablePaySheet() {
           <tr class="pay-sheet-total-row">
             <td colspan="4"><strong>TOTAL</strong></td>
             <td style="text-align:right"><strong>${formatHoursMin(totalHoursMin)}</strong></td>
+            ${fuelTotalCellHtml}
             <td style="text-align:right"><strong>${totalTheoreticalPay.toFixed(2)} €</strong></td>
           </tr>
         </tfoot>
       </table>
     </div>
+    ${vehicleFooterNote}
   `;
 
   const overlay = document.getElementById('pay-sheet-overlay');
