@@ -183,11 +183,13 @@ function initCalendarAndNavigation() {
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
     if (v === 'calendar') renderCalendar(1);
-    if (v === 'counter' || v === 'prestations' || v === 'livraisons' || v === 'pourboires') {
-      if (!preserveEdit && editingShiftId === null && editingLegacyId === null && typeof syncFormForCategoryView === 'function') {
+    if (v === 'counter' || v === 'prestations' || v === 'livraisons' || v === 'pourboires' || v === 'calendar') {
+      if (!preserveEdit && (editingShiftId !== null || editingLegacyId !== null) && typeof cancelEdit === 'function') {
+        cancelEdit();
+      } else if (!preserveEdit && editingShiftId === null && editingLegacyId === null && typeof syncFormForCategoryView === 'function') {
         syncFormForCategoryView(v);
       }
-      if (v !== 'counter' && typeof renderCategoryViews === 'function') renderCategoryViews();
+      if (v !== 'counter' && v !== 'calendar' && typeof renderCategoryViews === 'function') renderCategoryViews();
     }
     if (changed) {
       window.scrollTo(0, 0);

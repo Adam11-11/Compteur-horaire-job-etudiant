@@ -124,8 +124,9 @@ function initAmbientEffects() {
 
 function triggerViewEntrance(viewName) {
   if (prefersReducedMotion()) return;
+  const isEditingOnCounter = document.body.classList.contains('is-editing-shift');
   const viewSections = {
-    counter: window.innerWidth < 768
+    counter: isEditingOnCounter
       ? ['section-form', 'section-period', 'section-history', 'section-global']
       : ['section-period', 'section-history', 'section-global'],
     prestations: ['section-form', 'section-prestations'],

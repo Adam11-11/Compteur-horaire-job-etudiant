@@ -346,33 +346,17 @@ function startEditShift(id) {
   }
 
   const curView = document.body.getAttribute('data-view') || 'counter';
-  let targetView = curView;
-  if (curView === 'calendar' || (curView === 'counter' && window.innerWidth >= 768)) {
-    if ((item.std_minutes || 0) > 0 || (item.std_pay || 0) > 0) {
-      targetView = 'prestations';
-    } else if (item.has_delivery || (item.del_pay || 0) > 0) {
-      targetView = 'livraisons';
-    } else if (getItemTipPay(item) > 0) {
-      targetView = 'pourboires';
-    } else {
-      targetView = 'prestations';
-    }
-    if (typeof window.setView === 'function') {
-      window.setView(targetView, true);
-    }
-  } else if (curView === 'counter' && typeof setCounterQuickFormMode === 'function') {
+  if (curView !== 'counter' && typeof window.setView === 'function') {
+    window.setView('counter', true);
+  }
+  document.body.classList.add('is-editing-shift');
+  if (typeof setCounterQuickFormMode === 'function') {
     setCounterQuickFormMode('all');
   }
 
   editingShiftId = item.id;
   editingLegacyId = null;
-  const editTitleMap = {
-    counter: 'MODIFIER LA JOURNÉE',
-    prestations: 'MODIFIER LA PRESTATION',
-    livraisons: 'MODIFIER LA LIVRAISON',
-    pourboires: 'MODIFIER LE POURBOIRE'
-  };
-  document.getElementById('form-section-title').textContent = editTitleMap[targetView] || 'MODIFIER LA JOURNÉE';
+  document.getElementById('form-section-title').textContent = 'MODIFIER LA JOURNÉE';
   document.getElementById('shift-submit-btn').textContent = 'METTRE À JOUR';
   document.getElementById('shift-cancel-btn').style.display = 'inline-flex';
 
@@ -420,6 +404,7 @@ function startEditShift(id) {
 function cancelEdit() {
   editingShiftId = null;
   editingLegacyId = null;
+  document.body.classList.remove('is-editing-shift');
   document.getElementById('shift-submit-btn').textContent = 'ENREGISTRER';
   document.getElementById('shift-cancel-btn').style.display = 'none';
 
