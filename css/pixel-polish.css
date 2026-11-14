@@ -1246,3 +1246,154 @@ body {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
+
+/* =====================================================================
+   ÉCRAN DE CHARGEMENT RAPIDE AU LANCEMENT (~1s) AVEC LOGO SCINTILLANT
+   ===================================================================== */
+.app-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 42%, #2b2338 0%, #15121c 68%, #0b090f 100%);
+  opacity: 1;
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.app-splash.is-hiding {
+  opacity: 0;
+  transform: scale(1.03);
+  pointer-events: none;
+}
+
+.splash-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+
+.splash-logo-wrap {
+  position: relative;
+  width: 118px;
+  height: 118px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splash-halo {
+  position: absolute;
+  inset: 6px;
+  background: radial-gradient(circle, rgba(255, 226, 110, 0.48) 0%, rgba(229, 181, 103, 0.14) 55%, transparent 74%);
+  animation: splashHaloPulse 0.9s ease-in-out infinite alternate;
+}
+
+.splash-paella-logo {
+  position: relative;
+  z-index: 2;
+  width: 92px;
+  height: 92px;
+  filter:
+    drop-shadow(0 0 14px rgba(255, 232, 117, 0.78))
+    drop-shadow(0 6px 0 #09080c);
+  animation: splashPanSparkle 0.85s ease-in-out infinite;
+}
+
+.splash-glint {
+  position: absolute;
+  z-index: 3;
+  width: 6px;
+  height: 6px;
+  background: #ffffff;
+  box-shadow: 0 0 8px 2px #ffe875;
+  animation: splashGlintTwinkle 0.65s steps(2) infinite;
+}
+
+.splash-glint::before,
+.splash-glint::after {
+  content: "";
+  position: absolute;
+  background: #ffe875;
+}
+
+.splash-glint::before {
+  width: 12px;
+  height: 2px;
+  left: -3px;
+  top: 2px;
+}
+
+.splash-glint::after {
+  width: 2px;
+  height: 12px;
+  left: 2px;
+  top: -3px;
+}
+
+.splash-glint.g1 { top: 6px; right: 12px; animation-delay: 0s; }
+.splash-glint.g2 { top: 14px; left: 8px; animation-delay: 0.2s; }
+.splash-glint.g3 { bottom: 14px; right: 8px; animation-delay: 0.4s; }
+.splash-glint.g4 { bottom: 8px; left: 16px; animation-delay: 0.55s; }
+
+.splash-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(13px, 4vw, 18px);
+  color: #fff6d6;
+  letter-spacing: 1px;
+  text-shadow: 3px 3px 0 #09080c, 0 0 14px rgba(255, 226, 110, 0.55);
+}
+
+.splash-bar {
+  width: min(190px, 60vw);
+  height: 10px;
+  background: #100e16;
+  border: 2px solid #f2ece4;
+  box-shadow: 3px 3px 0 #09080c;
+  overflow: hidden;
+  padding: 1px;
+}
+
+.splash-bar-fill {
+  display: block;
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #e5b567 0%, #ffe875 60%, #ffffff 100%);
+  box-shadow: 0 0 8px rgba(255, 232, 117, 0.8);
+  animation: splashBarFill 0.82s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes splashHaloPulse {
+  0% { transform: scale(0.92); opacity: 0.65; }
+  100% { transform: scale(1.1); opacity: 1; }
+}
+
+@keyframes splashPanSparkle {
+  0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 12px rgba(255, 232, 117, 0.72)) drop-shadow(0 6px 0 #09080c); }
+  50% { transform: translateY(-4px) scale(1.06); filter: drop-shadow(0 0 22px rgba(255, 249, 200, 1)) drop-shadow(0 6px 0 #09080c); }
+}
+
+@keyframes splashGlintTwinkle {
+  0%, 100% { transform: scale(0.5); opacity: 0.2; }
+  50% { transform: scale(1.25); opacity: 1; }
+}
+
+@keyframes splashBarFill {
+  0% { width: 8%; }
+  100% { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-halo,
+  .splash-paella-logo,
+  .splash-glint,
+  .splash-bar-fill {
+    animation: none !important;
+  }
+  .splash-bar-fill {
+    width: 100%;
+  }
+}

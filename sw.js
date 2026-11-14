@@ -1,7 +1,7 @@
 // ==========================================
 // SERVICE WORKER — CACHE APP SHELL (OFFLINE-FIRST)
 // ==========================================
-const CACHE_NAME = 'compteur-paella-v72';
+const CACHE_NAME = 'compteur-paella-v73';
 const APP_SHELL = [
   './',
   './index.html',
@@ -17,7 +17,7 @@ const APP_SHELL = [
   './css/calendar.css',
   './css/photos.css',
   './css/features.css?v=172',
-  './css/pixel-polish.css?v=172',
+  './css/pixel-polish.css?v=173',
   './js/config.js',
   './js/audio.js',
   './js/utils.js',
@@ -29,7 +29,7 @@ const APP_SHELL = [
   './js/features.js?v=172',
   './js/ai.js',
   './js/auth.js',
-  './js/main.js'
+  './js/main.js?v=173'
 ];
 
 self.addEventListener('install', (event) => {

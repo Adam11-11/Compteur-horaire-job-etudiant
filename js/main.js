@@ -82,7 +82,17 @@ function initKeyboardVisibilityObserver() {
   document.addEventListener('focusout', () => setTimeout(update, 120));
 }
 
+function dismissAppSplash() {
+  const splash = document.getElementById('app-splash');
+  if (!splash) return;
+  splash.classList.add('is-hiding');
+  setTimeout(() => {
+    splash.style.display = 'none';
+  }, 260);
+}
+
 (function initApp() {
+  setTimeout(dismissAppSplash, 850);
   initKeyboardVisibilityObserver();
   document.addEventListener('click', (e) => {
     const settingsWrap = document.getElementById('header-settings-wrap');
