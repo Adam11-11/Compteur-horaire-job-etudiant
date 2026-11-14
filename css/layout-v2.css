@@ -424,7 +424,7 @@ body[data-view="pourboires"] #shift-submit-btn:not(:disabled) {
   position: absolute;
   right: 0;
   top: calc(100% + 6px);
-  min-width: 185px;
+  min-width: 230px;
   background: var(--bg-panel);
   border: 3px solid var(--white-cream);
   box-shadow: 4px 4px 0 var(--border-shadow);

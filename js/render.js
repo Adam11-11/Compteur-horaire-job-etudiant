@@ -142,6 +142,7 @@ function renderApp() {
 
   let allTotalPay = 0, allLegacyCount = 0;
   let monthStdMin = 0, monthStdPay = 0, monthDelCount = 0, monthDelPay = 0;
+  let monthDelKm = 0, monthFuelEst = 0;
   let monthTipCount = 0, monthTipPay = 0;
   let monthLegacyCount = 0, monthMissingProofs = 0;
   const allWorkedDatesSet = new Set();
@@ -194,7 +195,14 @@ function renderApp() {
       } else {
         monthStdPay += stdP;
         if ((stdMin > 0 || stdP > 0) && item.date) monthStdDatesSet.add(item.date);
-        if (isDel) monthDelCount++;
+        if (isDel) {
+          monthDelCount++;
+          const dKm = typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
+          if (dKm > 0) {
+            monthDelKm += dKm;
+            if (typeof estimateFuelCost === 'function') monthFuelEst += estimateFuelCost(dKm);
+          }
+        }
         monthDelPay += delP;
         if (tipP > 0) {
           monthTipCount++;
@@ -325,7 +333,9 @@ function renderApp() {
             const delMin = item.del_minutes || 0;
             const detailDur = delMin > 150 ? ` ${formatHoursMin(delMin)}` : '';
             const delKm = typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
-            const kmInfo = delKm > 0 ? ` • ${formatKm(delKm)}` : '';
+            const fuelEst = delKm > 0 && typeof estimateFuelCost === 'function' ? estimateFuelCost(delKm) : 0;
+            const fuelTxt = fuelEst > 0 ? ` (~${fuelEst.toFixed(2)}€ ess.)` : '';
+            const kmInfo = delKm > 0 ? ` • ${formatKm(delKm)}${fuelTxt}` : '';
             delText = `<span class="shift-pill pill-delivery">${PX_ICO.crate} Livr.${detailDur}${kmInfo} (${delP.toFixed(0)}€)</span>`;
           }
           const tipText = tipP > 0 ? `<span class="shift-pill pill-tip">${PX_ICO.gem} +${tipP.toFixed(2)}€</span>` : '';
@@ -382,8 +392,14 @@ function renderApp() {
     animateStatIfChanged('month-tip-pay', displayTipPay, 380);
     animateStatIfChanged('month-total-pay', displayTotalPay, 440);
   }
+  monthDelKm = Math.round(monthDelKm * 10) / 10;
+  monthFuelEst = Math.round(monthFuelEst * 100) / 100;
   document.getElementById('month-std-hours').textContent = `${formatHoursMin(monthStdMin)} • Moy. ${formatHoursMin(avgStdMin)}/j`;
-  document.getElementById('month-del-count').textContent = `${monthDelCount} livraison${monthDelCount > 1 ? 's' : ''}`;
+  let delCountLabel = `${monthDelCount} livraison${monthDelCount > 1 ? 's' : ''}`;
+  if (monthDelKm > 0) {
+    delCountLabel += ` • ${formatKm(monthDelKm)}${monthFuelEst > 0 ? ` (~${monthFuelEst.toFixed(2)}€ ess.)` : ''}`;
+  }
+  document.getElementById('month-del-count').textContent = delCountLabel;
   const tipCountEl = document.getElementById('month-tip-count');
   if (tipCountEl) tipCountEl.textContent = `${monthTipCount} pourboire${monthTipCount > 1 ? 's' : ''}`;
 

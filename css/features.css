@@ -1550,6 +1550,144 @@ body.keyboard-open .ai-fab-wrapper {
   }
 }
 
+/* ==========================================
+   12. PARAMÈTRES VÉHICULE & ESTIMATION ESSENCE
+   ========================================== */
+.settings-menu-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.settings-menu-sub {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  line-height: 1.1;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vehicle-modal-card {
+  max-width: 470px;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.veh-explain-box {
+  background: rgba(79, 164, 232, 0.1);
+  border: 2px solid rgba(79, 164, 232, 0.45);
+  padding: 9px 11px;
+  margin-bottom: 12px;
+  font-size: 17px;
+  line-height: 1.3;
+  color: var(--white-cream);
+}
+
+.veh-explain-box strong {
+  color: #80c2f7;
+}
+
+.veh-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.veh-form .input-group input,
+.veh-form .input-group select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: var(--bg-input);
+  border: 2px solid var(--border-soft);
+  color: var(--white-cream);
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+}
+
+.veh-form-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 10px;
+}
+
+@media (max-width: 460px) {
+  .veh-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.veh-field-hint {
+  display: block;
+  margin-top: 3px;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.veh-live-preview {
+  background: var(--bg-input);
+  border: 2px dashed var(--gold-soft);
+  padding: 10px 12px;
+  font-size: 17px;
+  line-height: 1.35;
+  color: var(--white-cream);
+}
+
+.veh-live-preview strong {
+  color: var(--gold-soft);
+}
+
+.veh-live-preview .veh-prev-warn {
+  color: var(--text-muted);
+}
+
+.del-vehicle-fuel-hint {
+  margin-top: 8px;
+  font-size: 17px;
+  line-height: 1.3;
+  color: #80c2f7;
+}
+
+.del-vehicle-fuel-hint.is-negative {
+  color: var(--red-light);
+}
+
+.del-vehicle-fuel-setup-link,
+.cat-veh-config-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 5px 10px;
+  background: var(--bg-input);
+  border: 2px solid var(--border-soft);
+  color: #80c2f7;
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.del-vehicle-fuel-setup-link:hover,
+.cat-veh-config-btn:hover {
+  border-color: #80c2f7;
+}
+
+.cat-veh-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 2px dashed var(--border-soft);
+  font-size: 17px;
+  color: var(--text-muted);
+}
+
 
 
 

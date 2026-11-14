@@ -203,12 +203,39 @@ function calculateCurrentForm() {
     }
     const hourlyEquivalent = (delMinutes / 60) * HOURLY_RATE;
     delPay = Math.max(DELIVERY_DEFAULT_PAY, hourlyEquivalent) + vehicleBonus;
-    const kmLabel = delKm > 0 ? ` (${formatKm(delKm)})` : '';
+    const fuelEstPreview = hasPersonalVehicle && delKm > 0 && typeof estimateFuelCost === 'function'
+      ? estimateFuelCost(delKm)
+      : 0;
+    const kmLabel = delKm > 0 ? ` (${formatKm(delKm)}${fuelEstPreview > 0 ? ` ~${fuelEstPreview.toFixed(2)}€ ess.` : ''})` : '';
     const vehLabel = hasPersonalVehicle ? ` + 10€ véhicule${kmLabel}` : '';
 
     if (delMinutes > 150) delLabel = `Livraison longue (${formatHoursMin(delMinutes)} x 12€${vehLabel} = ${delPay.toFixed(2)}€)`;
     else if (delMinutes > 0) delLabel = `Livraison (${formatHoursMin(delMinutes)} -> forfait ${delPay.toFixed(2)}€${vehLabel})`;
     else delLabel = `Livraison (forfait ${delPay.toFixed(2)}€${vehLabel})`;
+  }
+
+  const fuelHintEl = document.getElementById('del-vehicle-fuel-hint');
+  if (fuelHintEl) {
+    const hasPersonalVehicle = Boolean(document.getElementById('del-vehicle-check')?.checked);
+    if (hasDelivery && hasPersonalVehicle) {
+      const vehicle = typeof getPersonalVehicle === 'function' ? getPersonalVehicle() : null;
+      if (vehicle && delKm > 0) {
+        const est = estimateFuelCost(delKm, vehicle);
+        const netVeh = DELIVERY_VEHICLE_BONUS - est;
+        fuelHintEl.classList.toggle('is-negative', netVeh < 0);
+        fuelHintEl.innerHTML = `⛽ Essence (${escapeHtml(vehicle.name)}) : <strong>~${est.toFixed(2)} €</strong> • Net sur +10 € : <strong>${netVeh >= 0 ? '+' : ''}${netVeh.toFixed(2)} €</strong>`;
+      } else if (!vehicle) {
+        fuelHintEl.classList.remove('is-negative');
+        fuelHintEl.innerHTML = `<button type="button" class="del-vehicle-fuel-setup-link" onclick="openVehicleSettingsModal()">⚙ Configurer mon véhicule pour estimer l'essence</button>`;
+      } else {
+        fuelHintEl.classList.remove('is-negative');
+        const ratePerKm = getVehicleCostPerKm(vehicle);
+        fuelHintEl.textContent = `Véhicule : ${vehicle.name} (~${ratePerKm.toFixed(3)} €/km). Entre les km pour estimer l'essence.`;
+      }
+    } else {
+      fuelHintEl.classList.remove('is-negative');
+      fuelHintEl.innerHTML = '';
+    }
   }
 
   const tipInputEl = document.getElementById('tip-amount');

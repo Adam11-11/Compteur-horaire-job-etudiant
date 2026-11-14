@@ -43,7 +43,9 @@ function initCalendarAndNavigation() {
     if (c.del) {
       const dm = it.del_minutes || 0;
       const dKm = typeof getItemDelKm === 'function' ? getItemDelKm(it) : 0;
-      const kmSuffix = dKm > 0 ? ' • ' + formatKm(dKm) : '';
+      const fuelEst = dKm > 0 && typeof estimateFuelCost === 'function' ? estimateFuelCost(dKm) : 0;
+      const fuelTxt = fuelEst > 0 ? ' (~' + fuelEst.toFixed(2) + '€ ess.)' : '';
+      const kmSuffix = dKm > 0 ? ' • ' + formatKm(dKm) + fuelTxt : '';
       h += pill('pill-delivery', 'Livraison' + (dm > 150 ? ' (' + formatHoursMin(dm) + ' > 2h30)' : dm > 0 ? ' (' + formatHoursMin(dm) + ')' : ' (Forfait)') + kmSuffix + ' = ' + c.dp.toFixed(2) + '€');
     }
     if (c.tp > 0) {

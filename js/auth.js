@@ -293,6 +293,11 @@ function onAuthenticatedSession(session) {
   if (session && session.access_token) {
     savePersistentAuthBackup(session);
   }
+  if (session && session.user && typeof hydrateVehicleFromAuthUser === 'function') {
+    if (hydrateVehicleFromAuthUser(session.user) && typeof updateVehicleSettingsUI === 'function') {
+      updateVehicleSettingsUI();
+    }
+  }
   setAuthState('authenticated', session ? session.user : null);
 
   if (!isAppBooted) {

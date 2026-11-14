@@ -618,6 +618,7 @@ function initNewFeatures() {
     payCheckInp.addEventListener('change', runPayCheckComparison);
   }
 
+  initVehicleSettingsEvents();
   initSupabaseRealtime();
 }
 
@@ -631,7 +632,8 @@ function getCurrentPeriodShiftsDetailed() {
     .filter(s => s.date >= bounds.startYMD && s.date <= bounds.endYMD && !s.is_legacy)
     .sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
-  let totalStdMin = 0, totalStdPay = 0, totalDelCount = 0, totalDelPay = 0, totalDelKm = 0, totalTipPay = 0;
+  const vehicle = typeof getPersonalVehicle === 'function' ? getPersonalVehicle() : null;
+  let totalStdMin = 0, totalStdPay = 0, totalDelCount = 0, totalDelPay = 0, totalDelKm = 0, totalDelFuelEst = 0, totalTipPay = 0;
   const lines = inPeriod.map(item => {
     const stdMin = item.std_minutes || 0;
     let stdP = item.std_pay || 0;
@@ -641,6 +643,7 @@ function getCurrentPeriodShiftsDetailed() {
     const delP = item.del_pay || 0;
     const isDel = Boolean(item.has_delivery || delP > 0);
     const delKm = isDel && typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
+    const delFuelEst = delKm > 0 && vehicle && typeof estimateFuelCost === 'function' ? estimateFuelCost(delKm, vehicle) : 0;
     const tipP = getItemTipPay(item);
 
     totalStdMin += stdMin;
@@ -648,6 +651,7 @@ function getCurrentPeriodShiftsDetailed() {
     if (isDel) totalDelCount++;
     totalDelPay += delP;
     totalDelKm += delKm;
+    totalDelFuelEst += delFuelEst;
     totalTipPay += tipP;
 
     return {
@@ -658,6 +662,7 @@ function getCurrentPeriodShiftsDetailed() {
       delMin: item.del_minutes || 0,
       delP,
       delKm,
+      delFuelEst,
       tipP,
       employerRowTotal: stdP + delP,
       fullRowTotal: stdP + delP + tipP
@@ -666,16 +671,19 @@ function getCurrentPeriodShiftsDetailed() {
 
   const employerTotal = totalStdPay + totalDelPay;
   totalDelKm = Math.round(totalDelKm * 10) / 10;
+  totalDelFuelEst = Math.round(totalDelFuelEst * 100) / 100;
 
   return {
     bounds,
     monthLabel: `${MONTH_NAMES[activePayMonth]} ${activePayYear}`,
+    vehicle,
     lines,
     totalStdMin,
     totalStdPay,
     totalDelCount,
     totalDelPay,
     totalDelKm,
+    totalDelFuelEst,
     totalTipPay,
     employerTotal,
     advance: 0,
@@ -696,11 +704,19 @@ function openPrintablePaySheet() {
       <td>${escapeHtml(r.item.note || '—')}</td>
       <td>${r.stdMin > 0 ? `${escapeHtml(r.item.std_start)} - ${escapeHtml(r.item.std_end)} (${formatHoursMin(r.stdMin)})` : '—'}</td>
       <td style="text-align:right">${r.stdP.toFixed(2)} €</td>
-      <td style="text-align:right">${r.isDel ? `${r.delP.toFixed(2)} €${r.delKm > 0 ? ` <small style="color:#666">(${formatKm(r.delKm)})</small>` : ''}` : '—'}</td>
+      <td style="text-align:right">${r.isDel ? `${r.delP.toFixed(2)} €${r.delKm > 0 ? ` <small style="color:#666">(${formatKm(r.delKm)}${r.delFuelEst > 0 ? ` • ~${r.delFuelEst.toFixed(2)}€ ess.` : ''})</small>` : ''}` : '—'}</td>
       <td style="text-align:right"><strong>${r.employerRowTotal.toFixed(2)} €</strong></td>
       <td style="text-align:center">${itemHasProof(r.item) ? '✓ Oui' : '—'}</td>
     </tr>
   `).join('');
+
+  const delSummaryExtras = [];
+  if (recap.totalDelKm > 0) delSummaryExtras.push(formatKm(recap.totalDelKm));
+  if (recap.totalDelFuelEst > 0) delSummaryExtras.push(`ess. ~${recap.totalDelFuelEst.toFixed(2)} €`);
+  const delSummarySuffix = delSummaryExtras.length > 0 ? ` • ${delSummaryExtras.join(' • ')}` : '';
+  const fuelFootnoteHtml = recap.vehicle && recap.totalDelKm > 0
+    ? `<div class="sub" style="margin-top:12px;">⛽ <strong>Estimation essence stricte</strong> (${escapeHtml(recap.vehicle.name)}, ${recap.vehicle.consumption.toFixed(1)} L/100km à ${recap.vehicle.fuelPrice.toFixed(2)} €/L) : <strong>~${recap.totalDelFuelEst.toFixed(2)} €</strong> pour ${formatKm(recap.totalDelKm)} aller-retour.</div>`
+    : '';
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
@@ -733,7 +749,7 @@ function openPrintablePaySheet() {
 
   <div class="summary-grid">
     <div class="box"><span>Heures Prestations (${formatHoursMin(recap.totalStdMin)})</span><strong>${recap.totalStdPay.toFixed(2)} €</strong></div>
-    <div class="box"><span>Livraisons (${recap.totalDelCount}${recap.totalDelKm > 0 ? ` • ${formatKm(recap.totalDelKm)}` : ''})</span><strong>${recap.totalDelPay.toFixed(2)} €</strong></div>
+    <div class="box"><span>Livraisons (${recap.totalDelCount}${delSummarySuffix})</span><strong>${recap.totalDelPay.toFixed(2)} €</strong></div>
     <div class="box"><span>Total Paie Période</span><strong>${recap.employerTotal.toFixed(2)} €</strong></div>
     <div class="box"><span>${recap.advance > 0 ? `Reste à payer (Acompte -${recap.advance.toFixed(0)}€)` : 'Net à percevoir'}</span><strong>${recap.remainingEmployer.toFixed(2)} €</strong></div>
   </div>
@@ -754,6 +770,7 @@ function openPrintablePaySheet() {
       ${rowsHtml}
     </tbody>
   </table>
+  ${fuelFootnoteHtml}
 </body>
 </html>`;
 
@@ -1085,7 +1102,7 @@ function editFromCategory(id) {
   startEditShift(id);
 }
 
-function buildCategoryHeaderAndNav(titleText, accentClass, summaryMetricsHtml) {
+function buildCategoryHeaderAndNav(titleText, accentClass, summaryMetricsHtml, extraFooterHtml = '') {
   return `
     <div class="cat-summary-strip ${accentClass}">
       <div class="cat-strip-top">
@@ -1103,6 +1120,7 @@ function buildCategoryHeaderAndNav(titleText, accentClass, summaryMetricsHtml) {
       <div class="cat-strip-metrics">
         ${summaryMetricsHtml}
       </div>
+      ${extraFooterHtml}
     </div>
   `;
 }
@@ -1195,7 +1213,8 @@ function renderCategoryViews() {
   // --- 2. ONGLET LIVRAISONS ---
   const delContainer = document.getElementById('livraisons-view-content');
   if (delContainer) {
-    let monthCount = 0, monthPay = 0, monthFlatCount = 0, monthLongCount = 0, monthKm = 0;
+    const vehicle = typeof getPersonalVehicle === 'function' ? getPersonalVehicle() : null;
+    let monthCount = 0, monthPay = 0, monthFlatCount = 0, monthLongCount = 0, monthKm = 0, monthFuelEst = 0;
     let allCount = 0, allPay = 0;
     const rows = [];
 
@@ -1206,6 +1225,9 @@ function renderCategoryViews() {
 
       const delMin = item.del_minutes || 0;
       const delKm = typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
+      const delFuelEst = delKm > 0 && vehicle && typeof estimateFuelCost === 'function'
+        ? estimateFuelCost(delKm, vehicle)
+        : 0;
       const inPeriod = item.date >= bounds.startYMD && item.date <= bounds.endYMD;
 
       allCount++;
@@ -1215,21 +1237,24 @@ function renderCategoryViews() {
         monthCount++;
         monthPay += delP;
         monthKm += delKm;
+        monthFuelEst += delFuelEst;
         if (delMin > 150) monthLongCount++;
         else monthFlatCount++;
       }
 
       if (categoryScopeMode === 'all' || inPeriod) {
-        rows.push({ item, delMin, delP, delKm });
+        rows.push({ item, delMin, delP, delKm, delFuelEst });
       }
     });
 
     monthKm = Math.round(monthKm * 10) / 10;
+    monthFuelEst = Math.round(monthFuelEst * 100) / 100;
     const cardsHtml = rows.length === 0
       ? `<div class="empty-state">Aucune livraison sur cette sélection.</div>`
-      : `<div class="log-list">${rows.map(({ item, delMin, delP, delKm }, idx) => {
+      : `<div class="log-list">${rows.map(({ item, delMin, delP, delKm, delFuelEst }, idx) => {
           const durText = delMin > 150 ? `Longue ${formatHoursMin(delMin)}` : (delMin > 0 ? `${formatHoursMin(delMin)}` : 'Forfait 30€');
-          const kmPart = delKm > 0 ? ` • ${formatKm(delKm)}` : '';
+          const fuelPart = delFuelEst > 0 ? ` • ~${delFuelEst.toFixed(2)}€ ess.` : '';
+          const kmPart = delKm > 0 ? ` • ${formatKm(delKm)}${fuelPart}` : '';
           const pillHtml = `<span class="shift-pill pill-delivery">${PX_ICO.crate} ${durText}${kmPart}</span>`;
           return buildCategoryCardHtml(item, pillHtml, delP, idx);
         }).join('')}</div>`;
@@ -1237,13 +1262,20 @@ function renderCategoryViews() {
     const kmChipHtml = monthKm > 0
       ? `<div class="cat-metric-chip"><span class="cat-metric-label">KM A/R MOIS</span><strong class="cat-metric-val">${formatKm(monthKm)}</strong></div>`
       : '';
+    const fuelChipHtml = vehicle && monthKm > 0
+      ? `<div class="cat-metric-chip"><span class="cat-metric-label">ESSENCE ESTIMÉE</span><strong class="cat-metric-val">~${monthFuelEst.toFixed(2)} €</strong></div>`
+      : '';
+    const vehBarHtml = vehicle
+      ? `<div class="cat-veh-bar"><span>⛽ ${escapeHtml(vehicle.name)} (${vehicle.consumption.toFixed(1)} L/100 × ${vehicle.fuelPrice.toFixed(2)} €/L = ~${getVehicleCostPerKm(vehicle).toFixed(3)} €/km)</span><button type="button" class="cat-veh-config-btn" onclick="openVehicleSettingsModal()">⚙ Modifier véhicule</button></div>`
+      : `<div class="cat-veh-bar"><span>Estime le remboursement essence de tes livraisons :</span><button type="button" class="cat-veh-config-btn" onclick="openVehicleSettingsModal()">⚙ Ajouter mon véhicule</button></div>`;
     const metricsHtml = `
       <div class="cat-metric-chip"><span class="cat-metric-label">MOIS (${monthCount} livr.)</span><strong class="cat-metric-val">${monthPay.toFixed(2)} €</strong></div>
       <div class="cat-metric-chip"><span class="cat-metric-label">DÉTAIL</span><strong class="cat-metric-val">${monthFlatCount} forf. / ${monthLongCount} &gt;2h30</strong></div>
       ${kmChipHtml}
+      ${fuelChipHtml}
     `;
 
-    delContainer.innerHTML = `${buildCategoryHeaderAndNav('LIVRAISONS', 'blue-accent', metricsHtml)}${cardsHtml}`;
+    delContainer.innerHTML = `${buildCategoryHeaderAndNav('LIVRAISONS', 'blue-accent', metricsHtml, vehBarHtml)}${cardsHtml}`;
   }
 
   // --- 3. ONGLET POURBOIRES (TIPS) ---
@@ -1289,6 +1321,162 @@ function renderCategoryViews() {
     tipContainer.innerHTML = `${buildCategoryHeaderAndNav('POURBOIRES', 'green-accent', metricsHtml)}${cardsHtml}`;
   }
 }
+
+// ==========================================
+// 11. PARAMÈTRES VÉHICULE PERSONNEL (ESSENCE STRICT)
+// ==========================================
+let vehPriceManuallyEdited = false;
+
+function updateVehicleSettingsUI() {
+  const statusEl = document.getElementById('settings-vehicle-status');
+  const vehicle = typeof getPersonalVehicle === 'function' ? getPersonalVehicle() : null;
+  if (statusEl) {
+    statusEl.textContent = vehicle
+      ? `${vehicle.name} (${vehicle.consumption.toFixed(1)}L • ${vehicle.fuelPrice.toFixed(2)}€)`
+      : 'Non configuré';
+  }
+  if (typeof calculateCurrentForm === 'function' && document.getElementById('live-details')) {
+    calculateCurrentForm();
+  }
+  if (typeof renderApp === 'function' && typeof activePayYear === 'number' && typeof activePayMonth === 'number' && document.getElementById('log-list')) {
+    renderApp();
+  }
+}
+
+function updateVehicleModalPreview() {
+  const previewEl = document.getElementById('veh-live-preview');
+  if (!previewEl) return;
+  const conso = Math.round((Number(document.getElementById('veh-conso-input')?.value) || 0) * 10) / 10;
+  const price = Math.round((Number(document.getElementById('veh-price-input')?.value) || 0) * 100) / 100;
+
+  if (!(conso > 0) || !(price > 0)) {
+    previewEl.innerHTML = `<span class="veh-prev-warn">Indique ta consommation (L/100km) et le prix au litre pour voir l'estimation instantanée.</span>`;
+    return;
+  }
+
+  const perKm = (conso / 100) * price;
+  const ex30 = Math.round(30 * perKm * 100) / 100;
+  const ex60 = Math.round(60 * perKm * 100) / 100;
+  const breakEvenKm = perKm > 0 ? Math.round(DELIVERY_VEHICLE_BONUS / perKm) : 0;
+
+  previewEl.innerHTML = `
+    <div>Coût essence strict : <strong>${perKm.toFixed(3)} €/km</strong></div>
+    <div>Exemple 30 km A/R : <strong>~${ex30.toFixed(2)} €</strong> • 60 km A/R : <strong>~${ex60.toFixed(2)} €</strong></div>
+    <div>Le bonus <strong>+10 € véhicule</strong> couvre l'essence jusqu'à <strong>~${breakEvenKm} km A/R</strong></div>
+  `;
+}
+
+function onVehicleFuelTypeChange() {
+  const selectEl = document.getElementById('veh-fuel-select');
+  const priceEl = document.getElementById('veh-price-input');
+  if (!selectEl || !priceEl) return;
+  const cfg = typeof FUEL_TYPES_CONFIG !== 'undefined' ? FUEL_TYPES_CONFIG[selectEl.value] : null;
+  if (cfg && selectEl.value !== 'custom' && !vehPriceManuallyEdited) {
+    priceEl.value = cfg.defaultPrice.toFixed(2);
+  }
+  updateVehicleModalPreview();
+}
+
+function openVehicleSettingsModal() {
+  if (typeof toggleHeaderSettingsMenu === 'function') {
+    toggleHeaderSettingsMenu(false);
+  }
+  if (typeof playClickSound === 'function') playClickSound();
+
+  const modal = document.getElementById('vehicle-settings-modal');
+  if (!modal) return;
+
+  const existing = typeof getPersonalVehicle === 'function' ? getPersonalVehicle() : null;
+  const nameEl = document.getElementById('veh-name-input');
+  const fuelEl = document.getElementById('veh-fuel-select');
+  const priceEl = document.getElementById('veh-price-input');
+  const consoEl = document.getElementById('veh-conso-input');
+  const delBtn = document.getElementById('veh-delete-btn');
+
+  if (existing) {
+    if (nameEl) nameEl.value = existing.name === 'Mon véhicule' ? '' : existing.name;
+    if (fuelEl) fuelEl.value = existing.fuelType || 'sp95e10';
+    if (priceEl) priceEl.value = existing.fuelPrice.toFixed(2);
+    if (consoEl) consoEl.value = existing.consumption.toFixed(1);
+    vehPriceManuallyEdited = true;
+    if (delBtn) delBtn.style.display = '';
+  } else {
+    if (nameEl) nameEl.value = '';
+    if (fuelEl) fuelEl.value = 'sp95e10';
+    if (priceEl) priceEl.value = FUEL_TYPES_CONFIG.sp95e10.defaultPrice.toFixed(2);
+    if (consoEl) consoEl.value = '';
+    vehPriceManuallyEdited = false;
+    if (delBtn) delBtn.style.display = 'none';
+  }
+
+  updateVehicleModalPreview();
+  modal.style.display = 'flex';
+
+  setTimeout(() => {
+    const focusTarget = existing ? nameEl : consoEl;
+    if (focusTarget) focusTarget.focus();
+  }, 40);
+}
+
+function closeVehicleSettingsModal() {
+  const modal = document.getElementById('vehicle-settings-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function saveVehicleSettingsFromModal(e) {
+  if (e) e.preventDefault();
+  const raw = {
+    name: document.getElementById('veh-name-input')?.value || '',
+    fuelType: document.getElementById('veh-fuel-select')?.value || 'sp95e10',
+    fuelPrice: document.getElementById('veh-price-input')?.value,
+    consumption: document.getElementById('veh-conso-input')?.value
+  };
+  const clean = typeof sanitizeVehicleData === 'function' ? sanitizeVehicleData(raw) : null;
+  if (!clean) {
+    showToast('Renseigne une consommation (L/100km) et un prix (€/L) valides.', { type: 'warn' });
+    return;
+  }
+
+  persistPersonalVehicleLocal(clean);
+  syncVehicleToSupabase(clean);
+  if (typeof playSaveSuccessSound === 'function') playSaveSuccessSound();
+  closeVehicleSettingsModal();
+  updateVehicleSettingsUI();
+  showToast(`Véhicule enregistré : ${clean.name} (~${getVehicleCostPerKm(clean).toFixed(3)} €/km)`, { type: 'success' });
+}
+
+function deleteVehicleSettingsFromModal() {
+  persistPersonalVehicleLocal(null);
+  syncVehicleToSupabase(null);
+  if (typeof playClickSound === 'function') playClickSound();
+  closeVehicleSettingsModal();
+  updateVehicleSettingsUI();
+  showToast('Véhicule supprimé des paramètres.', { type: 'info' });
+}
+
+function initVehicleSettingsEvents() {
+  const priceEl = document.getElementById('veh-price-input');
+  const consoEl = document.getElementById('veh-conso-input');
+  if (priceEl) {
+    priceEl.addEventListener('input', () => {
+      vehPriceManuallyEdited = true;
+      updateVehicleModalPreview();
+    });
+  }
+  if (consoEl) {
+    consoEl.addEventListener('input', updateVehicleModalPreview);
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('vehicle-settings-modal');
+      if (modal && modal.style.display === 'flex') {
+        closeVehicleSettingsModal();
+      }
+    }
+  });
+  updateVehicleSettingsUI();
+}
+
 
 
 

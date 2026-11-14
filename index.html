@@ -334,6 +334,13 @@
               <svg class="px-ico" width="18" height="18" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="6" y="1" width="4" height="2" fill="#c7c1d4"/><rect x="6" y="13" width="4" height="2" fill="#c7c1d4"/><rect x="1" y="6" width="2" height="4" fill="#c7c1d4"/><rect x="13" y="6" width="2" height="4" fill="#c7c1d4"/><rect x="3" y="3" width="2" height="2" fill="#c7c1d4"/><rect x="11" y="3" width="2" height="2" fill="#c7c1d4"/><rect x="3" y="11" width="2" height="2" fill="#c7c1d4"/><rect x="11" y="11" width="2" height="2" fill="#c7c1d4"/><rect x="4" y="4" width="8" height="8" fill="#c7c1d4"/><rect x="6" y="6" width="4" height="4" fill="#18171c"/></svg>
             </button>
             <div class="header-settings-menu" id="header-settings-menu" role="menu">
+              <button type="button" id="settings-vehicle-btn" class="settings-menu-item" role="menuitem" onclick="openVehicleSettingsModal()">
+                <svg class="px-ico" width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="4" width="8" height="4" fill="#4fa4e8"/><rect x="2" y="7" width="12" height="4" fill="#255a8c"/><rect x="5" y="5" width="6" height="2" fill="#80c2f7"/><rect x="3" y="11" width="3" height="3" fill="#e5b567"/><rect x="10" y="11" width="3" height="3" fill="#e5b567"/></svg>
+                <span class="settings-menu-item-text">
+                  <span>MON VÉHICULE</span>
+                  <small id="settings-vehicle-status" class="settings-menu-sub">Non configuré</small>
+                </span>
+              </button>
               <button type="button" id="auth-logout-btn" class="settings-menu-item danger" role="menuitem" onclick="confirmLogout()">
                 <svg class="px-ico" width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="5" y="2" width="6" height="5" fill="none" stroke="#e5b567" stroke-width="2"/><rect x="3" y="7" width="10" height="7" fill="#d94b57"/><rect x="7" y="9" width="2" height="3" fill="#18171c"/></svg>
                 <span>DÉCONNEXION</span>
@@ -341,7 +348,7 @@
             </div>
           </div>
 
-          <span id="app-version-badge" class="app-version-badge" title="Version de l'application">v1.46</span>
+          <span id="app-version-badge" class="app-version-badge" title="Version de l'application">v1.47</span>
         </div>
       </div>
     </header>
@@ -715,6 +722,7 @@
                     <input type="number" id="del-vehicle-km" min="0" step="0.1" inputmode="decimal"
                       placeholder="Ex: 25" />
                   </div>
+                  <div id="del-vehicle-fuel-hint" class="del-vehicle-fuel-hint" aria-live="polite"></div>
                 </div>
               </div>
             </div>
@@ -884,6 +892,64 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- FENÊTRE MODALE PARAMÈTRES VÉHICULE PERSONNEL (ESTIMATION ESSENCE) -->
+  <div id="vehicle-settings-modal" class="ai-confirm-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="veh-modal-title" onclick="if (event.target === this) closeVehicleSettingsModal()">
+    <div class="pixel-box ai-confirm-card vehicle-modal-card">
+      <div class="ai-confirm-header">
+        <span class="ai-confirm-badge">
+          <svg class="px-ico" width="14" height="14" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><rect x="4" y="4" width="8" height="4" fill="#4fa4e8"/><rect x="2" y="7" width="12" height="4" fill="#255a8c"/><rect x="5" y="5" width="6" height="2" fill="#80c2f7"/><rect x="3" y="11" width="3" height="3" fill="#e5b567"/><rect x="10" y="11" width="3" height="3" fill="#e5b567"/></svg>
+          PARAMÈTRES • ESSENCE
+        </span>
+        <h3 class="pixel-font ai-confirm-title" id="veh-modal-title">MON VÉHICULE PERSONNEL</h3>
+      </div>
+
+      <div class="veh-explain-box">
+        Calcul basé uniquement sur l'<strong>essence réellement consommée</strong> (tarif le plus strict/bas, sans barème d'usure) pour garder une marge large.
+      </div>
+
+      <form id="vehicle-settings-form" onsubmit="saveVehicleSettingsFromModal(event)" class="veh-form">
+        <div class="input-group">
+          <label for="veh-name-input">Nom du véhicule (optionnel)</label>
+          <input type="text" id="veh-name-input" maxlength="40" placeholder="Ex: Clio 4, Peugeot 208..." />
+        </div>
+
+        <div class="veh-form-grid">
+          <div class="input-group">
+            <label for="veh-fuel-select">Carburant</label>
+            <select id="veh-fuel-select" onchange="onVehicleFuelTypeChange()">
+              <option value="sp95e10">SP95-E10 (~1.75 €/L)</option>
+              <option value="sp98">SP98 / SP95 (~1.85 €/L)</option>
+              <option value="diesel">Gazole / Diesel (~1.65 €/L)</option>
+              <option value="e85">E85 Éthanol (~0.85 €/L)</option>
+              <option value="custom">Autre / Libre</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="veh-price-input">Prix du litre (€ / L)</label>
+            <input type="number" id="veh-price-input" min="0.1" max="10" step="0.01" inputmode="decimal" placeholder="Ex: 1.75" required />
+            <span class="veh-field-hint">Prix affiché à la pompe</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="veh-conso-input">Consommation moyenne (L / 100 km)</label>
+          <input type="number" id="veh-conso-input" min="0.5" max="40" step="0.1" inputmode="decimal" placeholder="Ex: 6.5" required />
+          <span class="veh-field-hint">Visible sur ton tableau de bord (mets +0.5 L en ville pour être large)</span>
+        </div>
+
+        <div id="veh-live-preview" class="veh-live-preview" aria-live="polite"></div>
+
+        <div class="ai-confirm-actions">
+          <button type="submit" class="pixel-btn btn-gold ai-confirm-btn-main">✓ ENREGISTRER MON VÉHICULE</button>
+          <div class="ai-confirm-sub-actions">
+            <button type="button" id="veh-delete-btn" class="pixel-btn btn-danger" onclick="deleteVehicleSettingsFromModal()" style="display: none;">✕ SUPPRIMER</button>
+            <button type="button" class="pixel-btn btn-secondary" onclick="closeVehicleSettingsModal()">FERMER</button>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
 

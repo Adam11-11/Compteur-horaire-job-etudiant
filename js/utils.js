@@ -149,6 +149,80 @@ function encodeExtraMetaInProofUrl(tipPay, delKm, hasPhoto) {
   return hasPhoto ? 'true' : null;
 }
 
+// --- VÉHICULE PERSONNEL & ESTIMATION ESSENCE STRICT ---
+const VEHICLE_STORAGE_KEY = 'pixelpay_personal_vehicle_v1';
+const FUEL_TYPES_CONFIG = {
+  sp95e10: { label: 'Essence SP95-E10', defaultPrice: 1.75 },
+  sp98: { label: 'Essence SP98 / SP95', defaultPrice: 1.85 },
+  diesel: { label: 'Gazole / Diesel', defaultPrice: 1.65 },
+  e85: { label: 'Bioéthanol E85', defaultPrice: 0.85 },
+  custom: { label: 'Autre / Tarif libre', defaultPrice: 1.75 }
+};
+
+function sanitizeVehicleData(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const consumption = Math.round((Number(raw.consumption) || 0) * 10) / 10;
+  const fuelPrice = Math.round((Number(raw.fuelPrice) || 0) * 100) / 100;
+  if (!(consumption > 0) || !(fuelPrice > 0)) return null;
+  const fuelType = FUEL_TYPES_CONFIG[raw.fuelType] ? raw.fuelType : 'sp95e10';
+  const name = String(raw.name || '').trim().slice(0, 40) || 'Mon véhicule';
+  return { name, fuelType, consumption, fuelPrice };
+}
+
+function getPersonalVehicle() {
+  try {
+    const raw = window.localStorage.getItem(VEHICLE_STORAGE_KEY);
+    if (!raw) return null;
+    return sanitizeVehicleData(JSON.parse(raw));
+  } catch (e) {
+    return null;
+  }
+}
+
+function getVehicleCostPerKm(vehicle = getPersonalVehicle()) {
+  if (!vehicle) return 0;
+  return (vehicle.consumption / 100) * vehicle.fuelPrice;
+}
+
+function estimateFuelCost(kmVal, vehicle = getPersonalVehicle()) {
+  const km = Number(kmVal) || 0;
+  if (!vehicle || km <= 0) return 0;
+  return Math.round(km * getVehicleCostPerKm(vehicle) * 100) / 100;
+}
+
+function persistPersonalVehicleLocal(vehicle) {
+  try {
+    if (vehicle) {
+      window.localStorage.setItem(VEHICLE_STORAGE_KEY, JSON.stringify(vehicle));
+    } else {
+      window.localStorage.removeItem(VEHICLE_STORAGE_KEY);
+    }
+  } catch (e) {}
+}
+
+async function syncVehicleToSupabase(vehicle) {
+  try {
+    if (typeof supabaseClient === 'undefined' || !navigator.onLine) return;
+    const { data } = await supabaseClient.auth.getSession();
+    if (data && data.session) {
+      await supabaseClient.auth.updateUser({
+        data: { personal_vehicle: vehicle || null }
+      });
+    }
+  } catch (e) {}
+}
+
+function hydrateVehicleFromAuthUser(user) {
+  if (!user || !user.user_metadata) return false;
+  const remoteVeh = sanitizeVehicleData(user.user_metadata.personal_vehicle);
+  const localVeh = getPersonalVehicle();
+  if (remoteVeh && !localVeh) {
+    persistPersonalVehicleLocal(remoteVeh);
+    return true;
+  }
+  return false;
+}
+
 // --- TOASTS PIXEL ART ---
 function dismissToast(toast) {
   if (!toast || !toast.parentNode || toast.classList.contains('toast-leaving')) return;
@@ -203,10 +277,11 @@ function exportCSV() {
     return;
   }
 
+  const vehicle = getPersonalVehicle();
   const headers = [
     'Date', 'Jour', 'Note', 'Arrivee Prestation', 'Depart Prestation', 'Pause (min)',
     'Minutes Prestation', 'Gain Prestation (EUR)', 'Livraison', 'Minutes Livraison',
-    'Km Aller-Retour', 'Gain Livraison (EUR)', 'Pourboire (EUR)', 'Gain Total Paie (EUR)', 'Photo sur le site', 'Mois Anterieur'
+    'Km Aller-Retour', 'Essence Estimee (EUR)', 'Gain Livraison (EUR)', 'Pourboire (EUR)', 'Gain Total Paie (EUR)', 'Photo sur le site', 'Mois Anterieur'
   ];
 
   const rows = activeShifts.map(item => {
@@ -218,6 +293,7 @@ function exportCSV() {
     }
     const delP = item.del_pay || 0;
     const delKm = getItemDelKm(item);
+    const fuelEst = delKm > 0 && vehicle ? estimateFuelCost(delKm, vehicle) : 0;
     const tipP = getItemTipPay(item);
     const totalP = isLegacy ? (item.total_pay || stdP) : (stdP + delP);
     const dt = parseYMD(item.date);
@@ -235,6 +311,7 @@ function exportCSV() {
       (item.has_delivery || delP > 0) ? 'Oui' : 'Non',
       item.del_minutes || 0,
       delKm > 0 ? delKm : 0,
+      fuelEst > 0 ? fuelEst.toFixed(2) : '',
       delP.toFixed(2),
       tipP.toFixed(2),
       totalP.toFixed(2),
