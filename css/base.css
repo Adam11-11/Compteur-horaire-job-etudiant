@@ -16,7 +16,26 @@
   --blue-light: #80c2f7;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; image-rendering: pixelated; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  image-rendering: pixelated;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
 
 body {
   background-color: var(--bg-dark);
