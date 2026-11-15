@@ -22,7 +22,8 @@ body[data-view="pourboires"] #app-content>section:not(#section-pourboires):not(#
 body[data-view="prestations"] #section-form .role-block.delivery,
 body[data-view="prestations"] #section-form .role-block.tip-block,
 body[data-view="counter"] #section-form[data-form-mode="prestations"] .role-block.delivery,
-body[data-view="counter"] #section-form[data-form-mode="prestations"] .role-block.tip-block {
+body[data-view="counter"] #section-form[data-form-mode="prestations"] .role-block.tip-block,
+body[data-view="counter"] #section-form[data-form-mode="all"] .role-block.tip-block {
   display: none;
 }
 

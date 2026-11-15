@@ -230,6 +230,42 @@ function initCalendarAndNavigation() {
     });
   }
 
+  // Swipe gauche/droite sur le calendrier pour changer de mois
+  const calSwipeArea = document.querySelector('#section-calendar .cal-main') || calGridEl;
+  if (calSwipeArea) {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let trackingSwipe = false;
+
+    calSwipeArea.addEventListener('touchstart', e => {
+      if (!e.touches || e.touches.length !== 1) {
+        trackingSwipe = false;
+        return;
+      }
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+      trackingSwipe = true;
+    }, { passive: true });
+
+    calSwipeArea.addEventListener('touchcancel', () => {
+      trackingSwipe = false;
+    }, { passive: true });
+
+    calSwipeArea.addEventListener('touchend', e => {
+      if (!trackingSwipe || !e.changedTouches || !e.changedTouches.length) return;
+      trackingSwipe = false;
+      if (Date.now() - touchStartTime > 700) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.45) {
+        if (typeof playClickSound === 'function') playClickSound();
+        window.calChange(dx < 0 ? 1 : -1);
+      }
+    }, { passive: true });
+  }
+
   // --- NAVIGATION BASSE (Mobile / Tablette) ---
   const links = Array.from(document.querySelectorAll('.bottom-nav a'));
   function setActive() {

@@ -361,14 +361,16 @@ function startEditShift(id) {
   if (curView !== 'counter' && typeof window.setView === 'function') {
     window.setView('counter', true);
   }
+  const existingTip = getItemTipPay(item);
+  const isTipOnlyEntry = (item.std_minutes || 0) <= 0 && !item.has_delivery && !(Number(item.del_pay) > 0) && existingTip > 0;
   document.body.classList.add('is-editing-shift');
   if (typeof setCounterQuickFormMode === 'function') {
-    setCounterQuickFormMode('all');
+    setCounterQuickFormMode(isTipOnlyEntry ? 'pourboires' : 'all');
   }
 
   editingShiftId = item.id;
   editingLegacyId = null;
-  document.getElementById('form-section-title').textContent = 'MODIFIER LA JOURNEE';
+  document.getElementById('form-section-title').textContent = isTipOnlyEntry ? 'MODIFIER LE POURBOIRE' : 'MODIFIER LA JOURNEE';
   document.getElementById('shift-submit-btn').textContent = 'METTRE A JOUR';
   document.getElementById('shift-cancel-btn').style.display = 'inline-flex';
 
@@ -393,7 +395,6 @@ function startEditShift(id) {
   }
 
   const tipEl = document.getElementById('tip-amount');
-  const existingTip = getItemTipPay(item);
   if (tipEl) {
     tipEl.value = existingTip > 0 ? existingTip.toFixed(2) : '';
   }
