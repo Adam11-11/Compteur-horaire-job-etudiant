@@ -1345,9 +1345,10 @@ function buildCategoryHeaderAndNav(titleText, accentClass, summaryMetricsHtml, e
   `;
 }
 
-function buildSingleCategoryHtml(categoryKey, payYear = activePayYear, payMonth = activePayMonth) {
+function buildSingleCategoryHtml(categoryKey, payYear = activePayYear, payMonth = activePayMonth, forceZero = false) {
   const activeShifts = cachedShifts.filter(s => !pendingDeletes.has(s.id) && !s.is_legacy);
   const bounds = getPayPeriodBounds(payYear, payMonth);
+  const formatCatStatVal = (val) => (forceZero ? '0.00 €' : `${val.toFixed(2)} €`);
 
   if (categoryKey === 'prestations') {
     let monthCount = 0, monthMin = 0, monthPay = 0;
@@ -1381,7 +1382,7 @@ function buildSingleCategoryHtml(categoryKey, payYear = activePayYear, payMonth 
     const metricsHtml = `
       <div class="stat-card std-card stat-card-clickable cat-ledger-trigger${isPrestOpen ? ' is-open' : ''}" role="button" tabindex="0" aria-expanded="${isPrestOpen ? 'true' : 'false'}" onclick="toggleCategoryLedger('prestations')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategoryLedger('prestations');}">
         <span class="stat-title">PRESTATIONS DU MOIS (12€/H, MIN. 60€)</span>
-        <div class="stat-value">${monthPay.toFixed(2)} €</div>
+        <div class="stat-value" id="cat-prestations-stat-pay" data-cat-pay="${monthPay.toFixed(2)}">${formatCatStatVal(monthPay)}</div>
         <div class="stat-sub">${monthCount} j • ${formatHoursMin(monthMin)} • Moy. ${formatHoursMin(avgMin)}/j</div>
         <div class="cat-ledger-toggle-hint">${isPrestOpen ? '▲ MASQUER LE RELEVE' : '▼ VOIR LE RELEVE'}</div>
       </div>
@@ -1459,7 +1460,7 @@ function buildSingleCategoryHtml(categoryKey, payYear = activePayYear, payMonth 
     const metricsHtml = `
       <div class="stat-card delivery-card stat-card-clickable cat-ledger-trigger${isDelOpen ? ' is-open' : ''}" role="button" tabindex="0" aria-expanded="${isDelOpen ? 'true' : 'false'}" onclick="toggleCategoryLedger('livraisons')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategoryLedger('livraisons');}">
         <span class="stat-title">LIVRAISONS DU MOIS</span>
-        <div class="stat-value">${monthPay.toFixed(2)} €</div>
+        <div class="stat-value" id="cat-livraisons-stat-pay" data-cat-pay="${monthPay.toFixed(2)}">${formatCatStatVal(monthPay)}</div>
         <div class="stat-sub">${monthCount} livraison${monthCount > 1 ? 's' : ''} • ${monthFlatCount} forf. / ${monthLongCount} &gt;2h30</div>
         <div class="cat-ledger-toggle-hint">${isDelOpen ? '▲ MASQUER LE RELEVE' : '▼ VOIR LE RELEVE'}</div>
       </div>
@@ -1489,7 +1490,7 @@ function buildSingleCategoryHtml(categoryKey, payYear = activePayYear, payMonth 
   const metricsHtml = `
     <div class="stat-card tip-card stat-card-clickable cat-ledger-trigger${isTipOpen ? ' is-open' : ''}" role="button" tabindex="0" aria-expanded="${isTipOpen ? 'true' : 'false'}" onclick="toggleCategoryLedger('pourboires')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleCategoryLedger('pourboires');}">
       <span class="stat-title">POURBOIRES DU MOIS</span>
-      <div class="stat-value">${monthPay.toFixed(2)} €</div>
+      <div class="stat-value" id="cat-pourboires-stat-pay" data-cat-pay="${monthPay.toFixed(2)}">${formatCatStatVal(monthPay)}</div>
       <div class="stat-sub">${monthCount} pourboire${monthCount > 1 ? 's' : ''} • Moy. ${avgTip.toFixed(1)}€ / Max +${monthMaxTip.toFixed(0)}€</div>
       <div class="cat-ledger-toggle-hint">${isTipOpen ? '▲ MASQUER LE RELEVE' : '▼ VOIR LE RELEVE'}</div>
     </div>
@@ -1501,19 +1502,33 @@ function buildSingleCategoryHtml(categoryKey, payYear = activePayYear, payMonth 
 function buildCategorySwipePreview(categoryKey, delta) {
   const d = new Date(activePayYear, activePayMonth + delta, 1, 12, 0, 0);
   const wrap = document.createElement('div');
-  wrap.innerHTML = buildSingleCategoryHtml(categoryKey, d.getFullYear(), d.getMonth());
+  wrap.innerHTML = buildSingleCategoryHtml(categoryKey, d.getFullYear(), d.getMonth(), true);
+  wrap.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
   return wrap;
 }
 
-function renderCategoryViews() {
-  const prestContainer = document.getElementById('prestations-view-content');
-  if (prestContainer) prestContainer.innerHTML = buildSingleCategoryHtml('prestations', activePayYear, activePayMonth);
-
-  const delContainer = document.getElementById('livraisons-view-content');
-  if (delContainer) delContainer.innerHTML = buildSingleCategoryHtml('livraisons', activePayYear, activePayMonth);
-
-  const tipContainer = document.getElementById('pourboires-view-content');
-  if (tipContainer) tipContainer.innerHTML = buildSingleCategoryHtml('pourboires', activePayYear, activePayMonth);
+function renderCategoryViews(animateFromZero = false) {
+  const curView = document.body.getAttribute('data-view');
+  [
+    ['prestations', 'prestations-view-content'],
+    ['livraisons', 'livraisons-view-content'],
+    ['pourboires', 'pourboires-view-content']
+  ].forEach(([catKey, containerId]) => {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    const shouldCountUp = Boolean(animateFromZero) && curView === catKey && !prefersReducedMotion();
+    el.innerHTML = buildSingleCategoryHtml(catKey, activePayYear, activePayMonth, shouldCountUp);
+    if (shouldCountUp && typeof animateValueCounter === 'function') {
+      const valId = `cat-${catKey}-stat-pay`;
+      const valEl = document.getElementById(valId);
+      const targetPay = valEl ? (parseFloat(valEl.getAttribute('data-cat-pay')) || 0) : 0;
+      if (targetPay > 0) {
+        animateValueCounter(valId, 0, targetPay, 420, false);
+      } else if (valEl) {
+        valEl.textContent = '0.00 €';
+      }
+    }
+  });
 }
 
 // ==========================================

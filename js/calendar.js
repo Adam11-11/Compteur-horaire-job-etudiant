@@ -278,7 +278,7 @@ function initCalendarAndNavigation() {
       periodWrap,
       () => document.getElementById('period-swipe-body'),
       dir => (typeof buildPeriodSwipePreview === 'function' ? buildPeriodSwipePreview(dir) : null),
-      dir => { if (typeof changePeriod === 'function') changePeriod(dir); }
+      dir => { if (typeof changePeriod === 'function') changePeriod(dir, true); }
     );
 
     [
@@ -291,7 +291,7 @@ function initCalendarAndNavigation() {
         secEl,
         () => document.getElementById(contentId),
         dir => (typeof buildCategorySwipePreview === 'function' ? buildCategorySwipePreview(catKey, dir) : null),
-        dir => { if (typeof changePeriod === 'function') changePeriod(dir); }
+        dir => { if (typeof changePeriod === 'function') changePeriod(dir, true); }
       );
     });
   }

@@ -1,12 +1,15 @@
 // ==========================================
 // RENDU DE L'APPLICATION, FILTRES & GRAPHIQUE MENSUEL
 // ==========================================
-function changePeriod(delta) {
+function changePeriod(delta, fromSwipe = false) {
   const d = new Date(activePayYear, activePayMonth + delta, 1, 12, 0, 0);
   activePayYear = d.getFullYear();
   activePayMonth = d.getMonth();
+  if (fromSwipe && typeof resetPeriodStatBaseline === 'function') {
+    resetPeriodStatBaseline();
+  }
   triggerPeriodTransition(delta);
-  renderApp();
+  renderApp({ fromSwipe: Boolean(fromSwipe) });
 }
 
 function resetToCurrentPeriod() {
@@ -79,10 +82,10 @@ function buildPeriodSwipePreview(delta) {
         : `J-${diffDays} avant fin (${formatDateWithDayFR(bounds.endYMD)})`;
   setTxt('period-remaining-badge', remText);
 
-  setTxt('month-std-pay', `${monthStdPay.toFixed(2)} €`);
-  setTxt('month-del-pay', `${monthDelPay.toFixed(2)} €`);
-  setTxt('month-tip-pay', `${monthTipPay.toFixed(2)} €`);
-  setTxt('month-total-pay', `${totalPay.toFixed(2)} €`);
+  setTxt('month-std-pay', '0.00 €');
+  setTxt('month-del-pay', '0.00 €');
+  setTxt('month-tip-pay', '0.00 €');
+  setTxt('month-total-pay', '0.00 €');
   setTxt('month-std-hours', `${formatHoursMin(monthStdMin)} • Moy. ${formatHoursMin(avgStdMin)}/j`);
   setTxt('month-del-count', `${monthDelCount} livraison${monthDelCount > 1 ? 's' : ''}`);
   setTxt('month-tip-count', `${monthTipCount} pourboire${monthTipCount > 1 ? 's' : ''}`);
@@ -218,7 +221,7 @@ function toggleGlobalSection() {
 }
 
 // --- RENDU PRINCIPAL ---
-function renderApp() {
+function renderApp(renderOpts = {}) {
   const activeShifts = cachedShifts.filter(s => !pendingDeletes.has(s.id));
   const bounds = getPayPeriodBounds(activePayYear, activePayMonth);
 
@@ -521,7 +524,7 @@ function renderApp() {
     window.renderCalendarView();
   }
   if (typeof renderCategoryViews === 'function') {
-    renderCategoryViews();
+    renderCategoryViews(Boolean(renderOpts && renderOpts.fromSwipe));
   }
 }
 

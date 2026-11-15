@@ -110,13 +110,21 @@ function animateStatIfChanged(elementId, targetVal, duration = 420) {
   lastAnimatedStatValues.set(elementId, nextNum);
 
   if (prefersReducedMotion() || Math.abs(nextNum - prevNum) < 0.01) {
-    if (!activeCountRafs.has(elementId)) {
-      el.textContent = `${nextNum.toFixed(2)} €`;
+    if (typeof activeCountRafs !== 'undefined' && activeCountRafs.has(elementId)) {
+      cancelAnimationFrame(activeCountRafs.get(elementId));
+      activeCountRafs.delete(elementId);
     }
+    el.textContent = `${nextNum.toFixed(2)} €`;
     return;
   }
 
   animateValueCounter(elementId, prevNum, nextNum, duration, false);
+}
+
+function resetPeriodStatBaseline() {
+  ['month-std-pay', 'month-del-pay', 'month-tip-pay', 'month-total-pay'].forEach(id => {
+    lastAnimatedStatValues.set(id, 0);
+  });
 }
 
 function animateMonthlyBars() {
@@ -452,6 +460,7 @@ function animateValueCounter(elementId, fromVal, toVal, duration = 1200, withCoi
 
     const startTime = performance.now();
     let lastTickTime = 0;
+    el.textContent = `${fromVal.toFixed(2)} €`;
 
     const step = (now) => {
       const elapsed = now - startTime;
