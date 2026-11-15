@@ -230,40 +230,30 @@ function initCalendarAndNavigation() {
     });
   }
 
-  // Swipe gauche/droite sur le calendrier pour changer de mois
-  const calSwipeArea = document.querySelector('#section-calendar .cal-main') || calGridEl;
-  if (calSwipeArea) {
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTime = 0;
-    let trackingSwipe = false;
+  // Glissement horizontal interactif sur toutes les zones avec flèches ◀ / ▶
+  if (typeof bindInteractiveSwipe === 'function') {
+    const calMainEl = document.querySelector('#section-calendar .cal-main') || calGridEl;
+    bindInteractiveSwipe(calMainEl, () => [calMainEl], dir => window.calChange(dir));
 
-    calSwipeArea.addEventListener('touchstart', e => {
-      if (!e.touches || e.touches.length !== 1) {
-        trackingSwipe = false;
-        return;
-      }
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      touchStartTime = Date.now();
-      trackingSwipe = true;
-    }, { passive: true });
+    const periodSection = document.getElementById('section-period');
+    bindInteractiveSwipe(
+      periodSection,
+      () => [document.getElementById('period-stats-grid'), document.querySelector('#section-period .period-card')],
+      dir => { if (typeof changePeriod === 'function') changePeriod(dir); }
+    );
 
-    calSwipeArea.addEventListener('touchcancel', () => {
-      trackingSwipe = false;
-    }, { passive: true });
-
-    calSwipeArea.addEventListener('touchend', e => {
-      if (!trackingSwipe || !e.changedTouches || !e.changedTouches.length) return;
-      trackingSwipe = false;
-      if (Date.now() - touchStartTime > 700) return;
-      const dx = e.changedTouches[0].clientX - touchStartX;
-      const dy = e.changedTouches[0].clientY - touchStartY;
-      if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.45) {
-        if (typeof playClickSound === 'function') playClickSound();
-        window.calChange(dx < 0 ? 1 : -1);
-      }
-    }, { passive: true });
+    [
+      ['section-prestations', 'prestations-view-content'],
+      ['section-livraisons', 'livraisons-view-content'],
+      ['section-pourboires', 'pourboires-view-content']
+    ].forEach(([secId, contentId]) => {
+      const secEl = document.getElementById(secId);
+      bindInteractiveSwipe(
+        secEl,
+        () => [document.getElementById(contentId)],
+        dir => { if (typeof changePeriod === 'function') changePeriod(dir); }
+      );
+    });
   }
 
   // --- NAVIGATION BASSE (Mobile / Tablette) ---

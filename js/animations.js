@@ -137,7 +137,10 @@ function triggerPeriodTransition(direction) {
   if (prefersReducedMotion()) return;
   const targets = [
     document.getElementById('period-label-box'),
-    document.getElementById('period-stats-grid')
+    document.getElementById('period-stats-grid'),
+    document.getElementById('prestations-view-content'),
+    document.getElementById('livraisons-view-content'),
+    document.getElementById('pourboires-view-content')
   ];
   const cls = direction >= 0 ? 'period-transition-next' : 'period-transition-prev';
   targets.forEach(el => {
@@ -150,6 +153,192 @@ function triggerPeriodTransition(direction) {
     card.style.setProperty('--card-stagger', `${idx * 45}ms`);
     animateElementClass(card, 'stat-card-pop', 360);
   });
+}
+
+/**
+ * Attache un glissement horizontal interactif qui suit le doigt en temps réel
+ * puis valide ou annule le changement de période/mois à la relâche.
+ */
+function bindInteractiveSwipe(containerEl, getTargets, onCommit) {
+  if (!containerEl || typeof onCommit !== 'function' || containerEl.dataset.swipeBound) return;
+  containerEl.dataset.swipeBound = '1';
+
+  let startX = 0;
+  let startY = 0;
+  let lastX = 0;
+  let lastTime = 0;
+  let velocityX = 0;
+  let currentDx = 0;
+  let lockAxis = null;
+  let isAnimating = false;
+  let suppressClickUntil = 0;
+  let activeTargets = [];
+
+  const getActiveTargets = () => {
+    const raw = typeof getTargets === 'function' ? getTargets() : [containerEl];
+    return (Array.isArray(raw) ? raw : [raw]).filter(Boolean);
+  };
+
+  const resetStyles = (targets) => {
+    targets.forEach(el => {
+      el.style.transition = '';
+      el.style.transform = '';
+      el.style.opacity = '';
+      el.style.willChange = '';
+    });
+  };
+
+  const clearPeriodAnimClasses = (targets) => {
+    targets.forEach(el => {
+      el.classList.remove('period-transition-next', 'period-transition-prev');
+      el.querySelectorAll('.period-transition-next, .period-transition-prev').forEach(child => {
+        child.classList.remove('period-transition-next', 'period-transition-prev');
+      });
+    });
+  };
+
+  containerEl.addEventListener('click', (e) => {
+    if (Date.now() < suppressClickUntil) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
+
+  containerEl.addEventListener('touchstart', (e) => {
+    if (isAnimating || !e.touches || e.touches.length !== 1) {
+      lockAxis = null;
+      return;
+    }
+    if (e.target && e.target.closest('input, textarea, select')) {
+      lockAxis = null;
+      return;
+    }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    lastX = startX;
+    lastTime = Date.now();
+    velocityX = 0;
+    currentDx = 0;
+    lockAxis = null;
+    activeTargets = [];
+  }, { passive: true });
+
+  containerEl.addEventListener('touchmove', (e) => {
+    if (isAnimating || lockAxis === 'v' || !e.touches || e.touches.length !== 1) return;
+    const x = e.touches[0].clientX;
+    const y = e.touches[0].clientY;
+    const dx = x - startX;
+    const dy = y - startY;
+
+    if (lockAxis === null) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dy) >= Math.abs(dx) * 0.95) {
+        lockAxis = 'v';
+        return;
+      }
+      lockAxis = 'h';
+      activeTargets = getActiveTargets();
+      clearPeriodAnimClasses(activeTargets);
+      activeTargets.forEach(el => {
+        el.style.willChange = 'transform, opacity';
+      });
+    }
+
+    if (lockAxis === 'h') {
+      if (e.cancelable) e.preventDefault();
+      const now = Date.now();
+      const dt = Math.max(8, now - lastTime);
+      velocityX = (x - lastX) / dt;
+      lastX = x;
+      lastTime = now;
+
+      const sign = dx < 0 ? -1 : 1;
+      const abs = Math.abs(dx);
+      const damped = abs <= 110 ? dx : sign * (110 + (abs - 110) * 0.35);
+      currentDx = damped;
+
+      const dragOpacity = Math.max(0.68, 1 - Math.abs(damped) / 340);
+      activeTargets.forEach(el => {
+        el.style.transition = 'none';
+        el.style.transform = `translate3d(${damped.toFixed(1)}px, 0, 0)`;
+        el.style.opacity = dragOpacity.toFixed(3);
+      });
+    }
+  }, { passive: false });
+
+  const finishDrag = (cancelled = false) => {
+    if (lockAxis !== 'h') {
+      lockAxis = null;
+      return;
+    }
+    lockAxis = null;
+    suppressClickUntil = Date.now() + 260;
+
+    const targets = activeTargets.length ? activeTargets : getActiveTargets();
+    const absDx = Math.abs(currentDx);
+    const shouldCommit = !cancelled && (absDx >= 54 || (absDx >= 26 && Math.abs(velocityX) >= 0.35 && (velocityX * currentDx > 0)));
+
+    if (!shouldCommit) {
+      isAnimating = true;
+      targets.forEach(el => {
+        el.style.transition = 'transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease';
+        el.style.transform = 'translate3d(0, 0, 0)';
+        el.style.opacity = '1';
+      });
+      setTimeout(() => {
+        resetStyles(targets);
+        isAnimating = false;
+      }, 230);
+      return;
+    }
+
+    const dir = currentDx < 0 ? 1 : -1;
+    if (typeof playClickSound === 'function') playClickSound();
+
+    if (prefersReducedMotion()) {
+      resetStyles(targets);
+      onCommit(dir);
+      return;
+    }
+
+    isAnimating = true;
+    const exitX = dir > 0 ? -105 : 105;
+    targets.forEach(el => {
+      el.style.transition = 'transform 0.095s ease-in, opacity 0.095s ease-in';
+      el.style.transform = `translate3d(${exitX}px, 0, 0)`;
+      el.style.opacity = '0';
+    });
+
+    setTimeout(() => {
+      resetStyles(targets);
+      onCommit(dir);
+
+      const nextTargets = getActiveTargets();
+      clearPeriodAnimClasses(nextTargets);
+      const enterX = dir > 0 ? 48 : -48;
+      nextTargets.forEach(el => {
+        el.style.willChange = 'transform, opacity';
+        el.style.transition = 'none';
+        el.style.transform = `translate3d(${enterX}px, 0, 0)`;
+        el.style.opacity = '0.25';
+      });
+      if (nextTargets[0]) void nextTargets[0].offsetWidth;
+
+      nextTargets.forEach(el => {
+        el.style.transition = 'transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease-out';
+        el.style.transform = 'translate3d(0, 0, 0)';
+        el.style.opacity = '1';
+      });
+
+      setTimeout(() => {
+        resetStyles(nextTargets);
+        isAnimating = false;
+      }, 230);
+    }, 95);
+  };
+
+  containerEl.addEventListener('touchend', () => finishDrag(false), { passive: true });
+  containerEl.addEventListener('touchcancel', () => finishDrag(true), { passive: true });
 }
 
 function scrollToTotalCardAndWait() {

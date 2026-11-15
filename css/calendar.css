@@ -53,6 +53,15 @@ body[data-view="counter"] #section-form[data-form-mode="pourboires"] #form-photo
   display: none !important;
 }
 
+#section-period,
+#section-prestations,
+#section-livraisons,
+#section-pourboires,
+#section-calendar {
+  overflow-x: clip;
+  touch-action: pan-y;
+}
+
 .cal-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
