@@ -91,28 +91,19 @@ function initCalendarAndNavigation() {
     }
   }
 
-  function renderCalendar(dir) {
-    const grid = document.getElementById('cal-grid');
-    if (!grid) return;
-    const today = toYMD(new Date());
-    if (calY === undefined) {
-      const n0 = new Date();
-      calY = n0.getFullYear();
-      calM = n0.getMonth();
-      calSel = today;
-    }
-    const d = dataByDate();
-    const ym = calY + '-' + pad(calM + 1);
-    document.getElementById('cal-title').textContent = toPixelCaps(MONTH_NAMES[calM] + ' ' + calY);
-    const lead = (new Date(calY, calM, 1, 12).getDay() + 6) % 7;
-    const days = new Date(calY, calM + 1, 0).getDate();
+  function fillCalendarGridDom(titleEl, statsEl, gridEl, targetY, targetM, d, today, selectedYmd) {
+    if (!titleEl || !statsEl || !gridEl) return;
+    const ym = targetY + '-' + pad(targetM + 1);
+    titleEl.textContent = toPixelCaps(MONTH_NAMES[targetM] + ' ' + targetY);
+    const lead = (new Date(targetY, targetM, 1, 12).getDay() + 6) % 7;
+    const days = new Date(targetY, targetM + 1, 0).getDate();
     const cells = [];
     let nDays = 0, mins = 0, dels = 0;
     for (let i = 0; i < lead; i++) cells.push('<div class="cal-cell out" aria-hidden="true"></div>');
     for (let n = 1; n <= days; n++) {
       const ymd = ym + '-' + pad(n);
       const list = d.map[ymd] || [];
-      const dow = new Date(calY, calM, n, 12).getDay();
+      const dow = new Date(targetY, targetM, n, 12).getDay();
       let cls = 'cal-cell', amt = '', dots = '', tot = 0, tipTot = 0;
       if (dow === 0 || dow === 6) cls += ' weekend';
       if (list.length) {
@@ -137,15 +128,38 @@ function initCalendarAndNavigation() {
         }
       }
       if (ymd === today) cls += ' today';
-      if (ymd === calSel) cls += ' sel';
-      cells.push('<button type="button" class="' + cls + '" data-date="' + ymd + '" aria-pressed="' + (ymd === calSel) + '" aria-label="' +
+      if (selectedYmd && ymd === selectedYmd) cls += ' sel';
+      cells.push('<button type="button" class="' + cls + '" data-date="' + ymd + '" aria-pressed="' + (Boolean(selectedYmd) && ymd === selectedYmd) + '" aria-label="' +
         formatDateWithDayFR(ymd) + (list.length ? ', ' + (tot > 0 ? tot : tipTot).toFixed(2) + ' euros' : ', aucune journée') + '"><span class="cal-top"><span class="cal-num">' + n +
         '</span><span class="cal-dots">' + dots + '</span></span>' + amt + '</button>');
     }
     while (cells.length % 7) cells.push('<div class="cal-cell out" aria-hidden="true"></div>');
-    grid.innerHTML = cells.join('');
+    gridEl.innerHTML = cells.join('');
     const lg = d.legacy[ym];
-    document.getElementById('cal-stats').innerHTML = stat('JOURS', nDays, 'cal-stat-days') + stat('HEURES', formatHoursMin(mins), 'cal-stat-hours') + stat('LIVRAISONS', dels, 'cal-stat-dels') + (lg ? '<p class="cal-note">Mois importé : +' + lg.toFixed(2) + ' € (sans détail par jour)</p>' : '');
+    statsEl.innerHTML = stat('JOURS', nDays, 'cal-stat-days') + stat('HEURES', formatHoursMin(mins), 'cal-stat-hours') + stat('LIVRAISONS', dels, 'cal-stat-dels') + (lg ? '<p class="cal-note">Mois importé : +' + lg.toFixed(2) + ' € (sans détail par jour)</p>' : '');
+  }
+
+  function renderCalendar(dir) {
+    const grid = document.getElementById('cal-grid');
+    if (!grid) return;
+    const today = toYMD(new Date());
+    if (calY === undefined) {
+      const n0 = new Date();
+      calY = n0.getFullYear();
+      calM = n0.getMonth();
+      calSel = today;
+    }
+    const d = dataByDate();
+    fillCalendarGridDom(
+      document.getElementById('cal-title'),
+      document.getElementById('cal-stats'),
+      grid,
+      calY,
+      calM,
+      d,
+      today,
+      calSel
+    );
     if (dir) {
       grid.classList.remove('period-transition-next', 'period-transition-prev');
       void grid.offsetWidth;
@@ -158,6 +172,25 @@ function initCalendarAndNavigation() {
       }
     }
     renderDetail(d);
+  }
+
+  function buildCalSwipePreview(delta) {
+    const calMainEl = document.querySelector('#section-calendar .cal-main');
+    if (!calMainEl || calY === undefined) return null;
+    const clone = calMainEl.cloneNode(true);
+    const dt = new Date(calY, calM + delta, 1, 12);
+    fillCalendarGridDom(
+      clone.querySelector('#cal-title'),
+      clone.querySelector('#cal-stats'),
+      clone.querySelector('#cal-grid'),
+      dt.getFullYear(),
+      dt.getMonth(),
+      dataByDate(),
+      toYMD(new Date()),
+      null
+    );
+    clone.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+    return clone;
   }
 
   window.renderCalendarView = renderCalendar;
@@ -230,27 +263,34 @@ function initCalendarAndNavigation() {
     });
   }
 
-  // Glissement horizontal interactif sur toutes les zones avec flèches ◀ / ▶
+  // Glissement horizontal interactif avec aperçu du mois voisin sur toutes les vues à flèches ◀ / ▶
   if (typeof bindInteractiveSwipe === 'function') {
     const calMainEl = document.querySelector('#section-calendar .cal-main') || calGridEl;
-    bindInteractiveSwipe(calMainEl, () => [calMainEl], dir => window.calChange(dir));
-
-    const periodSection = document.getElementById('section-period');
     bindInteractiveSwipe(
-      periodSection,
-      () => [document.getElementById('period-stats-grid'), document.querySelector('#section-period .period-card')],
+      calMainEl,
+      () => calMainEl,
+      dir => buildCalSwipePreview(dir),
+      dir => window.calChange(dir)
+    );
+
+    const periodWrap = document.getElementById('period-swipe-wrap');
+    bindInteractiveSwipe(
+      periodWrap,
+      () => document.getElementById('period-swipe-body'),
+      dir => (typeof buildPeriodSwipePreview === 'function' ? buildPeriodSwipePreview(dir) : null),
       dir => { if (typeof changePeriod === 'function') changePeriod(dir); }
     );
 
     [
-      ['section-prestations', 'prestations-view-content'],
-      ['section-livraisons', 'livraisons-view-content'],
-      ['section-pourboires', 'pourboires-view-content']
-    ].forEach(([secId, contentId]) => {
+      ['section-prestations', 'prestations-view-content', 'prestations'],
+      ['section-livraisons', 'livraisons-view-content', 'livraisons'],
+      ['section-pourboires', 'pourboires-view-content', 'pourboires']
+    ].forEach(([secId, contentId, catKey]) => {
       const secEl = document.getElementById(secId);
       bindInteractiveSwipe(
         secEl,
-        () => [document.getElementById(contentId)],
+        () => document.getElementById(contentId),
+        dir => (typeof buildCategorySwipePreview === 'function' ? buildCategorySwipePreview(catKey, dir) : null),
         dir => { if (typeof changePeriod === 'function') changePeriod(dir); }
       );
     });

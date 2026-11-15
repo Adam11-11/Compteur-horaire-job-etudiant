@@ -157,9 +157,9 @@ function triggerPeriodTransition(direction) {
 
 /**
  * Attache un glissement horizontal interactif qui suit le doigt en temps réel
- * puis valide ou annule le changement de période/mois à la relâche.
+ * avec prévisualisation directe du mois voisin à côté pendant le geste.
  */
-function bindInteractiveSwipe(containerEl, getTargets, onCommit) {
+function bindInteractiveSwipe(containerEl, getTargetEl, buildPreviewClone, onCommit) {
   if (!containerEl || typeof onCommit !== 'function' || containerEl.dataset.swipeBound) return;
   containerEl.dataset.swipeBound = '1';
 
@@ -169,32 +169,61 @@ function bindInteractiveSwipe(containerEl, getTargets, onCommit) {
   let lastTime = 0;
   let velocityX = 0;
   let currentDx = 0;
+  let stepPx = 320;
   let lockAxis = null;
   let isAnimating = false;
   let suppressClickUntil = 0;
-  let activeTargets = [];
+  let activeEl = null;
+  let previewGhost = null;
+  let previewDir = 0;
 
-  const getActiveTargets = () => {
-    const raw = typeof getTargets === 'function' ? getTargets() : [containerEl];
-    return (Array.isArray(raw) ? raw : [raw]).filter(Boolean);
+  const resolveTarget = () => (typeof getTargetEl === 'function' ? getTargetEl() : containerEl);
+
+  const clearInline = (el) => {
+    if (!el) return;
+    el.style.transition = '';
+    el.style.transform = '';
+    el.style.opacity = '';
+    el.style.willChange = '';
   };
 
-  const resetStyles = (targets) => {
-    targets.forEach(el => {
-      el.style.transition = '';
-      el.style.transform = '';
-      el.style.opacity = '';
-      el.style.willChange = '';
+  const clearPeriodAnimClasses = (el) => {
+    if (!el) return;
+    el.classList.remove('period-transition-next', 'period-transition-prev', 'stat-card-pop', 'cal-cell-pop');
+    el.querySelectorAll('.period-transition-next, .period-transition-prev, .stat-card-pop, .cal-cell-pop').forEach(child => {
+      child.classList.remove('period-transition-next', 'period-transition-prev', 'stat-card-pop', 'cal-cell-pop');
     });
   };
 
-  const clearPeriodAnimClasses = (targets) => {
-    targets.forEach(el => {
-      el.classList.remove('period-transition-next', 'period-transition-prev');
-      el.querySelectorAll('.period-transition-next, .period-transition-prev').forEach(child => {
-        child.classList.remove('period-transition-next', 'period-transition-prev');
-      });
-    });
+  const removePreviewGhost = () => {
+    if (previewGhost && previewGhost.parentNode) {
+      previewGhost.parentNode.removeChild(previewGhost);
+    }
+    previewGhost = null;
+    previewDir = 0;
+  };
+
+  const ensurePreviewForDir = (dir) => {
+    if (!activeEl || previewDir === dir && previewGhost) return;
+    removePreviewGhost();
+    if (typeof buildPreviewClone !== 'function') return;
+    const cloned = buildPreviewClone(dir);
+    if (!cloned) return;
+    previewDir = dir;
+    previewGhost = cloned;
+    previewGhost.classList.add('swipe-preview-ghost');
+    previewGhost.setAttribute('aria-hidden', 'true');
+    const hostEl = activeEl.offsetParent || containerEl;
+    const widthPx = activeEl.offsetWidth || containerEl.clientWidth || 300;
+    stepPx = Math.max(widthPx + 14, 200);
+    previewGhost.style.left = `${activeEl.offsetLeft}px`;
+    previewGhost.style.top = `${activeEl.offsetTop}px`;
+    previewGhost.style.width = `${widthPx}px`;
+    previewGhost.style.willChange = 'transform, opacity';
+    previewGhost.style.transition = 'none';
+    previewGhost.style.transform = `translate3d(${dir * stepPx}px, 0, 0)`;
+    previewGhost.style.opacity = '0.65';
+    hostEl.appendChild(previewGhost);
   };
 
   containerEl.addEventListener('click', (e) => {
@@ -220,7 +249,8 @@ function bindInteractiveSwipe(containerEl, getTargets, onCommit) {
     velocityX = 0;
     currentDx = 0;
     lockAxis = null;
-    activeTargets = [];
+    activeEl = null;
+    removePreviewGhost();
   }, { passive: true });
 
   containerEl.addEventListener('touchmove', (e) => {
@@ -237,14 +267,17 @@ function bindInteractiveSwipe(containerEl, getTargets, onCommit) {
         return;
       }
       lockAxis = 'h';
-      activeTargets = getActiveTargets();
-      clearPeriodAnimClasses(activeTargets);
-      activeTargets.forEach(el => {
-        el.style.willChange = 'transform, opacity';
-      });
+      activeEl = resolveTarget();
+      if (!activeEl) {
+        lockAxis = null;
+        return;
+      }
+      clearPeriodAnimClasses(activeEl);
+      activeEl.style.willChange = 'transform, opacity';
+      stepPx = Math.max((activeEl.offsetWidth || containerEl.clientWidth || 300) + 14, 200);
     }
 
-    if (lockAxis === 'h') {
+    if (lockAxis === 'h' && activeEl) {
       if (e.cancelable) e.preventDefault();
       const now = Date.now();
       const dt = Math.max(8, now - lastTime);
@@ -252,41 +285,64 @@ function bindInteractiveSwipe(containerEl, getTargets, onCommit) {
       lastX = x;
       lastTime = now;
 
+      const dragDir = dx < 0 ? 1 : -1;
+      ensurePreviewForDir(dragDir);
+
+      const maxTravel = stepPx * 0.92;
       const sign = dx < 0 ? -1 : 1;
       const abs = Math.abs(dx);
-      const damped = abs <= 110 ? dx : sign * (110 + (abs - 110) * 0.35);
+      const damped = abs <= maxTravel ? dx : sign * (maxTravel + (abs - maxTravel) * 0.25);
       currentDx = damped;
 
-      const dragOpacity = Math.max(0.68, 1 - Math.abs(damped) / 340);
-      activeTargets.forEach(el => {
-        el.style.transition = 'none';
-        el.style.transform = `translate3d(${damped.toFixed(1)}px, 0, 0)`;
-        el.style.opacity = dragOpacity.toFixed(3);
-      });
+      const progress = Math.min(1, Math.abs(damped) / stepPx);
+      activeEl.style.transition = 'none';
+      activeEl.style.transform = `translate3d(${damped.toFixed(1)}px, 0, 0)`;
+      activeEl.style.opacity = (1 - progress * 0.28).toFixed(3);
+
+      if (previewGhost) {
+        const ghostX = damped + previewDir * stepPx;
+        previewGhost.style.transition = 'none';
+        previewGhost.style.transform = `translate3d(${ghostX.toFixed(1)}px, 0, 0)`;
+        previewGhost.style.opacity = Math.min(1, 0.55 + progress * 0.5).toFixed(3);
+      }
     }
   }, { passive: false });
 
   const finishDrag = (cancelled = false) => {
-    if (lockAxis !== 'h') {
+    if (lockAxis !== 'h' || !activeEl) {
       lockAxis = null;
       return;
     }
     lockAxis = null;
     suppressClickUntil = Date.now() + 260;
 
-    const targets = activeTargets.length ? activeTargets : getActiveTargets();
     const absDx = Math.abs(currentDx);
-    const shouldCommit = !cancelled && (absDx >= 54 || (absDx >= 26 && Math.abs(velocityX) >= 0.35 && (velocityX * currentDx > 0)));
+    const thresholdPx = Math.min(72, stepPx * 0.2);
+    const shouldCommit = !cancelled && (
+      absDx >= thresholdPx ||
+      (absDx >= 26 && Math.abs(velocityX) >= 0.32 && (velocityX * currentDx > 0))
+    );
 
     if (!shouldCommit) {
       isAnimating = true;
-      targets.forEach(el => {
-        el.style.transition = 'transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease';
-        el.style.transform = 'translate3d(0, 0, 0)';
-        el.style.opacity = '1';
-      });
+      const elRef = activeEl;
+      const ghostRef = previewGhost;
+      const ghostExitX = (previewDir || 1) * stepPx;
+
+      elRef.style.transition = 'transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease';
+      elRef.style.transform = 'translate3d(0, 0, 0)';
+      elRef.style.opacity = '1';
+
+      if (ghostRef) {
+        ghostRef.style.transition = 'transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.18s ease';
+        ghostRef.style.transform = `translate3d(${ghostExitX}px, 0, 0)`;
+        ghostRef.style.opacity = '0.4';
+      }
+
       setTimeout(() => {
-        resetStyles(targets);
+        clearInline(elRef);
+        removePreviewGhost();
+        activeEl = null;
         isAnimating = false;
       }, 230);
       return;
@@ -296,45 +352,38 @@ function bindInteractiveSwipe(containerEl, getTargets, onCommit) {
     if (typeof playClickSound === 'function') playClickSound();
 
     if (prefersReducedMotion()) {
-      resetStyles(targets);
+      clearInline(activeEl);
+      removePreviewGhost();
+      activeEl = null;
       onCommit(dir);
       return;
     }
 
     isAnimating = true;
-    const exitX = dir > 0 ? -105 : 105;
-    targets.forEach(el => {
-      el.style.transition = 'transform 0.095s ease-in, opacity 0.095s ease-in';
-      el.style.transform = `translate3d(${exitX}px, 0, 0)`;
-      el.style.opacity = '0';
-    });
+    const elRef = activeEl;
+    const ghostRef = previewGhost;
+    const exitX = -dir * stepPx;
+
+    elRef.style.transition = 'transform 0.19s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.19s ease-out';
+    elRef.style.transform = `translate3d(${exitX}px, 0, 0)`;
+    elRef.style.opacity = '0.2';
+
+    if (ghostRef) {
+      ghostRef.style.transition = 'transform 0.19s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.19s ease-out';
+      ghostRef.style.transform = 'translate3d(0, 0, 0)';
+      ghostRef.style.opacity = '1';
+    }
 
     setTimeout(() => {
-      resetStyles(targets);
+      clearInline(elRef);
       onCommit(dir);
-
-      const nextTargets = getActiveTargets();
-      clearPeriodAnimClasses(nextTargets);
-      const enterX = dir > 0 ? 48 : -48;
-      nextTargets.forEach(el => {
-        el.style.willChange = 'transform, opacity';
-        el.style.transition = 'none';
-        el.style.transform = `translate3d(${enterX}px, 0, 0)`;
-        el.style.opacity = '0.25';
-      });
-      if (nextTargets[0]) void nextTargets[0].offsetWidth;
-
-      nextTargets.forEach(el => {
-        el.style.transition = 'transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease-out';
-        el.style.transform = 'translate3d(0, 0, 0)';
-        el.style.opacity = '1';
-      });
-
-      setTimeout(() => {
-        resetStyles(nextTargets);
-        isAnimating = false;
-      }, 230);
-    }, 95);
+      const freshTarget = resolveTarget();
+      clearPeriodAnimClasses(freshTarget);
+      clearInline(freshTarget);
+      removePreviewGhost();
+      activeEl = null;
+      isAnimating = false;
+    }, 195);
   };
 
   containerEl.addEventListener('touchend', () => finishDrag(false), { passive: true });

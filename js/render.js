@@ -15,6 +15,89 @@ function resetToCurrentPeriod() {
   renderApp();
 }
 
+function buildPeriodSwipePreview(delta) {
+  const bodyEl = document.getElementById('period-swipe-body');
+  if (!bodyEl) return null;
+  const clone = bodyEl.cloneNode(true);
+  const d = new Date(activePayYear, activePayMonth + delta, 1, 12, 0, 0);
+  const y = d.getFullYear();
+  const m = d.getMonth();
+  const bounds = getPayPeriodBounds(y, m);
+  const activeShifts = cachedShifts.filter(s => !pendingDeletes.has(s.id));
+
+  let monthStdMin = 0, monthStdPay = 0, monthDelCount = 0, monthDelPay = 0;
+  let monthTipCount = 0, monthTipPay = 0, monthLegacyCount = 0;
+  const monthWorkedDatesSet = new Set();
+  const monthStdDatesSet = new Set();
+
+  activeShifts.forEach(item => {
+    if (!(item.date >= bounds.startYMD && item.date <= bounds.endYMD)) return;
+    const isLegacy = item.is_legacy === true;
+    const stdMin = item.std_minutes || 0;
+    let stdP = item.std_pay || 0;
+    if (!isLegacy && stdMin > 0 && stdP < STD_MIN_PAY) {
+      stdP = Math.max(STD_MIN_PAY, (stdMin / 60) * HOURLY_RATE);
+    }
+    const delP = item.del_pay || 0;
+    const isDel = item.has_delivery || delP > 0;
+    const tipP = getItemTipPay(item);
+    const employerPay = isLegacy ? Number(item.total_pay || stdP) : (stdP + delP);
+    const hasWork = isLegacy || stdMin > 0 || stdP > 0 || isDel;
+
+    monthStdMin += stdMin;
+    if (isLegacy) {
+      monthStdPay += employerPay;
+      monthLegacyCount++;
+    } else {
+      monthStdPay += stdP;
+      if ((stdMin > 0 || stdP > 0) && item.date) monthStdDatesSet.add(item.date);
+      if (isDel) monthDelCount++;
+      monthDelPay += delP;
+      if (tipP > 0) {
+        monthTipCount++;
+        monthTipPay += tipP;
+      }
+      if (item.date && hasWork) monthWorkedDatesSet.add(item.date);
+    }
+  });
+
+  const avgStdMin = monthStdDatesSet.size > 0 ? Math.round(monthStdMin / monthStdDatesSet.size) : 0;
+  const totalPay = monthStdPay + monthDelPay;
+  const setTxt = (id, txt) => { const n = clone.querySelector('#' + id); if (n) n.textContent = txt; };
+  setTxt('period-title', `PAIE DE ${toPixelCaps(MONTH_NAMES[m])} ${y}`);
+  const rangeEl = clone.querySelector('#period-range-text');
+  if (rangeEl) rangeEl.innerHTML = `Du <strong>${formatDateWithDayFR(bounds.startYMD)}</strong> au <strong>${formatDateWithDayFR(bounds.endYMD)}</strong>`;
+
+  const todayStr = toYMD(new Date());
+  const diffDays = Math.round((bounds.endObj - parseYMD(todayStr)) / 86400000);
+  const remText = todayStr > bounds.endYMD
+    ? `Clôturée le ${formatDateWithDayFR(bounds.endYMD)}`
+    : todayStr < bounds.startYMD
+      ? `Fin prévue le ${formatDateWithDayFR(bounds.endYMD)}`
+      : diffDays === 0
+        ? `Dernier jour ! (Fin ${formatDateFR(bounds.endYMD)})`
+        : `J-${diffDays} avant fin (${formatDateWithDayFR(bounds.endYMD)})`;
+  setTxt('period-remaining-badge', remText);
+
+  setTxt('month-std-pay', `${monthStdPay.toFixed(2)} €`);
+  setTxt('month-del-pay', `${monthDelPay.toFixed(2)} €`);
+  setTxt('month-tip-pay', `${monthTipPay.toFixed(2)} €`);
+  setTxt('month-total-pay', `${totalPay.toFixed(2)} €`);
+  setTxt('month-std-hours', `${formatHoursMin(monthStdMin)} • Moy. ${formatHoursMin(avgStdMin)}/j`);
+  setTxt('month-del-count', `${monthDelCount} livraison${monthDelCount > 1 ? 's' : ''}`);
+  setTxt('month-tip-count', `${monthTipCount} pourboire${monthTipCount > 1 ? 's' : ''}`);
+  let daysLabel = `${monthWorkedDatesSet.size} journée${monthWorkedDatesSet.size > 1 ? 's' : ''} travaillée${monthWorkedDatesSet.size > 1 ? 's' : ''}`;
+  if (monthLegacyCount > 0) daysLabel += ` (+ ${monthLegacyCount} mois importé${monthLegacyCount > 1 ? 's' : ''})`;
+  setTxt('month-total-days', daysLabel);
+
+  const anomEl = clone.querySelector('#period-anomalies-box');
+  if (anomEl) anomEl.innerHTML = '';
+  const comparePanel = clone.querySelector('#paycheck-compare-panel');
+  if (comparePanel) comparePanel.style.display = 'none';
+  clone.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+  return clone;
+}
+
 function setLogFilter(mode, scrollToItem = false) {
   logFilterMode = mode;
   document.getElementById('tab-period')?.classList.toggle('active', mode === 'period');

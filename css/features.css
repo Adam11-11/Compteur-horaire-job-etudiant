@@ -306,29 +306,29 @@ header {
 }
 
 /* Grille des statistiques avec la carte Pourboires */
-#period-stats-grid .tip-card {
+.period-stats-grid .tip-card {
   grid-column: 1 / -1;
 }
 @media (min-width: 640px) {
-  #period-stats-grid {
+  .period-stats-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-  #period-stats-grid .total-card {
+  .period-stats-grid .total-card {
     grid-column: 1 / -1;
   }
-  #period-stats-grid .tip-card {
+  .period-stats-grid .tip-card {
     grid-column: auto;
   }
 }
 @media (min-width: 1024px) {
-  #period-stats-grid {
+  .period-stats-grid {
     grid-template-columns: 1.35fr 1fr;
   }
-  #period-stats-grid .total-card {
+  .period-stats-grid .total-card {
     grid-column: 1;
     grid-row: 1 / span 3;
   }
-  #period-stats-grid .stat-card:not(.total-card) {
+  .period-stats-grid .stat-card:not(.total-card) {
     grid-column: 2;
   }
 }

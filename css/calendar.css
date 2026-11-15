@@ -53,13 +53,22 @@ body[data-view="counter"] #section-form[data-form-mode="pourboires"] #form-photo
   display: none !important;
 }
 
-#section-period,
+.period-swipe-wrap,
 #section-prestations,
 #section-livraisons,
 #section-pourboires,
-#section-calendar {
+#section-calendar .cal-layout {
+  position: relative;
   overflow-x: clip;
   touch-action: pan-y;
+}
+
+.swipe-preview-ghost {
+  position: absolute;
+  pointer-events: none;
+  z-index: 4;
+  margin: 0 !important;
+  box-sizing: border-box;
 }
 
 .cal-layout {
