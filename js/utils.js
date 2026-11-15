@@ -13,6 +13,19 @@ function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
 }
 
+/**
+ * Normalise une chaîne pour la police Press Start 2P : supprime les accents
+ * car ses glyphes majuscules accentués (É, È, Ê, À...) sont plus petits que A-Z.
+ */
+function toPixelCaps(str) {
+  return String(str ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/œ/gi, 'OE')
+    .replace(/æ/gi, 'AE')
+    .toUpperCase();
+}
+
 function parseYMD(dateStr) {
   const [y, m, d] = String(dateStr || '').split('-').map(Number);
   return new Date(y, (m || 1) - 1, d || 1, 12, 0, 0);
@@ -92,7 +105,7 @@ function getWeekInfo(dateStr) {
   const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6, 12, 0, 0);
   return {
     key: toYMD(mon),
-    label: `SEMAINE DU ${formatDateFR(toYMD(mon)).toUpperCase()} AU ${formatDateFR(toYMD(sun)).toUpperCase()}`
+    label: toPixelCaps(`SEMAINE DU ${formatDateFR(toYMD(mon))} AU ${formatDateFR(toYMD(sun))}`)
   };
 }
 

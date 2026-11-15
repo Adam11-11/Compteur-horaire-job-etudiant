@@ -20,7 +20,7 @@ function updateFormPhotoUI() {
   if (formSelectedPhotoFile) {
     block.classList.add('has-photo');
     if (formPhotoPreviewUrl) thumb.src = formPhotoPreviewUrl;
-    title.textContent = '✓ PHOTO PRÊTE';
+    title.textContent = '✓ PHOTO PRETE';
     sub.textContent = `${formSelectedPhotoFile.name || 'Image'} (${Math.max(1, Math.round(formSelectedPhotoFile.size / 1024))} Ko)`;
     sub.style.display = 'block';
     pickBtn.innerHTML = `${CAM_SVG} CHANGER`;

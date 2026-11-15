@@ -37,7 +37,7 @@ function initCalendarAndNavigation() {
   function entryHtml(it, idx) {
     const c = calc(it);
     let h = '<div class="cal-entry">';
-    if (idx || it.note) h += '<div class="cal-entry-head">' + (idx ? '<b>ENTRÉE ' + idx + '</b>' : '') + escapeHtml(it.note || '') + '</div>';
+    if (idx || it.note) h += '<div class="cal-entry-head">' + (idx ? '<b>ENTREE ' + idx + '</b>' : '') + escapeHtml(it.note || '') + '</div>';
     if (c.std > 0) h += pill('pill-standard', 'Prestation : ' + escapeHtml(it.std_start) + ' - ' + escapeHtml(it.std_end) + ' (' + formatHoursMin(c.std) + ') = ' + c.sp.toFixed(2) + '€');
     if (it.std_break > 0) h += pill('pill-standard', 'Pause non payée : ' + Number(it.std_break) + ' min');
     if (c.del) {
@@ -70,13 +70,19 @@ function initCalendarAndNavigation() {
     }
     const list = d.map[calSel] || [];
     const p = getPayPeriodForDateStr(calSel);
-    let h = '<h3 class="cal-detail-title pixel-font">' + escapeHtml(formatDateWithDayFR(calSel)) + '</h3><div class="cal-period">PAIE DE ' + MONTH_NAMES[p.month] + ' ' + p.year + '</div>';
+    let h = '<h3 class="cal-detail-title pixel-font">' + escapeHtml(toPixelCaps(formatDateWithDayFR(calSel))) + '</h3><div class="cal-period">PAIE DE ' + toPixelCaps(MONTH_NAMES[p.month]) + ' ' + p.year + '</div>';
     if (!list.length) {
       h += '<p class="cal-hint">Aucune journée enregistrée.</p><button type="button" class="pixel-btn" onclick="calAdd(\'' + calSel + '\')">+ AJOUTER CE JOUR</button>';
     } else {
-      let tot = 0;
-      list.forEach(it => { tot += calc(it).total; });
-      h += '<div class="cal-day-total">+' + tot.toFixed(2) + ' €</div>';
+      let tot = 0, tipTot = 0;
+      list.forEach(it => { const c = calc(it); tot += c.total; tipTot += c.tp; });
+      if (tot > 0) {
+        h += '<div class="cal-day-total">+' + tot.toFixed(2) + ' €</div>';
+      } else if (tipTot > 0) {
+        h += '<div class="cal-day-total cal-day-total-tip">+' + tipTot.toFixed(2) + ' € <span class="cal-tip-tag">(pourboire)</span></div>';
+      } else {
+        h += '<div class="cal-day-total">+0.00 €</div>';
+      }
       list.forEach((it, i) => { h += entryHtml(it, list.length > 1 ? i + 1 : 0); });
     }
     el.innerHTML = h;
@@ -97,7 +103,7 @@ function initCalendarAndNavigation() {
     }
     const d = dataByDate();
     const ym = calY + '-' + pad(calM + 1);
-    document.getElementById('cal-title').textContent = MONTH_NAMES[calM] + ' ' + calY;
+    document.getElementById('cal-title').textContent = toPixelCaps(MONTH_NAMES[calM] + ' ' + calY);
     const lead = (new Date(calY, calM, 1, 12).getDay() + 6) % 7;
     const days = new Date(calY, calM + 1, 0).getDate();
     const cells = [];
@@ -106,12 +112,15 @@ function initCalendarAndNavigation() {
     for (let n = 1; n <= days; n++) {
       const ymd = ym + '-' + pad(n);
       const list = d.map[ymd] || [];
-      let cls = 'cal-cell', amt = '', dots = '', tot = 0;
+      const dow = new Date(calY, calM, n, 12).getDay();
+      let cls = 'cal-cell', amt = '', dots = '', tot = 0, tipTot = 0;
+      if (dow === 0 || dow === 6) cls += ' weekend';
       if (list.length) {
         let hasStd = false, hasDel = false, hasTip = false, hasPhoto = false;
         list.forEach(it => {
           const c = calc(it);
           tot += c.total;
+          tipTot += c.tp;
           mins += c.std;
           if (c.std > 0) hasStd = true;
           if (c.del) { hasDel = true; dels++; }
@@ -121,18 +130,22 @@ function initCalendarAndNavigation() {
         nDays++;
         cls += ' worked';
         dots = (hasStd ? '<i class="d"></i>' : '') + (hasDel ? '<i class="d l"></i>' : '') + (hasTip ? '<i class="d t"></i>' : '') + (hasPhoto ? '<i class="d p"></i>' : '');
-        amt = '<span class="cal-amt">' + Math.round(tot) + '€</span>';
+        if (tot > 0) {
+          amt = '<span class="cal-amt">' + Math.round(tot) + '€</span>';
+        } else if (tipTot > 0) {
+          amt = '<span class="cal-amt cal-amt-tip">+' + Math.round(tipTot) + '€</span>';
+        }
       }
       if (ymd === today) cls += ' today';
       if (ymd === calSel) cls += ' sel';
       cells.push('<button type="button" class="' + cls + '" data-date="' + ymd + '" aria-pressed="' + (ymd === calSel) + '" aria-label="' +
-        formatDateWithDayFR(ymd) + (list.length ? ', ' + tot.toFixed(2) + ' euros' : ', aucune journée') + '"><span class="cal-top"><span>' + n +
+        formatDateWithDayFR(ymd) + (list.length ? ', ' + (tot > 0 ? tot : tipTot).toFixed(2) + ' euros' : ', aucune journée') + '"><span class="cal-top"><span class="cal-num">' + n +
         '</span><span class="cal-dots">' + dots + '</span></span>' + amt + '</button>');
     }
     while (cells.length % 7) cells.push('<div class="cal-cell out" aria-hidden="true"></div>');
     grid.innerHTML = cells.join('');
     const lg = d.legacy[ym];
-    document.getElementById('cal-stats').innerHTML = stat('JOURS', nDays) + stat('HEURES', formatHoursMin(mins)) + stat('LIVRAISONS', dels) + (lg ? '<p class="cal-note">Mois importé : +' + lg.toFixed(2) + ' € (sans détail par jour)</p>' : '');
+    document.getElementById('cal-stats').innerHTML = stat('JOURS', nDays, 'cal-stat-days') + stat('HEURES', formatHoursMin(mins), 'cal-stat-hours') + stat('LIVRAISONS', dels, 'cal-stat-dels') + (lg ? '<p class="cal-note">Mois importé : +' + lg.toFixed(2) + ' € (sans détail par jour)</p>' : '');
     if (dir) {
       grid.classList.remove('period-transition-next', 'period-transition-prev');
       void grid.offsetWidth;

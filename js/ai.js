@@ -736,11 +736,11 @@ function editAiModalInForm() {
   const titleEl = document.getElementById('form-section-title');
   if (titleEl) {
     const titleMap = {
-      prestations: 'VÉRIFIER / MODIFIER LA PRESTATION',
-      livraisons: 'VÉRIFIER / MODIFIER LA LIVRAISON',
-      pourboires: 'VÉRIFIER / MODIFIER LE POURBOIRE'
+      prestations: 'VERIFIER / MODIFIER LA PRESTATION',
+      livraisons: 'VERIFIER / MODIFIER LA LIVRAISON',
+      pourboires: 'VERIFIER / MODIFIER LE POURBOIRE'
     };
-    titleEl.textContent = titleMap[lastAiTargetView] || 'VÉRIFIER LA SAISIE IA';
+    titleEl.textContent = titleMap[lastAiTargetView] || 'VERIFIER LA SAISIE IA';
   }
   if (typeof scrollToForm === 'function') {
     setTimeout(() => scrollToForm(), 80);
@@ -765,8 +765,8 @@ function openAiConfirmModal(data, calc, sourceType) {
 
   if (badgeEl) {
     badgeEl.textContent = sourceType === 'photo'
-      ? `📸 SCAN FEUILLE (LIGNE ${getTargetWorkerName()})`
-      : '🎙️ DICTÉE VOCALE IA';
+      ? `📸 SCAN FEUILLE (LIGNE ${toPixelCaps(getTargetWorkerName())})`
+      : '🎙️ DICTEE VOCALE IA';
   }
 
   let catBadgeHtml = `<span class="ai-cat-pill cat-prest">🍳 PRESTATION</span>`;
@@ -779,7 +779,7 @@ function openAiConfirmModal(data, calc, sourceType) {
   const rowsHtml = [];
   rowsHtml.push(`
     <div class="ai-confirm-row">
-      <span class="ai-confirm-label">TYPE DÉTECTÉ</span>
+      <span class="ai-confirm-label">TYPE DETECTE</span>
       <span class="ai-confirm-val">${catBadgeHtml}</span>
     </div>
   `);
@@ -821,7 +821,7 @@ function openAiConfirmModal(data, calc, sourceType) {
     }
     rowsHtml.push(`
       <div class="ai-confirm-row">
-        <span class="ai-confirm-label">DÉTAIL LIVRAISON</span>
+        <span class="ai-confirm-label">DETAIL LIVRAISON</span>
         <strong class="ai-confirm-val">${delDetail}</strong>
       </div>
     `);
@@ -855,7 +855,7 @@ function openAiConfirmModal(data, calc, sourceType) {
   }
 
   const displayAmount = calc.totalPay > 0 ? calc.totalPay : (calc.tipPay || 0);
-  const amountLabel = calc.totalPay > 0 ? 'MONTANT AJOUTÉ À LA PAIE' : 'MONTANT DU POURBOIRE';
+  const amountLabel = calc.totalPay > 0 ? 'MONTANT AJOUTE A LA PAIE' : 'MONTANT DU POURBOIRE';
 
   const extraCount = pendingExtraAiEntries.length;
   const extraHtml = extraCount > 0

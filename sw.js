@@ -1,7 +1,7 @@
 // ==========================================
 // SERVICE WORKER — CACHE APP SHELL (OFFLINE-FIRST)
 // ==========================================
-const CACHE_NAME = 'compteur-paella-v87';
+const CACHE_NAME = 'compteur-paella-v88';
 const APP_SHELL = [
   './',
   './index.html',
@@ -13,22 +13,22 @@ const APP_SHELL = [
   './assets/icon-maskable-192.png',
   './assets/icon-maskable-512.png',
   './css/base.css?v=186',
-  './css/layout-v2.css?v=185',
-  './css/calendar.css?v=185',
+  './css/layout-v2.css?v=188',
+  './css/calendar.css?v=188',
   './css/photos.css',
   './css/features.css?v=184',
   './css/pixel-polish.css?v=187',
-  './js/config.js?v=187',
+  './js/config.js?v=188',
   './js/audio.js',
-  './js/utils.js?v=174',
+  './js/utils.js?v=188',
   './js/animations.js',
-  './js/photos.js?v=185',
-  './js/shifts.js?v=183',
-  './js/render.js?v=185',
-  './js/calendar.js?v=185',
-  './js/features.js?v=182',
-  './js/ai.js?v=176',
-  './js/auth.js?v=176',
+  './js/photos.js?v=188',
+  './js/shifts.js?v=188',
+  './js/render.js?v=188',
+  './js/calendar.js?v=188',
+  './js/features.js?v=188',
+  './js/ai.js?v=188',
+  './js/auth.js?v=188',
   './js/main.js?v=173'
 ];
 

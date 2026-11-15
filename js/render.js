@@ -94,7 +94,7 @@ function toggleFormSection(forceOpen) {
     playClickSound();
   }
   btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-  icon.textContent = isOpen ? '▲ REPLIER' : '▼ DÉPLIER';
+  icon.textContent = isOpen ? '▲ REPLIER' : '▼ DEPLIER';
 }
 window.toggleFormSection = toggleFormSection;
 
@@ -105,7 +105,7 @@ function toggleHistorySection() {
   if (!body || !btn || !icon) return;
   const isOpen = body.classList.toggle('open');
   btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-  icon.textContent = isOpen ? '▲ REPLIER' : '▼ DÉPLIER';
+  icon.textContent = isOpen ? '▲ REPLIER' : '▼ DEPLIER';
   if (isOpen && !prefersReducedMotion()) {
     body.querySelectorAll('.log-item').forEach(item => {
       item.style.animation = 'none';
@@ -121,7 +121,7 @@ function toggleGlobalSection() {
   const icon = document.getElementById('global-collapse-icon');
   const isOpen = body.classList.toggle('open');
   btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-  icon.textContent = isOpen ? '▲ REPLIER' : '▼ DÉPLIER';
+  icon.textContent = isOpen ? '▲ REPLIER' : '▼ DEPLIER';
   if (isOpen) {
     animateMonthlyBars();
     const allPayEl = document.getElementById('all-total-pay');
@@ -139,7 +139,7 @@ function renderApp() {
   const activeShifts = cachedShifts.filter(s => !pendingDeletes.has(s.id));
   const bounds = getPayPeriodBounds(activePayYear, activePayMonth);
 
-  document.getElementById('period-title').textContent = `PAIE DE ${MONTH_NAMES[activePayMonth]} ${activePayYear}`;
+  document.getElementById('period-title').textContent = `PAIE DE ${toPixelCaps(MONTH_NAMES[activePayMonth])} ${activePayYear}`;
   document.getElementById('period-range-text').innerHTML = `Du <strong>${formatDateWithDayFR(bounds.startYMD)}</strong> au <strong>${formatDateWithDayFR(bounds.endYMD)}</strong>`;
 
   const todayStr = toYMD(new Date());
@@ -270,7 +270,7 @@ function renderApp() {
 
     displayedShifts.forEach(entry => {
       const wInfo = entry.isLegacy
-        ? { key: `legacy-${entry.item.date.slice(0, 7)}`, label: `MOIS ANTÉRIEUR IMPORTÉ` }
+        ? { key: `legacy-${entry.item.date.slice(0, 7)}`, label: `MOIS ANTERIEUR IMPORTE` }
         : getWeekInfo(entry.item.date);
 
       if (!groupMap.has(wInfo.key)) {
@@ -492,7 +492,7 @@ function renderMonthlyChart(periodBuckets) {
     const fillClass = isGlobalOpen ? 'month-bar-fill bar-filled' : 'month-bar-fill';
     row.innerHTML = `
       <div class="month-bar-top">
-        <span class="month-bar-label">${MONTH_NAMES[b.month]} ${b.year} ${daysBadge}${legacyBadge}</span>
+        <span class="month-bar-label">${toPixelCaps(MONTH_NAMES[b.month])} ${b.year} ${daysBadge}${legacyBadge}</span>
         <strong class="month-bar-amount">${b.total.toFixed(2)} €</strong>
       </div>
       <div class="month-bar-track">

@@ -113,7 +113,7 @@ function cancelLiveShift() {
   if (!cancelLiveConfirm) {
     cancelLiveConfirm = true;
     const btn = document.getElementById('live-cancel-btn');
-    if (btn) btn.textContent = 'SÛR ? RE-CLIQUE';
+    if (btn) btn.textContent = 'SUR ? RE-CLIQUE';
     cancelLiveTimer = setTimeout(resetCancelLiveConfirm, 3500);
     return;
   }
@@ -198,8 +198,8 @@ function renderLiveClockTick() {
 
   if (statusText) {
     statusText.textContent = session.isPaused
-      ? `⏸ EN PAUSE (DÉBUT SERVICE À ${session.startTime})`
-      : `EN SERVICE DEPUIS ${session.startTime} (${formatDateFR(session.startDate)})`;
+      ? toPixelCaps(`⏸ EN PAUSE (DEBUT SERVICE A ${session.startTime})`)
+      : toPixelCaps(`EN SERVICE DEPUIS ${session.startTime} (${formatDateFR(session.startDate)})`);
   }
   if (elapsedEl) {
     elapsedEl.textContent = formatDurationHMS(elapsedWorkMs);
@@ -1214,7 +1214,7 @@ function setCounterQuickFormMode(mode, interactive = false) {
     if (editingShiftId === null && editingLegacyId === null) {
       if (nextMode === 'all') {
         const titleEl = document.getElementById('form-section-title');
-        if (titleEl) titleEl.textContent = 'AJOUTER UNE JOURNÉE';
+        if (titleEl) titleEl.textContent = 'AJOUTER UNE JOURNEE';
         if (typeof calculateCurrentForm === 'function') calculateCurrentForm();
         if (typeof checkFormDuplicateDate === 'function') checkFormDuplicateDate();
       } else {
@@ -1256,7 +1256,7 @@ function syncFormForCategoryView(viewName, keepQuickMode = false) {
   } else {
     if (titleEl) {
       titleEl.textContent = viewName === 'counter'
-        ? 'AJOUTER UNE JOURNÉE'
+        ? 'AJOUTER UNE JOURNEE'
         : 'ENREGISTRER UNE PRESTATION';
     }
     if (tipInp) tipInp.value = '';
@@ -1315,7 +1315,7 @@ function buildCategoryLedgerHtml(catKey, accentClass, entries, totalPay) {
   return `
     <div class="cat-ledger-box ${accentClass}" aria-label="Relevé détaillé du mois">
       <div class="cat-ledger-head">
-        <span class="cat-ledger-head-title">RELEVÉ • ${MONTH_NAMES[activePayMonth]} ${activePayYear}</span>
+        <span class="cat-ledger-head-title">RELEVE • ${toPixelCaps(MONTH_NAMES[activePayMonth])} ${activePayYear}</span>
         <span class="cat-ledger-head-count">${countLabel}</span>
       </div>
       <div class="cat-ledger-list">${rowsHtml}</div>
@@ -1330,7 +1330,7 @@ function buildCategoryHeaderAndNav(titleText, accentClass, summaryMetricsHtml, e
       <div class="cat-strip-top">
         <div class="cat-strip-period">
           <button type="button" class="nav-btn compact-nav-btn" onclick="changePeriod(-1)" aria-label="Mois précédent">◀</button>
-          <span class="cat-strip-month-label">PAIE DE ${MONTH_NAMES[activePayMonth]} ${activePayYear}</span>
+          <span class="cat-strip-month-label">PAIE DE ${toPixelCaps(MONTH_NAMES[activePayMonth])} ${activePayYear}</span>
           <button type="button" class="nav-btn compact-nav-btn" onclick="changePeriod(1)" aria-label="Mois suivant">▶</button>
         </div>
         <div class="cat-strip-scope">
@@ -1385,7 +1385,7 @@ function renderCategoryViews() {
         <span class="stat-title">PRESTATIONS DU MOIS (12€/H, MIN. 60€)</span>
         <div class="stat-value">${monthPay.toFixed(2)} €</div>
         <div class="stat-sub">${monthCount} j • ${formatHoursMin(monthMin)} • Moy. ${formatHoursMin(avgMin)}/j</div>
-        <div class="cat-ledger-toggle-hint">${isPrestOpen ? '▲ MASQUER LE RELEVÉ' : '▼ VOIR LE RELEVÉ'}</div>
+        <div class="cat-ledger-toggle-hint">${isPrestOpen ? '▲ MASQUER LE RELEVE' : '▼ VOIR LE RELEVE'}</div>
       </div>
       ${buildCategoryLedgerHtml('prestations', 'red-accent', prestEntries, monthPay)}
     `;
@@ -1440,7 +1440,7 @@ function renderCategoryViews() {
         fuelMonthBoxHtml = `
           <div class="cat-fuel-month-box">
             <div class="cat-fuel-month-info">
-              <span class="cat-fuel-month-title">${PX_ICO.fuel} CONSO PERSO DU MOIS (${escapeHtml(vehicle.name)})</span>
+              <span class="cat-fuel-month-title">${PX_ICO.fuel} CONSO PERSO DU MOIS (${escapeHtml(toPixelCaps(vehicle.name))})</span>
               <span class="cat-fuel-month-stats">${monthPersonalDelCount} déplacement${monthPersonalDelCount > 1 ? 's' : ''} • <strong>${kmStr}</strong> • ${essStr}</span>
             </div>
             <button type="button" class="cat-veh-config-btn" onclick="openVehicleSettingsModal()">${PX_ICO.gear} Véhicule</button>
@@ -1466,7 +1466,7 @@ function renderCategoryViews() {
         <span class="stat-title">LIVRAISONS DU MOIS</span>
         <div class="stat-value">${monthPay.toFixed(2)} €</div>
         <div class="stat-sub">${monthCount} livraison${monthCount > 1 ? 's' : ''} • ${monthFlatCount} forf. / ${monthLongCount} &gt;2h30</div>
-        <div class="cat-ledger-toggle-hint">${isDelOpen ? '▲ MASQUER LE RELEVÉ' : '▼ VOIR LE RELEVÉ'}</div>
+        <div class="cat-ledger-toggle-hint">${isDelOpen ? '▲ MASQUER LE RELEVE' : '▼ VOIR LE RELEVE'}</div>
       </div>
       ${buildCategoryLedgerHtml('livraisons', 'blue-accent', delEntries, monthPay)}
     `;
@@ -1500,7 +1500,7 @@ function renderCategoryViews() {
         <span class="stat-title">POURBOIRES DU MOIS</span>
         <div class="stat-value">${monthPay.toFixed(2)} €</div>
         <div class="stat-sub">${monthCount} pourboire${monthCount > 1 ? 's' : ''} • Moy. ${avgTip.toFixed(1)}€ / Max +${monthMaxTip.toFixed(0)}€</div>
-        <div class="cat-ledger-toggle-hint">${isTipOpen ? '▲ MASQUER LE RELEVÉ' : '▼ VOIR LE RELEVÉ'}</div>
+        <div class="cat-ledger-toggle-hint">${isTipOpen ? '▲ MASQUER LE RELEVE' : '▼ VOIR LE RELEVE'}</div>
       </div>
       ${buildCategoryLedgerHtml('pourboires', 'green-accent', tipEntries, monthPay)}
     `;

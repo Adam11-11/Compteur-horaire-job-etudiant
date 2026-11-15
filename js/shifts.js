@@ -350,8 +350,8 @@ function startEditShift(id) {
     document.getElementById('legacy-total-pay').value = Number(item.total_pay || item.std_pay || 0).toFixed(2);
     const cleanedNote = String(item.note || '').replace(/^Mois antérieur\s*(—\s*|\([^)]*\))?/, '').trim();
     document.getElementById('legacy-note').value = cleanedNote;
-    document.getElementById('legacy-form-title').textContent = 'MODIFIER CE MOIS ANTÉRIEUR';
-    document.getElementById('legacy-submit-btn').textContent = 'METTRE À JOUR CE MOIS';
+    document.getElementById('legacy-form-title').textContent = 'MODIFIER CE MOIS ANTERIEUR';
+    document.getElementById('legacy-submit-btn').textContent = 'METTRE A JOUR CE MOIS';
     document.getElementById('legacy-cancel-btn').style.display = 'inline-flex';
     document.getElementById('legacy-container').scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     return;
@@ -368,8 +368,8 @@ function startEditShift(id) {
 
   editingShiftId = item.id;
   editingLegacyId = null;
-  document.getElementById('form-section-title').textContent = 'MODIFIER LA JOURNÉE';
-  document.getElementById('shift-submit-btn').textContent = 'METTRE À JOUR';
+  document.getElementById('form-section-title').textContent = 'MODIFIER LA JOURNEE';
+  document.getElementById('shift-submit-btn').textContent = 'METTRE A JOUR';
   document.getElementById('shift-cancel-btn').style.display = 'inline-flex';
 
   document.getElementById('shift-date').value = item.date || toYMD(new Date());
@@ -421,9 +421,9 @@ function cancelEdit() {
   document.getElementById('shift-cancel-btn').style.display = 'none';
 
   const legacyTitle = document.getElementById('legacy-form-title');
-  if (legacyTitle) legacyTitle.textContent = 'IMPORT MOIS PASSÉ (DEPUIS AVRIL 2025)';
+  if (legacyTitle) legacyTitle.textContent = 'IMPORT MOIS PASSE (DEPUIS AVRIL 2025)';
   const legacySubmit = document.getElementById('legacy-submit-btn');
-  if (legacySubmit) legacySubmit.textContent = 'VALIDER CE MOIS ANTÉRIEUR';
+  if (legacySubmit) legacySubmit.textContent = 'VALIDER CE MOIS ANTERIEUR';
   const legacyCancel = document.getElementById('legacy-cancel-btn');
   if (legacyCancel) legacyCancel.style.display = 'none';
 
@@ -466,7 +466,7 @@ async function saveShift(e) {
 
   const submitBtn = document.getElementById('shift-submit-btn');
   const wasEditingId = editingShiftId;
-  const originalText = wasEditingId ? 'METTRE À JOUR' : 'SAUVEGARDER DANS LE CLOUD';
+  const originalText = wasEditingId ? 'METTRE A JOUR' : 'SAUVEGARDER DANS LE CLOUD';
   submitBtn.disabled = true;
   submitBtn.textContent = formSelectedPhotoFile ? 'ENVOI PHOTO...' : 'ENVOI...';
 
@@ -635,7 +635,7 @@ async function saveShift(e) {
       if (typeof isLocalSaveInFlight !== 'undefined') isLocalSaveInFlight = false;
     }, 600);
     submitBtn.disabled = false;
-    submitBtn.textContent = editingShiftId ? 'METTRE À JOUR' : originalText;
+    submitBtn.textContent = editingShiftId ? 'METTRE A JOUR' : originalText;
   }
 }
 
@@ -654,7 +654,7 @@ async function saveLegacyMonth(e) {
   }
 
   const submitBtn = document.getElementById('legacy-submit-btn');
-  const originalText = editingLegacyId ? 'METTRE À JOUR CE MOIS' : 'VALIDER CE MOIS ANTÉRIEUR';
+  const originalText = editingLegacyId ? 'METTRE A JOUR CE MOIS' : 'VALIDER CE MOIS ANTERIEUR';
   submitBtn.disabled = true;
   submitBtn.textContent = 'ENVOI...';
 
@@ -728,7 +728,7 @@ async function saveLegacyMonth(e) {
       if (typeof isLocalSaveInFlight !== 'undefined') isLocalSaveInFlight = false;
     }, 600);
     submitBtn.disabled = false;
-    submitBtn.textContent = editingLegacyId ? 'METTRE À JOUR CE MOIS' : originalText;
+    submitBtn.textContent = editingLegacyId ? 'METTRE A JOUR CE MOIS' : originalText;
   }
 }
 

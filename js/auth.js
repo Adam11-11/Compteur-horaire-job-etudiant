@@ -56,7 +56,7 @@ function updateSettingsUserUI(user = currentAuthUser) {
 
   const displayName = getWorkerDisplayName(user) || 'Mon compte';
   if (card) card.style.display = 'block';
-  if (nameEl) nameEl.textContent = displayName;
+  if (nameEl) nameEl.textContent = toPixelCaps(displayName);
   if (emailEl) emailEl.textContent = user.email || '';
   if (subEl) subEl.textContent = `Prénom : ${displayName}`;
   if (logoutBtn) {
@@ -347,7 +347,7 @@ function setAuthTabMode(mode) {
   if (fb) fb.style.display = 'none';
 
   if (submitBtn) {
-    submitBtn.textContent = isSignup ? '✓ CRÉER MON COMPTE' : 'SE CONNECTER';
+    submitBtn.textContent = isSignup ? '✓ CREER MON COMPTE' : 'SE CONNECTER';
   }
 }
 
@@ -446,10 +446,10 @@ async function handleLoginSubmit(e) {
       return;
     }
 
-    const originalText = submitBtn ? submitBtn.textContent : '✓ CRÉER MON COMPTE';
+    const originalText = submitBtn ? submitBtn.textContent : '✓ CREER MON COMPTE';
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = 'CRÉATION...';
+      submitBtn.textContent = 'CREATION...';
     }
     const fb = document.getElementById('auth-feedback');
     if (fb) fb.style.display = 'none';
