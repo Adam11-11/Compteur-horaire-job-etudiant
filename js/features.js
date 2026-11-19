@@ -1286,7 +1286,7 @@ function toggleCategoryLedger(categoryKey) {
 }
 window.toggleCategoryLedger = toggleCategoryLedger;
 
-function buildCategoryLedgerHtml(catKey, accentClass, entries, totalPay) {
+function buildCategoryLedgerHtml(catKey, accentClass, entries, totalPay, payYear = activePayYear, payMonth = activePayMonth) {
   if (!categoryLedgerState[catKey]) return '';
   const sorted = [...entries].sort(
     (a, b) => String(b.date || '').localeCompare(String(a.date || '')) || (Number(b.id || 0) - Number(a.id || 0))

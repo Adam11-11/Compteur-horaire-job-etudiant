@@ -212,10 +212,15 @@ function bindInteractiveSwipe(containerEl, getTargetEl, buildPreviewClone, onCom
   };
 
   const ensurePreviewForDir = (dir) => {
-    if (!activeEl || previewDir === dir && previewGhost) return;
+    if (!activeEl || (previewDir === dir && previewGhost)) return;
     removePreviewGhost();
     if (typeof buildPreviewClone !== 'function') return;
-    const cloned = buildPreviewClone(dir);
+    let cloned = null;
+    try {
+      cloned = buildPreviewClone(dir);
+    } catch (e) {
+      return;
+    }
     if (!cloned) return;
     previewDir = dir;
     previewGhost = cloned;
@@ -383,14 +388,17 @@ function bindInteractiveSwipe(containerEl, getTargetEl, buildPreviewClone, onCom
     }
 
     setTimeout(() => {
-      clearInline(elRef);
-      onCommit(dir);
-      const freshTarget = resolveTarget();
-      clearPeriodAnimClasses(freshTarget);
-      clearInline(freshTarget);
-      removePreviewGhost();
-      activeEl = null;
-      isAnimating = false;
+      try {
+        clearInline(elRef);
+        onCommit(dir);
+      } finally {
+        const freshTarget = resolveTarget();
+        clearPeriodAnimClasses(freshTarget);
+        clearInline(freshTarget);
+        removePreviewGhost();
+        activeEl = null;
+        isAnimating = false;
+      }
     }, 195);
   };
 
