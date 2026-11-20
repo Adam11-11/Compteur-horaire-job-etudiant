@@ -650,8 +650,7 @@ body[data-view="counter"] #section-form[data-form-mode="pourboires"] #shift-subm
   letter-spacing: 2px;
   color: #ffe875;
   text-shadow:
-    0 0 10px rgba(255, 232, 117, 0.8),
-    0 0 22px rgba(229, 181, 103, 0.45),
+    0 0 6px rgba(255, 232, 117, 0.32),
     3px 3px 0 #09080c;
 }
 

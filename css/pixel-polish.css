@@ -294,8 +294,7 @@ header {
 .period-month-title {
   color: #ffe875;
   text-shadow:
-    0 0 10px rgba(255, 232, 117, 0.8),
-    0 0 22px rgba(229, 181, 103, 0.45),
+    0 0 6px rgba(255, 232, 117, 0.32),
     3px 3px 0 #09080c;
   letter-spacing: 2px;
 }
@@ -742,14 +741,12 @@ textarea:focus {
 @keyframes periodTitleGlow {
   0%, 100% {
     text-shadow:
-      0 0 10px rgba(255, 232, 117, 0.72),
-      0 0 20px rgba(229, 181, 103, 0.4),
+      0 0 6px rgba(255, 232, 117, 0.28),
       3px 3px 0 #09080c;
   }
   50% {
     text-shadow:
-      0 0 14px rgba(255, 232, 117, 0.95),
-      0 0 26px rgba(229, 181, 103, 0.6),
+      0 0 9px rgba(255, 232, 117, 0.45),
       3px 3px 0 #09080c;
   }
 }

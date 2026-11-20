@@ -77,17 +77,6 @@ function buildPeriodSwipePreview(delta) {
   const rangeEl = clone.querySelector('#period-range-text');
   if (rangeEl) rangeEl.innerHTML = `Du <strong>${formatDateWithDayFR(bounds.startYMD)}</strong> au <strong>${formatDateWithDayFR(bounds.endYMD)}</strong>`;
 
-  const todayStr = toYMD(new Date());
-  const diffDays = Math.round((bounds.endObj - parseYMD(todayStr)) / 86400000);
-  const remText = todayStr > bounds.endYMD
-    ? 'Clôturée'
-    : todayStr < bounds.startYMD
-      ? 'À venir'
-      : diffDays === 0
-        ? 'Dernier jour !'
-        : `J-${diffDays} avant fin`;
-  setTxt('period-remaining-badge', remText);
-
   setTxt('month-std-pay', '0.00 €');
   setTxt('month-del-pay', '0.00 €');
   setTxt('month-tip-pay', '0.00 €');
@@ -233,20 +222,6 @@ function renderApp(renderOpts = {}) {
 
   document.getElementById('period-title').textContent = formatPeriodHeaderTitle(activePayMonth, activePayYear);
   document.getElementById('period-range-text').innerHTML = `Du <strong>${formatDateWithDayFR(bounds.startYMD)}</strong> au <strong>${formatDateWithDayFR(bounds.endYMD)}</strong>`;
-
-  const todayStr = toYMD(new Date());
-  const todayObj = parseYMD(todayStr);
-  const diffDays = Math.round((bounds.endObj - todayObj) / (1000 * 60 * 60 * 24));
-  const remBadge = document.getElementById('period-remaining-badge');
-  if (todayStr > bounds.endYMD) {
-    remBadge.textContent = 'Clôturée';
-  } else if (todayStr < bounds.startYMD) {
-    remBadge.textContent = 'À venir';
-  } else if (diffDays === 0) {
-    remBadge.textContent = 'Dernier jour !';
-  } else {
-    remBadge.textContent = `J-${diffDays} avant fin`;
-  }
 
   let allTotalPay = 0, allLegacyCount = 0;
   let monthStdMin = 0, monthStdPay = 0, monthDelCount = 0, monthDelPay = 0;
