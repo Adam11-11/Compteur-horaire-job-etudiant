@@ -617,3 +617,63 @@ body[data-view="counter"] #section-form[data-form-mode="pourboires"] #shift-subm
   display: block;
   animation: fadeSlideDown 0.2s ease-out;
 }
+
+/* En-tête centré du mois en haut de la page Paie */
+.period-top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 3px dashed #433e50;
+}
+
+.period-top-header .compact-nav-btn {
+  flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.period-top-header .period-current-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+}
+
+.period-top-header .period-month-title {
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+
+.period-top-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+}
+
+.period-top-header .period-dates-badge {
+  font-size: 19px;
+  line-height: 1.15;
+}
+
+.period-rem-pill {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 4px 8px;
+  background: var(--bg-input);
+  border: 2px solid var(--gold-soft);
+  color: var(--gold-soft);
+  white-space: nowrap;
+}
+
+#section-period .period-quick-tools {
+  margin-top: 14px;
+}

@@ -74,12 +74,12 @@ function buildPeriodSwipePreview(delta) {
   const todayStr = toYMD(new Date());
   const diffDays = Math.round((bounds.endObj - parseYMD(todayStr)) / 86400000);
   const remText = todayStr > bounds.endYMD
-    ? `Clôturée le ${formatDateWithDayFR(bounds.endYMD)}`
+    ? 'Clôturée'
     : todayStr < bounds.startYMD
-      ? `Fin prévue le ${formatDateWithDayFR(bounds.endYMD)}`
+      ? 'À venir'
       : diffDays === 0
-        ? `Dernier jour ! (Fin ${formatDateFR(bounds.endYMD)})`
-        : `J-${diffDays} avant fin (${formatDateWithDayFR(bounds.endYMD)})`;
+        ? 'Dernier jour !'
+        : `J-${diffDays} avant fin`;
   setTxt('period-remaining-badge', remText);
 
   setTxt('month-std-pay', '0.00 €');
@@ -233,13 +233,13 @@ function renderApp(renderOpts = {}) {
   const diffDays = Math.round((bounds.endObj - todayObj) / (1000 * 60 * 60 * 24));
   const remBadge = document.getElementById('period-remaining-badge');
   if (todayStr > bounds.endYMD) {
-    remBadge.textContent = `Clôturée le ${formatDateWithDayFR(bounds.endYMD)}`;
+    remBadge.textContent = 'Clôturée';
   } else if (todayStr < bounds.startYMD) {
-    remBadge.textContent = `Fin prévue le ${formatDateWithDayFR(bounds.endYMD)}`;
+    remBadge.textContent = 'À venir';
   } else if (diffDays === 0) {
-    remBadge.textContent = `Dernier jour ! (Fin ${formatDateFR(bounds.endYMD)})`;
+    remBadge.textContent = 'Dernier jour !';
   } else {
-    remBadge.textContent = `J-${diffDays} avant fin (${formatDateWithDayFR(bounds.endYMD)})`;
+    remBadge.textContent = `J-${diffDays} avant fin`;
   }
 
   let allTotalPay = 0, allLegacyCount = 0;
