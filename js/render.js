@@ -1,6 +1,12 @@
 // ==========================================
 // RENDU DE L'APPLICATION, FILTRES & GRAPHIQUE MENSUEL
 // ==========================================
+function formatPeriodHeaderTitle(monthIndex, year) {
+  const currentYear = new Date().getFullYear();
+  const monthLabel = toPixelCaps(MONTH_NAMES[monthIndex]);
+  return Number(year) === currentYear ? monthLabel : `${monthLabel} (${year})`;
+}
+
 function changePeriod(delta, fromSwipe = false) {
   const d = new Date(activePayYear, activePayMonth + delta, 1, 12, 0, 0);
   activePayYear = d.getFullYear();
@@ -67,7 +73,7 @@ function buildPeriodSwipePreview(delta) {
   const avgStdMin = monthStdDatesSet.size > 0 ? Math.round(monthStdMin / monthStdDatesSet.size) : 0;
   const totalPay = monthStdPay + monthDelPay;
   const setTxt = (id, txt) => { const n = clone.querySelector('#' + id); if (n) n.textContent = txt; };
-  setTxt('period-title', `PAIE DE ${toPixelCaps(MONTH_NAMES[m])} ${y}`);
+  setTxt('period-title', formatPeriodHeaderTitle(m, y));
   const rangeEl = clone.querySelector('#period-range-text');
   if (rangeEl) rangeEl.innerHTML = `Du <strong>${formatDateWithDayFR(bounds.startYMD)}</strong> au <strong>${formatDateWithDayFR(bounds.endYMD)}</strong>`;
 
@@ -225,7 +231,7 @@ function renderApp(renderOpts = {}) {
   const activeShifts = cachedShifts.filter(s => !pendingDeletes.has(s.id));
   const bounds = getPayPeriodBounds(activePayYear, activePayMonth);
 
-  document.getElementById('period-title').textContent = `PAIE DE ${toPixelCaps(MONTH_NAMES[activePayMonth])} ${activePayYear}`;
+  document.getElementById('period-title').textContent = formatPeriodHeaderTitle(activePayMonth, activePayYear);
   document.getElementById('period-range-text').innerHTML = `Du <strong>${formatDateWithDayFR(bounds.startYMD)}</strong> au <strong>${formatDateWithDayFR(bounds.endYMD)}</strong>`;
 
   const todayStr = toYMD(new Date());

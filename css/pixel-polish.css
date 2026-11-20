@@ -292,8 +292,12 @@ header {
 }
 
 .period-month-title {
-  text-shadow: 2px 2px 0 #09080c;
-  letter-spacing: 1.5px;
+  color: #ffe875;
+  text-shadow:
+    0 0 10px rgba(255, 232, 117, 0.8),
+    0 0 22px rgba(229, 181, 103, 0.45),
+    3px 3px 0 #09080c;
+  letter-spacing: 2px;
 }
 
 /* Cartes de statistiques & compteur principal façon écran Arcade / LED */
@@ -736,8 +740,18 @@ textarea:focus {
 
 /* Titre période & Pastille statut SYNCHRO vivantes */
 @keyframes periodTitleGlow {
-  0%, 100% { text-shadow: 2px 2px 0 #09080c, 0 0 6px rgba(229, 181, 103, 0.2); }
-  50% { text-shadow: 2px 2px 0 #09080c, 0 0 14px rgba(255, 232, 117, 0.55); }
+  0%, 100% {
+    text-shadow:
+      0 0 10px rgba(255, 232, 117, 0.72),
+      0 0 20px rgba(229, 181, 103, 0.4),
+      3px 3px 0 #09080c;
+  }
+  50% {
+    text-shadow:
+      0 0 14px rgba(255, 232, 117, 0.95),
+      0 0 26px rgba(229, 181, 103, 0.6),
+      3px 3px 0 #09080c;
+  }
 }
 
 .period-month-title {
