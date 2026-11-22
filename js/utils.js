@@ -60,21 +60,24 @@ function formatHoursMin(totalMinutes) {
 }
 
 // --- CALCUL PÉRIODE DE PAIE ---
-function getPenultimateSunday(year, monthIndex) {
+// Chaque période de paie se termine le 4e dimanche du mois X
+// (soit la dernière semaine du mois X-1 + les 3 premières semaines complètes du mois X,
+// et la 5e semaine éventuelle bascule sur la période suivante).
+function getFourthSunday(year, monthIndex) {
   const sundays = [];
   const d = new Date(year, monthIndex, 1, 12, 0, 0);
   while (d.getMonth() === monthIndex) {
     if (d.getDay() === 0) sundays.push(new Date(d));
     d.setDate(d.getDate() + 1);
   }
-  return sundays[sundays.length - 2];
+  return sundays[3];
 }
 
 function getPayPeriodBounds(year, monthIndex) {
   const prevMonthDate = new Date(year, monthIndex - 1, 1, 12, 0, 0);
-  const prevPenult = getPenultimateSunday(prevMonthDate.getFullYear(), prevMonthDate.getMonth());
-  const startObj = new Date(prevPenult.getFullYear(), prevPenult.getMonth(), prevPenult.getDate() + 1, 12, 0, 0);
-  const endObj = getPenultimateSunday(year, monthIndex);
+  const prevCutoff = getFourthSunday(prevMonthDate.getFullYear(), prevMonthDate.getMonth());
+  const startObj = new Date(prevCutoff.getFullYear(), prevCutoff.getMonth(), prevCutoff.getDate() + 1, 12, 0, 0);
+  const endObj = getFourthSunday(year, monthIndex);
   return { startYMD: toYMD(startObj), endYMD: toYMD(endObj), startObj, endObj };
 }
 
@@ -82,8 +85,8 @@ function getPayPeriodForDateStr(dateStr) {
   const dt = parseYMD(dateStr);
   const y = dt.getFullYear();
   const m = dt.getMonth();
-  const penultSun = getPenultimateSunday(y, m);
-  if (toYMD(dt) > toYMD(penultSun)) {
+  const cutoffSun = getFourthSunday(y, m);
+  if (toYMD(dt) > toYMD(cutoffSun)) {
     const next = new Date(y, m + 1, 1, 12, 0, 0);
     return { year: next.getFullYear(), month: next.getMonth() };
   }
