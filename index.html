@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="css/layout-v2.css?v=192" />
   <link rel="stylesheet" href="css/calendar.css?v=191" />
   <link rel="stylesheet" href="css/photos.css" />
-  <link rel="stylesheet" href="css/features.css?v=191" />
+  <link rel="stylesheet" href="css/features.css?v=195" />
   <link rel="stylesheet" href="css/pixel-polish.css?v=187" />
 
   <!-- Supabase Client SDK -->
@@ -353,6 +353,13 @@
                 <div id="settings-user-name" class="settings-user-name">Mon compte</div>
                 <div id="settings-user-email" class="settings-user-email"></div>
               </div>
+              <button type="button" id="settings-dashboard-btn" class="settings-menu-item" role="menuitem" onclick="openGlobalDashboardModal()">
+                <svg class="px-ico" width="16" height="16" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="19" width="20" height="2" fill="#0d0c10"/><rect x="3" y="18" width="18" height="2" fill="#c7c1d4"/><rect x="4" y="12" width="4" height="6" fill="#0d0c10"/><rect x="5" y="13" width="2" height="5" fill="#4fa4e8"/><rect x="10" y="8" width="4" height="10" fill="#0d0c10"/><rect x="11" y="9" width="2" height="9" fill="#5ab57a"/><rect x="16" y="4" width="4" height="14" fill="#0d0c10"/><rect x="17" y="5" width="2" height="13" fill="#ffe875"/><rect x="4" y="6" width="3" height="2" fill="#eb7c85"/><rect x="8" y="4" width="3" height="2" fill="#eb7c85"/></svg>
+                <span class="settings-menu-item-text">
+                  <span>DASHBOARD GLOBAL</span>
+                  <small class="settings-menu-sub">Graphes &amp; taux par mois</small>
+                </span>
+              </button>
               <button type="button" id="settings-profile-btn" class="settings-menu-item" role="menuitem" onclick="promptEditWorkerName()">
                 <svg class="px-ico" width="16" height="16" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true"><rect x="8" y="3" width="8" height="8" fill="#0d0c10"/><rect x="9" y="4" width="6" height="6" fill="#e5b567"/><rect x="9" y="4" width="6" height="2" fill="#fff2a6"/><rect x="4" y="13" width="16" height="8" fill="#0d0c10"/><rect x="5" y="14" width="14" height="6" fill="#5ab57a"/><rect x="5" y="14" width="14" height="2" fill="#82d99d"/></svg>
                 <span class="settings-menu-item-text">
@@ -846,6 +853,40 @@
     </div>
   </div>
 
+  <!-- FENÊTRE MODALE DASHBOARD GLOBAL & GRAPHE D'ÉVOLUTION -->
+  <div id="global-dashboard-modal" class="ai-confirm-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="dash-modal-title" onclick="if (event.target === this) closeGlobalDashboardModal()">
+    <div class="pixel-box ai-confirm-card dashboard-modal-card">
+      <div class="ai-confirm-header">
+        <span class="ai-confirm-badge">
+          <svg class="px-ico" width="16" height="16" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true"><rect x="2" y="19" width="20" height="2" fill="#0d0c10"/><rect x="3" y="18" width="18" height="2" fill="#c7c1d4"/><rect x="4" y="12" width="4" height="6" fill="#0d0c10"/><rect x="5" y="13" width="2" height="5" fill="#4fa4e8"/><rect x="10" y="8" width="4" height="10" fill="#0d0c10"/><rect x="11" y="9" width="2" height="9" fill="#5ab57a"/><rect x="16" y="4" width="4" height="14" fill="#0d0c10"/><rect x="17" y="5" width="2" height="13" fill="#ffe875"/></svg>
+          PARAMETRES • ANALYSE
+        </span>
+        <h3 class="pixel-font ai-confirm-title" id="dash-modal-title">DASHBOARD GLOBAL</h3>
+      </div>
+
+      <div id="dash-kpi-grid" class="dash-kpi-grid"></div>
+
+      <div class="dash-tabs" role="tablist" aria-label="Métrique du graphique">
+        <button type="button" class="dash-tab-btn active" id="dash-tab-rate" role="tab" aria-selected="true" onclick="setDashboardChartMode('rate')">TAUX (€/H)</button>
+        <button type="button" class="dash-tab-btn" id="dash-tab-pay" role="tab" aria-selected="false" onclick="setDashboardChartMode('pay')">PAIE (€)</button>
+        <button type="button" class="dash-tab-btn" id="dash-tab-hours" role="tab" aria-selected="false" onclick="setDashboardChartMode('hours')">HEURES</button>
+      </div>
+
+      <div class="dash-chart-box">
+        <div id="dash-chart-caption" class="dash-chart-caption"></div>
+        <div id="dash-chart-wrap" class="dash-chart-wrap"></div>
+        <div id="dash-chart-tooltip" class="dash-tooltip-bar" aria-live="polite"></div>
+      </div>
+
+      <div class="dash-section-label">DETAIL PAR MOIS (CLIQUE POUR OUVRIR)</div>
+      <div id="dash-months-table" class="dash-months-list"></div>
+
+      <div class="ai-confirm-actions" style="margin-top: 12px;">
+        <button type="button" class="pixel-btn btn-secondary" style="width: 100%;" onclick="closeGlobalDashboardModal()">FERMER</button>
+      </div>
+    </div>
+  </div>
+
   <!-- BOUTON CIRCULAIRE IA GÉNÉRALISÉ EN BAS À GAUCHE + MENU DÉROULANT -->
   <div id="ai-fab-wrapper" class="ai-fab-wrapper">
     <!-- Menu déroulant IA -->
@@ -921,7 +962,7 @@
   <script src="js/shifts.js?v=189"></script>
   <script src="js/render.js?v=193"></script>
   <script src="js/calendar.js?v=193"></script>
-  <script src="js/features.js?v=193"></script>
+  <script src="js/features.js?v=195"></script>
   <script src="js/ai.js?v=188"></script>
   <script src="js/auth.js?v=188"></script>
   <script src="js/main.js?v=173"></script>
