@@ -152,7 +152,14 @@ function formatKm(kmVal) {
   return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)} km`;
 }
 
-function encodeExtraMetaInProofUrl(tipPay, delKm, hasPhoto) {
+function getItemIsLivService(item) {
+  if (!item || item.is_legacy) return false;
+  if (item.is_liv_service === true) return true;
+  const raw = String(item.proof_url || '');
+  return /(?:^|\|)svc:1(?:\||$)/.test(raw);
+}
+
+function encodeExtraMetaInProofUrl(tipPay, delKm, hasPhoto, isLivService = false) {
   const parts = [];
   if (Number(tipPay) > 0) {
     parts.push(`tip:${Number(tipPay).toFixed(2)}`);
@@ -160,6 +167,9 @@ function encodeExtraMetaInProofUrl(tipPay, delKm, hasPhoto) {
   if (Number(delKm) > 0) {
     const cleanKm = Math.round(Number(delKm) * 10) / 10;
     parts.push(`km:${Number.isInteger(cleanKm) ? cleanKm : cleanKm.toFixed(1)}`);
+  }
+  if (isLivService) {
+    parts.push('svc:1');
   }
   if (parts.length > 0) return parts.join('|');
   return hasPhoto ? 'true' : null;

@@ -407,7 +407,9 @@ function renderApp(renderOpts = {}) {
           const stdMin = item.std_minutes || 0;
           const startSafe = escapeHtml(item.std_start);
           const endSafe = escapeHtml(item.std_end);
-          const stdText = stdMin > 0 ? `<span class="shift-pill pill-standard">${PX_ICO.prest} Prest. ${startSafe} - ${endSafe} (${formatHoursMin(stdMin)})</span>` : '';
+          const isLivService = typeof getItemIsLivService === 'function' ? getItemIsLivService(item) : false;
+          const stdShortLabel = isLivService ? 'Prest. service' : 'Prest.';
+          const stdText = stdMin > 0 ? `<span class="shift-pill pill-standard">${PX_ICO.prest} ${stdShortLabel} ${startSafe} - ${endSafe} (${formatHoursMin(stdMin)})</span>` : '';
           let delText = '';
           if (item.has_delivery || delP > 0) {
             const delMin = item.del_minutes || 0;

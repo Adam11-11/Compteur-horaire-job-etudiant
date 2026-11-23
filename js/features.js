@@ -543,8 +543,9 @@ async function handleImportJSONFile(file) {
         : null;
       const tipVal = typeof getItemTipPay === 'function' ? getItemTipPay(item) : 0;
       const kmVal = typeof getItemDelKm === 'function' ? getItemDelKm(item) : 0;
+      const livServiceVal = typeof getItemIsLivService === 'function' ? getItemIsLivService(item) : false;
       const cleanProofUrl = typeof encodeExtraMetaInProofUrl === 'function'
-        ? encodeExtraMetaInProofUrl(tipVal, kmVal, Boolean(safeOwnProof))
+        ? encodeExtraMetaInProofUrl(tipVal, kmVal, Boolean(safeOwnProof), livServiceVal)
         : (safeOwnProof ? 'true' : null);
 
       toInsert.push({
@@ -704,6 +705,7 @@ function getCurrentPeriodShiftsDetailed() {
     const hasPersonalVehicle = isDel && (delKm > 0 || delP >= baseDelPay + DELIVERY_VEHICLE_BONUS - 0.01);
     const delFuelEst = delKm > 0 && vehicle && typeof estimateFuelCost === 'function' ? estimateFuelCost(delKm, vehicle) : 0;
     const tipP = getItemTipPay(item);
+    const isLivService = typeof getItemIsLivService === 'function' ? getItemIsLivService(item) : false;
 
     totalStdMin += stdMin;
     totalStdPay += stdP;
@@ -717,6 +719,7 @@ function getCurrentPeriodShiftsDetailed() {
       item,
       stdMin,
       stdP,
+      isLivService,
       isDel,
       delMin,
       delP,
@@ -781,9 +784,10 @@ function openPrintablePaySheet() {
     const vehSuffix = r.hasPersonalVehicle
       ? ` (véh. perso${r.delKm > 0 ? ` • ${formatKm(r.delKm)}` : ''})`
       : '';
-    let typeText = 'Prestation';
+    const basePrestaLabel = r.isLivService ? 'Prestation service' : 'Prestation';
+    let typeText = basePrestaLabel;
     if (r.stdMin > 0 && r.isDel) {
-      typeText = `Prestation + Livraison${vehSuffix}`;
+      typeText = `${basePrestaLabel} + Livraison${vehSuffix}`;
     } else if (r.isDel) {
       typeText = `Livraison${vehSuffix}`;
     }

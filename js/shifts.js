@@ -252,9 +252,11 @@ function calculateCurrentForm() {
   const tipPay = Math.max(0, Number(tipInputEl ? tipInputEl.value : 0) || 0);
   const tipLabel = tipPay > 0 ? ` | 💰 Pourboire +${tipPay.toFixed(2)}€ (hors paie)` : '';
 
+  const isLivService = Boolean(document.getElementById('std-liv-service-check')?.checked);
   const totalPay = stdPay + delPay;
   const previewTotal = totalPay > 0 ? totalPay : tipPay;
-  const stdLabelText = stdMinutes > 0 ? `${formatHoursMin(stdMinutes)} prestation (${stdPay.toFixed(2)}€${rawStdPay < STD_MIN_PAY ? ' min 60€' : ''})` : `0h00 prestation`;
+  const stdKindLabel = isLivService ? 'prestation service' : 'prestation';
+  const stdLabelText = stdMinutes > 0 ? `${formatHoursMin(stdMinutes)} ${stdKindLabel} (${stdPay.toFixed(2)}€${rawStdPay < STD_MIN_PAY ? ' min 60€' : ''})` : `0h00 ${stdKindLabel}`;
   const liveDetailsEl = document.getElementById('live-details');
   if (liveDetailsEl) liveDetailsEl.textContent = `${stdLabelText} | ${delLabel}${tipLabel}`;
   const liveTotalEl = document.getElementById('live-total');
@@ -275,16 +277,21 @@ function calculateCurrentForm() {
       animateElementClass(submitBtn, 'btn-ready-pop', 360);
     }
   }
-  return { stdMinutes, stdPay, hasDelivery, delMinutes, delPay, delKm, tipPay, totalPay, previewTotal };
+  return { stdMinutes, stdPay, isLivService, hasDelivery, delMinutes, delPay, delKm, tipPay, totalPay, previewTotal };
 }
 
 function initFormCalculationListeners() {
-  ['std-start', 'std-end', 'std-break', 'del-start', 'del-end', 'del-duration-min', 'del-vehicle-check', 'del-vehicle-km', 'tip-amount'].forEach(id => {
+  ['std-start', 'std-end', 'std-break', 'std-liv-service-check', 'del-start', 'del-end', 'del-duration-min', 'del-vehicle-check', 'del-vehicle-km', 'tip-amount'].forEach(id => {
     const el = document.getElementById(id);
     if (el) {
       if (id === 'del-vehicle-check') {
         el.addEventListener('change', () => {
           syncDeliveryVehicleUI();
+          if (typeof playPixelSound === 'function') playPixelSound('toggle');
+          calculateCurrentForm();
+        });
+      } else if (id === 'std-liv-service-check') {
+        el.addEventListener('change', () => {
           if (typeof playPixelSound === 'function') playPixelSound('toggle');
           calculateCurrentForm();
         });
@@ -380,6 +387,8 @@ function startEditShift(id) {
   document.getElementById('std-end').value = item.std_end || '';
   const stdBreakInp = document.getElementById('std-break');
   if (stdBreakInp) stdBreakInp.value = String(item.std_break || 0);
+  const livServiceCheck = document.getElementById('std-liv-service-check');
+  if (livServiceCheck) livServiceCheck.checked = typeof getItemIsLivService === 'function' ? getItemIsLivService(item) : false;
 
   setDeliveryState(Boolean(item.has_delivery || (item.del_pay && item.del_pay > 0)));
   if (hasDelivery) {
@@ -434,6 +443,8 @@ function cancelEdit() {
   document.getElementById('std-end').value = '';
   const stdBreakEl = document.getElementById('std-break');
   if (stdBreakEl) stdBreakEl.value = '0';
+  const livServiceCheck = document.getElementById('std-liv-service-check');
+  if (livServiceCheck) livServiceCheck.checked = false;
   const tipEl = document.getElementById('tip-amount');
   if (tipEl) tipEl.value = '';
   setDeliveryState(false);
@@ -492,7 +503,7 @@ async function saveShift(e) {
     return;
   }
 
-  const encodeTipOrProofUrl = (hasPhoto) => encodeExtraMetaInProofUrl(calc.tipPay, calc.delKm, hasPhoto);
+  const encodeTipOrProofUrl = (hasPhoto) => encodeExtraMetaInProofUrl(calc.tipPay, calc.delKm, hasPhoto, calc.isLivService);
 
   const payload = {
     user_id: uid,
