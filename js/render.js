@@ -374,14 +374,22 @@ function renderApp(renderOpts = {}) {
 
         const card = document.createElement('div');
         const isJustAdded = highlightedShiftId && item.id === highlightedShiftId;
+        const isCurrentlyEditing = editingShiftId !== null && String(item.id) === String(editingShiftId);
         const kindClass = isLegacy
           ? ' legacy-item'
           : (stdP > 0 ? ' kind-prest' : ((item.has_delivery || delP > 0) ? ' kind-delivery' : (tipP > 0 ? ' kind-tip' : '')));
         card.className = 'log-item compact-row'
           + (isLegacy ? '' : (inPeriod ? ' in-current-period' : ''))
           + kindClass
-          + (isJustAdded ? ' just-added-flash' : '');
+          + (isJustAdded ? ' just-added-flash' : '')
+          + (isCurrentlyEditing ? ' is-editing-row' : '');
         card.setAttribute('data-shift-id', String(item.id));
+        card.setAttribute('data-clickable', '1');
+        card.title = 'Cliquer pour modifier cette mission';
+        card.onclick = (e) => {
+          if (e.target.closest('.compact-row-btns')) return;
+          startEditShift(item.id);
+        };
         card.style.setProperty('--item-index', String(Math.min(cascadeIndex, 10)));
         cascadeIndex++;
 

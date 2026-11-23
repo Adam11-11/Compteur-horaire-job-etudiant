@@ -107,9 +107,17 @@ function scrollToForm() {
   if (typeof toggleFormSection === 'function') {
     toggleFormSection(true);
   }
-  document.getElementById('section-form').scrollIntoView({
-    behavior: prefersReducedMotion() ? 'auto' : 'smooth'
-  });
+  const formEl = document.getElementById('section-form');
+  if (!formEl) return;
+  const isDesktop = window.innerWidth >= 900;
+  const rect = formEl.getBoundingClientRect();
+  const alreadyVisibleOnDesktop = isDesktop && rect.top >= 0 && rect.top < window.innerHeight * 0.65;
+  if (!alreadyVisibleOnDesktop) {
+    formEl.scrollIntoView({
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      block: 'start'
+    });
+  }
 }
 
 function toggleLegacyForm() {
@@ -368,16 +376,36 @@ function startEditShift(id) {
   if (curView !== 'counter' && typeof window.setView === 'function') {
     window.setView('counter', true);
   }
+  const hasStd = (item.std_minutes || 0) > 0 || (item.std_pay || 0) > 0;
+  const hasDel = Boolean(item.has_delivery || (Number(item.del_pay) > 0));
   const existingTip = getItemTipPay(item);
-  const isTipOnlyEntry = (item.std_minutes || 0) <= 0 && !item.has_delivery && !(Number(item.del_pay) > 0) && existingTip > 0;
+  const isTipOnlyEntry = !hasStd && !hasDel && existingTip > 0;
+  const isPrestOnlyEntry = hasStd && !hasDel;
+  const isDelOnlyEntry = !hasStd && hasDel;
+
+  let editFormMode = 'all';
+  let editTitle = 'MODIFIER LA JOURNEE';
+  if (isTipOnlyEntry) {
+    editFormMode = 'pourboires';
+    editTitle = 'MODIFIER LE POURBOIRE';
+  } else if (isPrestOnlyEntry) {
+    editFormMode = 'prestations';
+    editTitle = 'MODIFIER LA PRESTATION';
+  } else if (isDelOnlyEntry) {
+    editFormMode = 'livraisons';
+    editTitle = 'MODIFIER LA LIVRAISON';
+  }
+
   document.body.classList.add('is-editing-shift');
   if (typeof setCounterQuickFormMode === 'function') {
-    setCounterQuickFormMode(isTipOnlyEntry ? 'pourboires' : 'all');
+    setCounterQuickFormMode(editFormMode);
   }
 
   editingShiftId = item.id;
   editingLegacyId = null;
-  document.getElementById('form-section-title').textContent = isTipOnlyEntry ? 'MODIFIER LE POURBOIRE' : 'MODIFIER LA JOURNEE';
+  document.querySelectorAll('.compact-row.is-editing-row').forEach(el => el.classList.remove('is-editing-row'));
+  document.querySelectorAll(`.compact-row[data-shift-id="${CSS.escape(String(item.id))}"]`).forEach(el => el.classList.add('is-editing-row'));
+  document.getElementById('form-section-title').textContent = editTitle;
   document.getElementById('shift-submit-btn').textContent = 'METTRE A JOUR';
   document.getElementById('shift-cancel-btn').style.display = 'inline-flex';
 
@@ -427,6 +455,7 @@ function cancelEdit() {
   editingShiftId = null;
   editingLegacyId = null;
   document.body.classList.remove('is-editing-shift');
+  document.querySelectorAll('.compact-row.is-editing-row').forEach(el => el.classList.remove('is-editing-row'));
   document.getElementById('shift-submit-btn').textContent = 'ENREGISTRER';
   document.getElementById('shift-cancel-btn').style.display = 'none';
 

@@ -9,6 +9,8 @@ function triggerFormPhotoPick() {
   }
 }
 
+const formExistingPhotoUrlCache = new Map();
+
 function updateFormPhotoUI() {
   const block = document.getElementById('form-photo-dropzone');
   const thumb = document.getElementById('form-photo-thumb');
@@ -19,22 +21,48 @@ function updateFormPhotoUI() {
 
   if (formSelectedPhotoFile) {
     block.classList.add('has-photo');
-    if (formPhotoPreviewUrl) thumb.src = formPhotoPreviewUrl;
+    if (formPhotoPreviewUrl) {
+      thumb.src = formPhotoPreviewUrl;
+      thumb.style.display = 'block';
+    } else {
+      thumb.style.display = 'none';
+    }
     title.textContent = '✓ PHOTO PRETE';
     sub.textContent = `${formSelectedPhotoFile.name || 'Image'} (${Math.max(1, Math.round(formSelectedPhotoFile.size / 1024))} Ko)`;
     sub.style.display = 'block';
     pickBtn.innerHTML = `${CAM_SVG} CHANGER`;
     clearBtn.style.display = 'inline-flex';
   } else if (existingFormProofPath && !removeExistingFormPhoto) {
+    const targetPath = existingFormProofPath;
     block.classList.add('has-photo');
     title.textContent = '✓ PHOTO JOINTE';
     sub.textContent = '';
     sub.style.display = 'none';
     pickBtn.innerHTML = `${CAM_SVG} REMPLACER`;
     clearBtn.style.display = 'inline-flex';
+
+    const cachedUrl = formExistingPhotoUrlCache.get(targetPath);
+    if (cachedUrl) {
+      thumb.src = cachedUrl;
+      thumb.style.display = 'block';
+    } else {
+      thumb.removeAttribute('src');
+      thumb.style.display = 'none';
+      if (navigator.onLine && typeof supabaseClient !== 'undefined') {
+        supabaseClient.storage.from(PHOTO_BUCKET).createSignedUrl(targetPath, 3600).then(res => {
+          if (existingFormProofPath !== targetPath || removeExistingFormPhoto || formSelectedPhotoFile) return;
+          if (!res.error && res.data && res.data.signedUrl) {
+            formExistingPhotoUrlCache.set(targetPath, res.data.signedUrl);
+            thumb.src = res.data.signedUrl;
+            thumb.style.display = 'block';
+          }
+        }).catch(() => {});
+      }
+    }
   } else {
     block.classList.remove('has-photo');
     thumb.removeAttribute('src');
+    thumb.style.display = 'none';
     title.innerHTML = `${CAM_SVG} PHOTO DE PREUVE (OPTIONNEL)`;
     sub.textContent = '';
     sub.style.display = 'none';

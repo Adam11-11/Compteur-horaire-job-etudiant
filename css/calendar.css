@@ -27,6 +27,13 @@ body[data-view="counter"] #section-form[data-form-mode="all"] .role-block.tip-bl
   display: none;
 }
 
+body[data-view="prestations"] #section-form #form-roles-grid,
+body[data-view="livraisons"] #section-form #form-roles-grid,
+body[data-view="counter"] #section-form[data-form-mode="prestations"] #form-roles-grid,
+body[data-view="counter"] #section-form[data-form-mode="livraisons"] #form-roles-grid {
+  grid-template-columns: 1fr;
+}
+
 body[data-view="livraisons"] #section-form #live-clock-box,
 body[data-view="livraisons"] #section-form #legacy-toggle-btn,
 body[data-view="livraisons"] #section-form #legacy-container,
@@ -285,6 +292,15 @@ div.cal-cell.out {
   z-index: 2;
 }
 
+.compact-row[data-clickable="1"] {
+  cursor: pointer;
+}
+
+.compact-row.is-editing-row {
+  border-color: var(--gold-bright) !important;
+  box-shadow: 0 0 0 2px rgba(255, 232, 117, 0.25) !important;
+}
+
 @media (hover: hover) {
   button.cal-cell:hover {
     border-color: var(--gold-soft);
@@ -485,6 +501,13 @@ button.cal-cell:active {
       "form history"
       "global global";
     align-items: start;
+  }
+
+  body[data-view="counter"].is-editing-shift #section-form {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
   }
 
   body[data-view="calendar"] #app-content {
